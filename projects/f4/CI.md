@@ -2,9 +2,4 @@
 
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
 
-08-09-2026 19:56:14 — PR https://github.com/unxed/f4/pull/1004, GitHub Actions run 34260045725: запущен, результат не проверен.
-08-09-2026 19:57:44 — PR https://github.com/unxed/f4/pull/1004, GitHub Actions run 34260183832: запущен, результат не проверен.
-08-09-2026 20:01:19 — PR https://github.com/unxed/f4/pull/1004, GitHub Actions run 34260534146: запущен, результат не проверен.
-
-
-08-09-2026 20:04:08 — PR https://github.com/unxed/f4/pull/1006, GitHub Actions run 34260765737: запущен, результат не проверен.
+08-09-2026 20:14:31 — f4 main commit 68c27d1396eb04293c4d8edad83f552be7702eca, GitHub Actions run 34261797311: запущен, результат не проверен.
