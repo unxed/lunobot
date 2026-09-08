@@ -36,14 +36,15 @@ def parse(path):
         if key:
             key = key.group(0)
         else:
-            custom = re.search(r"кастомную задачу\s*«([^»]+)»", body)
+            # «взял кастомную задачу «X»» и «работаю над кастомной задачей «X»» — один шаг
+            custom = re.search(r"кастомн\w+ задач\w+\s*«([^»]+)»", body)
             if not custom:
                 custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
             key = custom.group(1).strip() if custom else None
-            if key and "по §" not in body:
+            if key and "взял" in line and "по §" not in body:
                 no_origin.append((n, line[:110]))
         part = re.search(r"\(часть (\d+) из (\d+)\)", line)
-        if not (ts and who and verb and key and part):
+        if not (ts and who and verb and key):
             malformed.append((n, line[:110], {
                 "нет метки времени": not ts,
                 "id не по формату": not who,
@@ -52,9 +53,10 @@ def parse(path):
                 "не указана часть": not part,
             }))
             continue
+        # часть не указана — значит единственная
+        part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
         entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
-                        "who": who.group(0), "verb": verb,
-                        "key": f"{key}#{part.group(1)}/{part.group(2)}"})
+                        "who": who.group(0), "verb": verb, "key": f"{key}#{part_key}"})
     return entries, malformed, no_origin
 
 
