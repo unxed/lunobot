@@ -171,21 +171,27 @@ def instances(hours=24, silent_min=30):
     return items
 
 
-def ci_line(raw, repo):
+def ci_line(raw, repo, now=None):
     """Запись о прогоне — к одному виду, что бы бот туда ни написал."""
+    stamp = re.search(r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})", raw)
+    abandoned = ""
+    if stamp and now:
+        age = int((now - datetime.strptime(stamp.group(1), "%d-%m-%Y %H:%M:%S")).total_seconds() // 60)
+        if age >= STALE_MIN:
+            abandoned = f"  ⚠ брошен {age} мин назад"
     time = re.search(r"\d{2}-\d{2}-\d{4} (\d{2}:\d{2})", raw)
     pr = re.search(r"/pull/(\d+)", raw)
     sha = re.search(r"\b([0-9a-f]{7,40})\b", raw)
     run = re.search(r"/actions/runs/(\d+)|\brun (\d{6,})\b", raw)
     if not (pr and run):
-        return shorten(raw, repo)
+        return shorten(raw, repo) + abandoned
     run_id = run.group(1) or run.group(2)
     parts = [time.group(1) if time else "",
              f"[PR #{pr.group(1)}](https://github.com/{repo}/pull/{pr.group(1)})"]
     if sha:
         parts.append(f"[`{sha.group(1)[:7]}`](https://github.com/{repo}/commit/{sha.group(1)})")
     parts.append(shorten(f"run {run_id}", repo))
-    return " · ".join(p for p in parts if p)
+    return " · ".join(p for p in parts if p) + abandoned
 
 
 def report(name, repo, d, hours):
@@ -208,9 +214,14 @@ def report(name, repo, d, hours):
     blocks.append(("В работе", items))
 
     pending = [l for l in read_lines(d / "CI.md") if "http" in l or "run " in l]
+    # время берём из самой свежей записи учёта: боты пишут в своих часовых поясах
+    marks = [datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S")
+             for m in (re.search(r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})", l) for l in
+                       read_lines(d / "DISPATCH.md") + pending) if m]
+    ci_now = max(marks) if marks else datetime.now()
     if pending:
         blocks.append((f"Непроверенные прогоны CI: {len(pending)}",
-                       [ci_line(l, repo) for l in pending[:10]]))
+                       [ci_line(l, repo, ci_now) for l in pending[:10]]))
 
     if not repo:
         blocks.append(("GitHub", ["В паспорте проекта нет ссылки на репозиторий."]))
