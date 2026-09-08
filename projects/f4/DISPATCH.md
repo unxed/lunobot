@@ -4,3 +4,5 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 Проверка: `python3 check_dispatch.py projects/f4/DISPATCH.md`
+
+08-09-2026 19:23:21 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/pull/1000 (часть 1 из 1)
