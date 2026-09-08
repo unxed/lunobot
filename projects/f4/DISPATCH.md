@@ -6,7 +6,6 @@
 Проверка: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
 
-08-09-2026 19:33:50 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу, покрытие internal/ttyx (часть 1 из 1)
 
 
 
