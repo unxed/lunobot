@@ -62,6 +62,28 @@ def projects(only=None):
         yield d.name, (m.group(1) if m else None), d
 
 
+def effective_now(marks, scope="projects"):
+    """Сейчас — в тех же часах, в которых пишут боты.
+
+    Боты пишут время в своих поясах, поэтому сравнивать их метки с UTC нельзя.
+    Перекос считаем по последнему коммиту учётного репозитория: его реальное время
+    известно, а самая свежая метка в файлах ему примерно соответствует.
+    """
+    if not marks:
+        return datetime.now()
+    newest = max(marks)
+    try:
+        # ориентируемся на последний коммит именно ботов: правки инструкции
+        # в счёт не идут, иначе перекос обнулится от любого патча
+        ct = int(subprocess.run(["git", "log", "-1", "--format=%ct", "--", str(scope)],
+                                cwd=ROOT, capture_output=True, text=True,
+                                timeout=30).stdout.strip())
+        elapsed = datetime.now(timezone.utc).timestamp() - ct
+    except Exception:
+        elapsed = 0
+    return newest + timedelta(seconds=max(elapsed, 0))
+
+
 def read_lines(path):
     """Строки файла. Боты иногда пишут литеральный \n вместо перевода строки — разрезаем и его."""
     if not path.exists():
@@ -163,12 +185,30 @@ def instances(hours=24, silent_min=30):
             who = f"Лунобот-{m.group(1)} ({m.group(2)[:8]}…; {m.group(3)})"
             seen[who] = max(seen.get(who, 0), when)
     now = datetime.now(timezone.utc).timestamp()
-    items = []
+    out = []
     for who, ts in sorted(seen.items(), key=lambda x: -x[1]):
-        mins = int((now - ts) // 60)
-        mark = "  ⚠ молчит" if mins >= silent_min else ""
-        items.append(f"{who} — последний след {mins} мин назад{mark}")
+        node = re.search(r"\(([0-9a-f]+)…", who)
+        out.append({"who": who, "node": node.group(1) if node else "",
+                    "mins": int((now - ts) // 60)})
+    return out
+
+
+def instances_block(silent_min=30):
+    items = []
+    for i in instances():
+        mark = "  ⚠ молчит" if i["mins"] >= silent_min else ""
+        items.append(f"{i['who']} — последний след {i['mins']} мин назад{mark}")
     return items
+
+
+def fleet_line(silent_min=30):
+    inst = instances()
+    if not inst:
+        return ""
+    alive = [i for i in inst if i["mins"] < silent_min]
+    if not alive:
+        return f"Флот стоит: молчат все {len(inst)} инстансов."
+    return f"Флот: работают {len(alive)} из {len(inst)}."
 
 
 def ci_line(raw, repo, now=None):
@@ -203,9 +243,7 @@ def report(name, repo, d, hours):
     if not claims:
         items.append("Никто ничего не держит.")
     else:
-        # боты пишут время в своих часовых поясах: отсчитываем от самой свежей записи,
-        # а не от часов машины, где запущен пульт
-        now = max([c[1] for c in claims] + [datetime.now()])
+        now = effective_now([c[1] for c in claims], d.relative_to(ROOT) if str(d).startswith(str(ROOT)) else "projects")
         for _full, stamp, who, origin, part_txt, key in sorted(claims, key=lambda c: c[1]):
             age = int((now - stamp).total_seconds() // 60)
             mark = "  ⚠ протух" if age > STALE_MIN else ""
@@ -218,7 +256,7 @@ def report(name, repo, d, hours):
     marks = [datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S")
              for m in (re.search(r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})", l) for l in
                        read_lines(d / "DISPATCH.md") + pending) if m]
-    ci_now = max(marks) if marks else datetime.now()
+    ci_now = effective_now(marks, d.relative_to(ROOT) if str(d).startswith(str(ROOT)) else "projects")
     if pending:
         blocks.append((f"Непроверенные прогоны CI: {len(pending)}",
                        [ci_line(l, repo, ci_now) for l in pending[:10]]))
@@ -266,6 +304,23 @@ def report(name, repo, d, hours):
     if counts:
         blocks.append((f"Открытых тикетов: {counts.get('total_count', '?')}", []))
 
+    prs = gh_json(f"/repos/{repo}/pulls?state=open&per_page=100")
+    if prs:
+        silent = {i["node"]: i["mins"] for i in instances() if i["mins"] >= 30}
+        orphan = []
+        for p in prs:
+            ref = p["head"]["ref"]
+            if not ref.startswith("codex/"):
+                continue
+            node = ref.split("/")[1] if ref.count("/") >= 3 else ""
+            mins = next((m for n, m in silent.items() if node.startswith(n.rstrip("…"))), None)
+            if mins is None and node:
+                continue
+            orphan.append(f"[PR #{p['number']}]({p['html_url']}) {p['title'][:60]}"
+                          + (f" — владелец молчит {mins} мин" if mins else " — владельца не определить"))
+        if orphan:
+            blocks.append((f"PR без владельца: {len(orphan)}", orphan))
+
     # сверка веток: журнал намерений против реальности на GitHub (§ 14.3)
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
     if branches is not None:
@@ -292,7 +347,7 @@ LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 def render_text(report_blocks):
     print(f"# Пульт Луноботов — {datetime.now():%d-%m-%Y %H:%M}")
-    inst = instances()
+    inst = instances_block()
     if inst:
         print("\n## Инстансы\n")
         for i in inst:
@@ -340,8 +395,9 @@ def render_html(report_blocks):
            ".stale{color:#f85149}.upd{color:#8b949e;font-size:.85rem}</style></head><body>",
            "<h1>Пульт Луноботов</h1>",
            f'<p class="upd">Обновлено {datetime.now(timezone.utc):%d-%m-%Y %H:%M} UTC. '
-           "Страница перезагружается сама раз в две минуты.</p>"]
-    inst = instances()
+           "Страница перезагружается сама раз в две минуты.</p>",
+           f'<p>{line(fleet_line())}</p>']
+    inst = instances_block()
     if inst:
         out.append("<h2>Инстансы</h2><ul>"
                    + "".join(f"<li>{line(i)}</li>" for i in inst) + "</ul>")
