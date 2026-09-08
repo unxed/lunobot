@@ -62,15 +62,20 @@ def projects(only=None):
         yield d.name, (m.group(1) if m else None), d
 
 
+def read_lines(path):
+    """Строки файла. Боты иногда пишут литеральный \n вместо перевода строки — разрезаем и его."""
+    if not path.exists():
+        return []
+    raw = path.read_text(encoding="utf-8").replace("\\n", "\n")
+    return [l.strip() for l in raw.splitlines() if l.strip()]
+
+
 def active_claims(project_dir):
     """Кто что держит прямо сейчас, по DISPATCH.md."""
-    f = project_dir / "DISPATCH.md"
-    if not f.exists():
-        return []
     holders = {}
-    for line in f.read_text(encoding="utf-8").splitlines():
+    for line in read_lines(project_dir / "DISPATCH.md"):
         ts = re.match(TS, line)
-        who = re.search(r"Лунобот-\d+ \((?:instance|node) [0-9a-f]+; [A-Z]{3}\)", line)
+        who = re.search(r"Лунобот-(\d+) \((?:instance|node) [0-9a-f]+; ([A-Z]{3})\)", line)
         if not (ts and who) or not re.search(r"взял|работаю", line):
             continue
         key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", line)
@@ -79,13 +84,17 @@ def active_claims(project_dir):
             custom = re.search(r"«([^»]+)»", line) or re.search(
                 r"кастомную задачу,\s*([^(]+)", line)
             key = f"«{custom.group(1).strip()}»" if custom else line[:40]
-        part = re.search(r"\(часть \d+ из \d+\)", line)
-        full = key + (" " + part.group(0) if part else "")
+        part = re.search(r"часть (\d+) из (\d+)", line)
+        part_txt = ""
+        if part and part.group(2) != "1":
+            part_txt = f"часть {part.group(1)} из {part.group(2)}"
+        full = key + (part.group(0) if part else "")
         stamp = datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S")
         prev = holders.get(full)
         if not prev or stamp > prev[0]:
-            origin = re.search(r"по (§ ?[\d.]+[^(]*)", line)
-            holders[full] = (stamp, who.group(0), origin.group(1).strip() if origin else "")
+            origin = re.search(r"по (§ ?[\d. п]*\d)", line)
+            holders[full] = (stamp, f"Лунобот-{who.group(1)} ({who.group(2)})",
+                             origin.group(1).strip() if origin else "", part_txt, key)
     return [(k, *v) for k, v in holders.items()]
 
 
@@ -123,6 +132,23 @@ def shorten(text, repo):
     return re.sub(r"\s+,", ",", text).strip()
 
 
+def ci_line(raw, repo):
+    """Запись о прогоне — к одному виду, что бы бот туда ни написал."""
+    time = re.search(r"\d{2}-\d{2}-\d{4} (\d{2}:\d{2})", raw)
+    pr = re.search(r"/pull/(\d+)", raw)
+    sha = re.search(r"\b([0-9a-f]{7,40})\b", raw)
+    run = re.search(r"/actions/runs/(\d+)|\brun (\d{6,})\b", raw)
+    if not (pr and run):
+        return shorten(raw, repo)
+    run_id = run.group(1) or run.group(2)
+    parts = [time.group(1) if time else "",
+             f"[PR #{pr.group(1)}](https://github.com/{repo}/pull/{pr.group(1)})"]
+    if sha:
+        parts.append(f"[`{sha.group(1)[:7]}`](https://github.com/{repo}/commit/{sha.group(1)})")
+    parts.append(shorten(f"run {run_id}", repo))
+    return " · ".join(p for p in parts if p)
+
+
 def report(name, repo, d, hours):
     """Возвращает список блоков (заголовок, строки) — рендер отдельно."""
     blocks = []
@@ -135,18 +161,17 @@ def report(name, repo, d, hours):
         # боты пишут время в своих часовых поясах: отсчитываем от самой свежей записи,
         # а не от часов машины, где запущен пульт
         now = max([c[1] for c in claims] + [datetime.now()])
-        for key, stamp, who, origin in sorted(claims, key=lambda c: c[1]):
+        for _full, stamp, who, origin, part_txt, key in sorted(claims, key=lambda c: c[1]):
             age = int((now - stamp).total_seconds() // 60)
             mark = "  ⚠ протух" if age > STALE_MIN else ""
-            tail = f" — {origin}" if origin else ""
-            items.append(f"{shorten(key, repo)}{tail} — {who}, {age} мин{mark}")
+            head = " · ".join(x for x in (shorten(key, repo), part_txt, origin) if x)
+            items.append(f"{head} — {who}, {age} мин{mark}")
     blocks.append(("В работе", items))
 
-    ci = d / "CI.md"
-    pending = [l for l in ci.read_text(encoding="utf-8").splitlines() if "http" in l] if ci.exists() else []
+    pending = [l for l in read_lines(d / "CI.md") if "http" in l or "run " in l]
     if pending:
         blocks.append((f"Непроверенные прогоны CI: {len(pending)}",
-                       [shorten(l.strip(), repo) for l in pending[:10]]))
+                       [ci_line(l, repo) for l in pending[:10]]))
 
     if not repo:
         blocks.append(("GitHub", ["В паспорте проекта нет ссылки на репозиторий."]))
