@@ -1,4 +1,8 @@
 
+Актуальная инструкция лежит по адресу
+https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md
+— обновляй её оттуда после каждого коммита в основной проект, и следуй обновлённой.
+
 Рабочий репозиторий:
 https://github.com/unxed/f4
 
