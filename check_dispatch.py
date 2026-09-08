@@ -62,13 +62,11 @@ def check(path, timeout_min, since=None):
     entries, malformed, no_origin = parse(path)
     if since:
         entries = [e for e in entries if e["ts"] >= since]
-        kept = []
-        for n, text, flags in malformed:
+        def fresh(text):
             m = re.match(r"(\d{2}-\d{2}-\d{4})", text)
-            if m and datetime.strptime(m.group(1), "%d-%m-%Y") < since:
-                continue
-            kept.append((n, text, flags))
-        malformed = kept
+            return not (m and datetime.strptime(m.group(1), "%d-%m-%Y") < since)
+        malformed = [x for x in malformed if fresh(x[1])]
+        no_origin = [x for x in no_origin if fresh(x[1])]
 
     problems = []
     for n, text in no_origin:
