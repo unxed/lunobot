@@ -8,3 +8,4 @@
 
 
 08-09-2026 18:47:24 — `codex/996-language-settings` — https://github.com/unxed/f4/pull/997 — merged в `main`, remote-ветка удалена.
+08-09-2026 18:55:26 — `codex/998-edit-prefix` — https://github.com/unxed/f4/pull/999 — активна, ожидает CI.
