@@ -27,9 +27,12 @@ def parse(path):
         ts = re.match(TS, line)
         who = re.search(ID, line)
         verb = next((v for v in VERBS if v in line), None)
-        key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", line)
+        # ссылка-цель markdown-ссылки (например в «[закончил](...PR)») ключом не является:
+        # ключ шага — тот, по которому он был захвачен
+        body = re.sub(r"\]\(https?://[^)]+\)", "]", line)
+        key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", body)
         if not key:
-            custom = re.search(r"кастомную задачу,\s*([^(]+)", line)
+            custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
             key = custom.group(1).strip() if custom else None
         else:
             key = key.group(0)
