@@ -85,3 +85,5 @@
 
 08-09-2026 05:30:48 Я Лунобот-1 (instance e0fc97), взял задачу номер https://github.com/unxed/f4/issues/261 (часть 1 из 2)
 
+08-09-2026 05:48:22 Я Лунобот-1 (instance e0fc97), снял резерв задачи https://github.com/unxed/f4/issues/261 — срез Help.Scrollbar и Table.Separator уже присутствует в main коммитом cd8cd1d0; дублирующий PR не создаю.
+
