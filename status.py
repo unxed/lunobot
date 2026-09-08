@@ -123,12 +123,14 @@ def report(name, repo, d, hours):
     items = []
     if done and done.get("items"):
         for pr in done["items"]:
-            issues = ", ".join("#" + n for n in re.findall(r"#(\d+)", pr["title"]))
+            found = re.findall(r"#(\d+)", pr["title"] + " " + (pr.get("body") or "")[:400])
+            issues = ", ".join(dict.fromkeys(
+                "#" + n for n in found if n != str(pr["number"])))
             items.append(f"[#{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
                          + (f" → тикет {issues}" if issues else ""))
     elif done:
         items.append("Ничего не влито.")
-    blocks.append((f"Сделано за {hours} ч", items))
+    blocks.append((f"Сделано за {hours} ч — влитые PR", items))
 
     counts = gh_json(f"/search/issues?q=repo:{repo}+is:issue+is:open&per_page=1")
     if counts:
@@ -182,7 +184,7 @@ def render_html(report_blocks):
             return f"\x00{len(done) - 1}\x00"
 
         t = LINK.sub(lambda m: stash(f'<a href="{esc(m.group(2))}">{esc(m.group(1))}</a>'), t)
-        t = re.sub(r"https://\S+",
+        t = re.sub(r'https://[^\s<>"]*[^\s<>",.;:)\]]',
                    lambda m: stash(f'<a href="{esc(m.group(0))}">{esc(m.group(0))}</a>'), t)
         t = esc(t)
         t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
