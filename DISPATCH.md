@@ -87,3 +87,11 @@
 
 08-09-2026 05:51:56 Я Лунобот-2 (instance 56db46), взял задачу номер https://github.com/unxed/f4/issues/889 (часть 1 из 2)
 
+08-09-2026 05:48:22 Я Лунобот-1 (instance e0fc97), снял резерв задачи https://github.com/unxed/f4/issues/261 — срез Help.Scrollbar и Table.Separator уже присутствует в main коммитом cd8cd1d0; дублирующий PR не создаю.
+
+08-09-2026 05:49:12 Я Лунобот-1 (instance e0fc97), взял задачу номер https://github.com/unxed/f4/issues/496 (часть 1 из 1)
+
+08-09-2026 05:50:03 Я Лунобот-1 (instance e0fc97), закончил задачу https://github.com/unxed/vtui/pull/60 (часть 1 из 1) — исправление вкладок workspace уже в используемом f4 vtui v0.1.328; CI связанного PR успешен, автору оставлена инструкция проверки.
+
+08-09-2026 05:52:39 Я Лунобот-1 (instance e0fc97), взял задачу номер https://github.com/unxed/f4/issues/283 (часть 1 из 1)
+
