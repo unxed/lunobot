@@ -6,3 +6,5 @@
 
 
 08-09-2026 18:29:24 — `codex/996-language-settings` — https://github.com/unxed/f4/issues/996 — active, commit `1dda1e9e`.
+
+08-09-2026 18:30:05 — PR https://github.com/unxed/f4/pull/997 открыта для ветки `codex/996-language-settings`; ожидается CI.
