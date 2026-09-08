@@ -5,7 +5,7 @@
 захватов и завершений, отсутствие двойных закрытий, просроченные захваты.
 
 Использование:
-    python3 check_dispatch.py projects/f4/DISPATCH.md [--timeout-min 45]
+    python3 check_dispatch.py projects/f4/DISPATCH.md [--timeout-min 45] [--since ДД-ММ-ГГГГ]
 
 Коды возврата: 0 — нарушений нет, 1 — есть.
 """
@@ -55,8 +55,18 @@ def parse(path):
     return entries, malformed
 
 
-def check(path, timeout_min):
+def check(path, timeout_min, since=None):
     entries, malformed = parse(path)
+    if since:
+        entries = [e for e in entries if e["ts"] >= since]
+        # у битых записей метки может не быть — фильтруем по дате в начале строки
+        kept = []
+        for n, text, flags in malformed:
+            m = re.match(r"(\d{2}-\d{2}-\d{4})", text)
+            if m and datetime.strptime(m.group(1), "%d-%m-%Y") < since:
+                continue
+            kept.append((n, text, flags))
+        malformed = kept
     problems = []
 
     for n, text, flags in malformed:
@@ -108,7 +118,10 @@ def main():
     timeout = 45
     if "--timeout-min" in sys.argv:
         timeout = int(sys.argv[sys.argv.index("--timeout-min") + 1])
-    entries, problems = check(path, timeout)
+    since = None
+    if "--since" in sys.argv:
+        since = datetime.strptime(sys.argv[sys.argv.index("--since") + 1], "%d-%m-%Y")
+    entries, problems = check(path, timeout, since)
     print(f"разобрано корректных записей: {len(entries)}")
     if not problems:
         print("нарушений нет")
