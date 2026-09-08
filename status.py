@@ -137,7 +137,8 @@ def report(name, repo, d, hours):
     # сверка веток: журнал намерений против реальности на GitHub (§ 14.3)
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
     if branches is not None:
-        real = {b["name"] for b in branches} - {"main", "master"}
+        # сверяем только территорию Луноботов: всё остальное завёл человек
+        real = {b["name"] for b in branches if b["name"].startswith("codex/")}
         f = d / "BRANCHES.md"
         recorded = set(re.findall(r"`([^`]+)`", f.read_text(encoding="utf-8"))) if f.exists() else set()
         leaks = sorted(real - recorded)
