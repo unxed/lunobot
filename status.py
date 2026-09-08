@@ -89,6 +89,40 @@ def active_claims(project_dir):
     return [(k, *v) for k, v in holders.items()]
 
 
+RUN_NUMBERS = {}
+
+
+def shorten(text, repo):
+    """Длинные ссылки и хеши → короткие подписи со ссылками."""
+    if not repo:
+        return text
+    r = re.escape(repo)
+
+    def run_no(run_id):
+        if run_id not in RUN_NUMBERS:
+            data = gh_json(f"/repos/{repo}/actions/runs/{run_id}") or {}
+            RUN_NUMBERS[run_id] = data.get("run_number") or run_id
+        return RUN_NUMBERS[run_id]
+
+    text = re.sub(rf"https://github\.com/{r}/commit/([0-9a-f]{{7,40}})",
+                  lambda m: f"[`{m.group(1)[:7]}`]({m.group(0)})", text)
+    text = re.sub(rf"https://github\.com/{r}/issues/(\d+)",
+                  lambda m: f"[#{m.group(1)}]({m.group(0)})", text)
+    text = re.sub(rf"https://github\.com/{r}/pull/(\d+)",
+                  lambda m: f"[PR #{m.group(1)}]({m.group(0)})", text)
+    text = re.sub(rf"https://github\.com/{r}/actions/runs/(\d+)",
+                  lambda m: f"[прогон #{run_no(m.group(1))}]({m.group(0)})", text)
+    text = re.sub(r"\b(?:GitHub Actions\s+)?run\s+(\d{6,})\b",
+                  lambda m: f"[прогон #{run_no(m.group(1))}]"
+                            f"(https://github.com/{repo}/actions/runs/{m.group(1)})", text)
+    text = re.sub(r"\b([0-9a-f]{40})\b",
+                  lambda m: f"[`{m.group(1)[:7]}`](https://github.com/{repo}/commit/{m.group(1)})", text)
+    text = re.sub(r"[:,]?\s*(запущен|GitHub Actions)[^.]*результат не проверен\.?", "", text)
+    text = re.sub(r"\bPR\s+(\[PR #)", r"\1", text)          # «PR [PR #1008]» → «[PR #1008]»
+    text = re.sub(r"\b(?:commit|коммит)\s+(\[`)", r"коммит \1", text)
+    return re.sub(r"\s+,", ",", text).strip()
+
+
 def report(name, repo, d, hours):
     """Возвращает список блоков (заголовок, строки) — рендер отдельно."""
     blocks = []
@@ -105,14 +139,14 @@ def report(name, repo, d, hours):
             age = int((now - stamp).total_seconds() // 60)
             mark = "  ⚠ протух" if age > STALE_MIN else ""
             tail = f" — {origin}" if origin else ""
-            items.append(f"{key}{tail} — {who}, {age} мин{mark}")
+            items.append(f"{shorten(key, repo)}{tail} — {who}, {age} мин{mark}")
     blocks.append(("В работе", items))
 
     ci = d / "CI.md"
     pending = [l for l in ci.read_text(encoding="utf-8").splitlines() if "http" in l] if ci.exists() else []
     if pending:
         blocks.append((f"Непроверенные прогоны CI: {len(pending)}",
-                       [l.strip() for l in pending[:10]]))
+                       [shorten(l.strip(), repo) for l in pending[:10]]))
 
     if not repo:
         blocks.append(("GitHub", ["В паспорте проекта нет ссылки на репозиторий."]))
@@ -124,10 +158,13 @@ def report(name, repo, d, hours):
     if done and done.get("items"):
         for pr in done["items"]:
             found = re.findall(r"#(\d+)", pr["title"] + " " + (pr.get("body") or "")[:400])
-            issues = ", ".join(dict.fromkeys(
-                "#" + n for n in found if n != str(pr["number"])))
-            items.append(f"[#{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
-                         + (f" → тикет {issues}" if issues else ""))
+            issues = list(dict.fromkeys(n for n in found if n != str(pr["number"])))
+            fix = f"[PR #{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
+            if issues:
+                base = ", ".join(f"[#{n}](https://github.com/{repo}/issues/{n})" for n in issues)
+                items.append(f"{base} → {fix}")
+            else:
+                items.append(fix)
     elif done:
         items.append("Ничего не влито.")
     blocks.append((f"Сделано за {hours} ч — влитые PR", items))
