@@ -180,6 +180,8 @@
 
 08-09-2026 06:51:44 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), закончил задачу https://github.com/unxed/f4/pull/951 (часть 1 из 1) — исправлена ссылка на подтверждённый CI и уточнён статус недоступного вложения в docs/LUNOBOT/914.md; PR объединён в main.
 
+08-09-2026 06:53:53 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), взял задачу номер https://github.com/unxed/f4/issues/89 (часть 1 из 1)
+
 08-09-2026 06:54:33 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), взял задачу номер https://github.com/unxed/f4/issues/885 (часть 1 из 2)
 
 08-09-2026 06:55:02 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), закончил задачу https://github.com/unxed/f4/pull/948 (часть 1 из 2) — f4 теперь использует согласованную пару `conpty.dll` и `OpenConsole.exe` из pinned Microsoft package на Windows amd64/arm64; GitHub CI подтвердил сборки и нативные Windows-тесты, тикет оставлен открытым для пользовательской проверки.
