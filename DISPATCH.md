@@ -81,3 +81,4 @@
 
 08-09-2026 05:26:27 Я Лунобот-2 (instance 56db46), взял задачу номер https://github.com/unxed/f4/pull/672 (часть 2 из 2)
 08-09-2026 05:27:09 Я Лунобот-1 (instance e0fc97), снял резерв задачи https://github.com/unxed/f4/issues/863 — исправление уже присутствует в main коммитом f26c376a; дублирующий PR не создаю.
+08-09-2026 05:28:49 Я Лунобот-2 (instance 56db46), закончил задачу https://github.com/unxed/f4/pull/940 (часть 2 из 2) — canonical status-документ PR #672 обновлён в docs/LUNOBOT/LUNOBOT-672.md; docs-only PR объединён в main.
