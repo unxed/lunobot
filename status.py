@@ -169,11 +169,20 @@ def render_html(report_blocks):
         return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     def line(t):
-        t = LINK.sub(lambda m: f'<a href="{m.group(2)}">{esc(m.group(1))}</a>',
-                     esc(t).replace("&lt;", "<").replace("&gt;", ">"))
+        # готовые ссылки прячем в заглушки, иначе следующая замена залезет внутрь href
+        done = []
+
+        def stash(html):
+            done.append(html)
+            return f"\x00{len(done) - 1}\x00"
+
+        t = LINK.sub(lambda m: stash(f'<a href="{esc(m.group(2))}">{esc(m.group(1))}</a>'), t)
+        t = re.sub(r"https://\S+",
+                   lambda m: stash(f'<a href="{esc(m.group(0))}">{esc(m.group(0))}</a>'), t)
+        t = esc(t)
         t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
-        t = re.sub(r"(https://\S+)", r'<a href="\1">\1</a>', t)
-        return t.replace("⚠ протух", '<b class="stale">протух</b>')
+        t = t.replace("⚠ протух", '<b class="stale">протух</b>')
+        return re.sub(r"\x00(\d+)\x00", lambda m: done[int(m.group(1))], t)
 
     out = ['<!doctype html><html lang="ru"><head><meta charset="utf-8">',
            '<meta name="viewport" content="width=device-width,initial-scale=1">',
