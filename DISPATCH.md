@@ -292,4 +292,6 @@
 Синхронизировано завершение worker для marked-clipboard тестов после наблюдения ожидаемого значения и при тайм-ауте. Это закрывает тот же класс межтестовой гонки без изменения production-поведения; GitHub Actions прошёл полностью.
 
 08-09-2026 08:42:36 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), взял задачу номер https://github.com/unxed/f4/issues/217 (часть 1 из 2)
+08-09-2026 08:51:14 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), закончил PR https://github.com/unxed/f4/pull/975 (часть 1 из 1)
+Изолированы Mac-key и portable-profile тесты от общего состояния после shuffled-падений main CI; production-код не изменён. Все обязательные GitHub Actions checks PR прошли успешно, затем PR принят в main коммитом ad2f15b07bd72c414e1e78a8d583a2b0c9ee6ac7.
 
