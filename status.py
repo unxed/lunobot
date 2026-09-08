@@ -46,7 +46,7 @@ def gh_json(path):
         with urllib.request.urlopen(req, timeout=30) as r:
             return json.loads(r.read())
     except Exception as e:
-        print(f"  _(GitHub недоступен: {e})_")
+        print(f"GitHub недоступен: {e}", file=sys.stderr)
         return None
 
 
@@ -90,12 +90,13 @@ def active_claims(project_dir):
 
 
 def report(name, repo, d, hours):
-    print(f"\n## {name}\n")
+    """Возвращает список блоков (заголовок, строки) — рендер отдельно."""
+    blocks = []
 
     claims = active_claims(d)
-    print("### В работе\n")
+    items = []
     if not claims:
-        print("Никто ничего не держит.\n")
+        items.append("Никто ничего не держит.")
     else:
         # боты пишут время в своих часовых поясах: отсчитываем от самой свежей записи,
         # а не от часов машины, где запущен пульт
@@ -104,36 +105,34 @@ def report(name, repo, d, hours):
             age = int((now - stamp).total_seconds() // 60)
             mark = "  ⚠ протух" if age > STALE_MIN else ""
             tail = f" — {origin}" if origin else ""
-            print(f"- {key}{tail} — {who}, {age} мин{mark}")
-        print()
+            items.append(f"{key}{tail} — {who}, {age} мин{mark}")
+    blocks.append(("В работе", items))
 
     ci = d / "CI.md"
     pending = [l for l in ci.read_text(encoding="utf-8").splitlines() if "http" in l] if ci.exists() else []
     if pending:
-        print(f"### Непроверенные прогоны CI: {len(pending)}\n")
-        for l in pending[:10]:
-            print(f"- {l.strip()}")
-        print()
+        blocks.append((f"Непроверенные прогоны CI: {len(pending)}",
+                       [l.strip() for l in pending[:10]]))
 
     if not repo:
-        print("_В паспорте проекта нет ссылки на репозиторий — данные GitHub пропущены._")
-        return
+        blocks.append(("GitHub", ["В паспорте проекта нет ссылки на репозиторий."]))
+        return blocks
 
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
     done = gh_json(f"/search/issues?q=repo:{repo}+is:pr+is:merged+merged:>={since}&per_page=50")
-    print(f"### Сделано за {hours} ч\n")
+    items = []
     if done and done.get("items"):
         for pr in done["items"]:
             issues = ", ".join("#" + n for n in re.findall(r"#(\d+)", pr["title"]))
-            print(f"- [#{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
-                  + (f" → тикет {issues}" if issues else ""))
+            items.append(f"[#{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
+                         + (f" → тикет {issues}" if issues else ""))
     elif done:
-        print("Ничего не влито.")
-    print()
+        items.append("Ничего не влито.")
+    blocks.append((f"Сделано за {hours} ч", items))
 
     counts = gh_json(f"/search/issues?q=repo:{repo}+is:issue+is:open&per_page=1")
     if counts:
-        print(f"### Открытых тикетов: {counts.get('total_count', '?')}\n")
+        blocks.append((f"Открытых тикетов: {counts.get('total_count', '?')}", []))
 
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
     prs = gh_json(f"/repos/{repo}/pulls?state=open&per_page=100")
@@ -144,12 +143,61 @@ def report(name, repo, d, hours):
                 if b["name"] not in ("main", "master") and b["name"] not in with_pr
                 and not any(n in held for n in re.findall(r"\d+", b["name"]))]
         if junk:
-            print(f"### Ветки без PR и без захвата: {len(junk)}\n")
-            for b in junk[:15]:
-                print(f"- `{b}`")
+            items = [f"`{b}`" for b in junk[:15]]
             if len(junk) > 15:
-                print(f"- … ещё {len(junk) - 15}")
+                items.append(f"… ещё {len(junk) - 15}")
+            blocks.append((f"Ветки без PR и без захвата: {len(junk)}", items))
+    return blocks
+
+
+LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+
+
+def render_text(report_blocks):
+    print(f"# Пульт Луноботов — {datetime.now():%d-%m-%Y %H:%M}")
+    for name, blocks in report_blocks:
+        print(f"\n## {name}\n")
+        for title, items in blocks:
+            print(f"### {title}\n")
+            for i in items:
+                print(f"- {i}")
             print()
+
+
+def render_html(report_blocks):
+    def esc(t):
+        return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def line(t):
+        t = LINK.sub(lambda m: f'<a href="{m.group(2)}">{esc(m.group(1))}</a>',
+                     esc(t).replace("&lt;", "<").replace("&gt;", ">"))
+        t = re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
+        t = re.sub(r"(https://\S+)", r'<a href="\1">\1</a>', t)
+        return t.replace("⚠ протух", '<b class="stale">протух</b>')
+
+    out = ['<!doctype html><html lang="ru"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width,initial-scale=1">',
+           '<meta http-equiv="refresh" content="120">',
+           "<title>Пульт Луноботов</title><style>",
+           "body{font:15px/1.5 system-ui,sans-serif;margin:0 auto;padding:1.5rem;max-width:60rem;",
+           "background:#0d1117;color:#c9d1d9}h1{font-size:1.3rem}h2{font-size:1.1rem;",
+           "border-bottom:1px solid #30363d;padding-bottom:.3rem;margin-top:2rem}",
+           "h3{font-size:.95rem;color:#8b949e;margin:1.2rem 0 .4rem}",
+           "ul{margin:0;padding-left:1.2rem}li{margin:.25rem 0}",
+           "a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}",
+           "code{background:#161b22;padding:.1rem .35rem;border-radius:4px;font-size:.85em}",
+           ".stale{color:#f85149}.upd{color:#8b949e;font-size:.85rem}</style></head><body>",
+           "<h1>Пульт Луноботов</h1>",
+           f'<p class="upd">Обновлено {datetime.now(timezone.utc):%d-%m-%Y %H:%M} UTC. '
+           "Страница перезагружается сама раз в две минуты.</p>"]
+    for name, blocks in report_blocks:
+        out.append(f"<h2>{esc(name)}</h2>")
+        for title, items in blocks:
+            out.append(f"<h3>{esc(title)}</h3>")
+            if items:
+                out.append("<ul>" + "".join(f"<li>{line(i)}</li>" for i in items) + "</ul>")
+    out.append("</body></html>")
+    return "\n".join(out)
 
 
 def main():
@@ -158,9 +206,12 @@ def main():
     if "--hours" in sys.argv:
         hours = int(sys.argv[sys.argv.index("--hours") + 1])
     only = args[0] if args else None
-    print(f"# Пульт Луноботов — {datetime.now():%d-%m-%Y %H:%M}")
-    for name, repo, d in projects(only):
-        report(name, repo, d, hours)
+    report_blocks = [(name, report(name, repo, d, hours) or [])
+                     for name, repo, d in projects(only)]
+    if "--html" in sys.argv:
+        print(render_html(report_blocks))
+    else:
+        render_text(report_blocks)
 
 
 if __name__ == "__main__":
