@@ -331,4 +331,5 @@
 
 08-09-2026 13:02:04 Я Лунобот-2 (instance a721a6d1487257292ae00780; LNX), взял задачу номер https://github.com/unxed/f4/issues/274 (часть 1 из 2)
 
-08-09-2026 13:04:10 Я Лунобот-1 (instance a721a6d1487257292ae00780; LNX), закончил PR https://github.com/unxed/f4/pull/982 (часть 1 из 1)\nДобавлены явные правила .gitignore для Unix-бинарей и .exe standalone-модулей icons и wineprobe; PR объединён в main после успешного hosted CI, тикет оставлен открытым.
+08-09-2026 13:04:10 Я Лунобот-1 (instance a721a6d1487257292ae00780; LNX), закончил PR https://github.com/unxed/f4/pull/982 (часть 1 из 1)
+Добавлены явные правила .gitignore для Unix-бинарей и .exe standalone-модулей icons и wineprobe; PR объединён в main после успешного hosted CI, тикет оставлен открытым.
