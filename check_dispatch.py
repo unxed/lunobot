@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Линтер DISPATCH.md.
 
-Проверяет ровно то, что можно проверить механически: формат записей, парность
-захватов и завершений, отсутствие двойных закрытий, просроченные захваты.
+Файл протокола содержит только действующие захваты (§ 14.1 инструкции). Проверяется
+формат строк, отсутствие записей о законченной работе, повторные захваты одного шага,
+keepalive без захвата и протухшие захваты.
 
 Использование:
     python3 check_dispatch.py projects/f4/DISPATCH.md [--timeout-min 45] [--since ДД-ММ-ГГГГ]
@@ -14,8 +15,10 @@ import sys
 from datetime import datetime, timedelta
 
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
-ID = r"Я Лунобот-(?P<num>\d+) \((?:instance|node) (?P<inst>[0-9a-f]{6,24}); (?P<plt>[A-Z]{3})\)"
-VERBS = ("взял", "закончил", "освобождаю", "разблокировано по таймауту", "работаю")
+ID = r"Я Лунобот-(?P<num>\d+) \((?:instance|node) (?P<node>[0-9a-f]{6,24}); (?P<plt>[A-Z]{3})\)"
+LIVE = ("взял", "работаю")
+CLOSED = ("закончил", "освобождаю", "разблокировано по таймауту")
+FINAL = ("считаю цель", "прекращаю работу")
 
 
 def parse(path):
@@ -24,34 +27,30 @@ def parse(path):
         line = line.rstrip()
         if "Лунобот" not in line:
             continue
-        ts = re.match(TS, line)
-        who = re.search(ID, line)
-        verb = next((v for v in VERBS if v in line), None)
-        # ссылка-цель markdown-ссылки (например в «[закончил](...PR)») ключом не является:
-        # ключ шага — тот, по которому он был захвачен
+        if any(f in line for f in FINAL):
+            continue  # записи о завершении сессии — законное исключение
+        ts, who = re.match(TS, line), re.search(ID, line)
+        verb = next((v for v in LIVE + CLOSED if v in line), None)
         body = re.sub(r"\]\(https?://[^)]+\)", "]", line)
         key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", body)
-        if not key:
+        if key:
+            key = key.group(0)
+        else:
             custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
             key = custom.group(1).strip() if custom else None
-        else:
-            key = key.group(0)
         part = re.search(r"\(часть (\d+) из (\d+)\)", line)
-        if not (ts and who and verb and key):
+        if not (ts and who and verb and key and part):
             malformed.append((n, line[:110], {
                 "нет метки времени": not ts,
                 "id не по формату": not who,
                 "нет глагола состояния": not verb,
                 "нет ключа задачи": not key,
+                "не указана часть": not part,
             }))
             continue
-        entries.append({
-            "line": n,
-            "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
-            "who": who.group(0),
-            "verb": verb,
-            "key": key + (f"#{part.group(1)}/{part.group(2)}" if part else ""),
-        })
+        entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
+                        "who": who.group(0), "verb": verb,
+                        "key": f"{key}#{part.group(1)}/{part.group(2)}"})
     return entries, malformed
 
 
@@ -59,7 +58,6 @@ def check(path, timeout_min, since=None):
     entries, malformed = parse(path)
     if since:
         entries = [e for e in entries if e["ts"] >= since]
-        # у битых записей метки может не быть — фильтруем по дате в начале строки
         kept = []
         for n, text, flags in malformed:
             m = re.match(r"(\d{2}-\d{2}-\d{4})", text)
@@ -67,49 +65,42 @@ def check(path, timeout_min, since=None):
                 continue
             kept.append((n, text, flags))
         malformed = kept
+
     problems = []
-
+    for n, line in enumerate(open(path, encoding="utf-8"), 1):
+        if len(re.findall(TS, line)) > 1:
+            if since:
+                m = re.match(r"(\d{2}-\d{2}-\d{4})", line)
+                if m and datetime.strptime(m.group(1), "%d-%m-%Y") < since:
+                    continue
+            problems.append(("слиплось", n,
+                             "в одной строке несколько записей — между ними нужна пустая строка"))
     for n, text, flags in malformed:
-        why = ", ".join(k for k, v in flags.items() if v)
-        problems.append(("формат", n, f"{why}: {text}"))
+        problems.append(("формат", n, ", ".join(k for k, v in flags.items() if v) + f": {text}"))
 
-    state = {}
+    holders = {}
     for e in entries:
-        st = state.get(e["key"])
-        if e["verb"] == "взял":
-            if st and st["verb"] in ("взял", "работаю"):
-                problems.append(("гонка", e["line"],
-                                 f"повторный захват {e['key']}, прошлый не закрыт "
-                                 f"(строка {st['line']})"))
-            state[e["key"]] = e
-        elif e["verb"] == "работаю":
-            if not st or st["verb"] not in ("взял", "работаю"):
-                problems.append(("состояние", e["line"],
-                                 f"keepalive по незахваченному шагу {e['key']}"))
-            else:
-                state[e["key"]] = e
-        else:  # закончил / освобождаю / разблокировано
-            if not st:
-                problems.append(("состояние", e["line"],
-                                 f"«{e['verb']}» без парного «взял»: {e['key']}"))
-            elif st["verb"] == "закончил":
-                problems.append(("двойное закрытие", e["line"],
-                                 f"{e['key']} уже закрыт в строке {st['line']}"))
-            elif e["verb"] == "закончил" and st["who"] != e["who"]:
-                problems.append(("изоляция", e["line"],
-                                 f"{e['key']} закрывает не тот, кто брал (строка {st['line']})"))
-            state[e["key"]] = e
+        if e["verb"] in CLOSED:
+            problems.append(("мусор", e["line"],
+                             f"«{e['verb']}» — записей о законченном в файле быть не должно, "
+                             f"строки по закрытому шагу удаляются: {e['key']}"))
+            continue
+        prev = holders.get(e["key"])
+        if e["verb"] == "взял" and prev and prev["who"] != e["who"]:
+            problems.append(("гонка", e["line"],
+                             f"{e['key']} уже захвачен другим (строка {prev['line']})"))
+        if e["verb"] == "работаю" and not prev:
+            problems.append(("состояние", e["line"], f"keepalive без захвата: {e['key']}"))
+        if not prev or e["ts"] >= prev["ts"]:
+            holders[e["key"]] = e
 
     if entries:
         now = max(e["ts"] for e in entries)
-        for key, st in state.items():
-            if st["verb"] in ("взял", "работаю"):
-                age = now - st["ts"]
-                if age > timedelta(minutes=timeout_min):
-                    problems.append(("протух", st["line"],
-                                     f"{key} захвачен {int(age.total_seconds() // 60)} мин назад "
-                                     f"и не закрыт"))
-
+        for key, h in holders.items():
+            age = now - h["ts"]
+            if age > timedelta(minutes=timeout_min):
+                problems.append(("протух", h["line"],
+                                 f"{key} держится {int(age.total_seconds() // 60)} мин без отметки"))
     return entries, problems
 
 
@@ -122,7 +113,7 @@ def main():
     if "--since" in sys.argv:
         since = datetime.strptime(sys.argv[sys.argv.index("--since") + 1], "%d-%m-%Y")
     entries, problems = check(path, timeout, since)
-    print(f"разобрано корректных записей: {len(entries)}")
+    print(f"действующих записей разобрано: {len(entries)}")
     if not problems:
         print("нарушений нет")
         return 0
@@ -140,4 +131,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except BrokenPipeError:  # вывод обрезан через | head
+        sys.exit(0)
