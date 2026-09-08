@@ -82,3 +82,6 @@ Bare-префиксы зарегистрированных plugin drives и `tmp
 08-09-2026 18:36:23 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), работаю над задачей https://github.com/unxed/f4/issues/996 (часть 1 из 1)
 
 08-09-2026 18:42:38 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), работаю над задачей https://github.com/unxed/f4/issues/996 (часть 1 из 1)
+
+08-09-2026 18:47:24 — Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), [закончил](https://github.com/unxed/f4/pull/997) задачу https://github.com/unxed/f4/issues/996 (часть 1 из 1)
+Добавлен сохраняемый default-off флаг UseLocalLanguageFiles в единый диалог языков; пользовательские .lng/.hlf и command-palette language packs теперь загружаются только при включении, с регрессионными тестами. PR объединён в main (merge a44f4b84478fb7f3494a862d43304994b9884025); CI run 34252054748 прошёл на SHA 19e7f3cec4ea6125555857870812aefe3a3bde8b.
