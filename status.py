@@ -134,19 +134,23 @@ def report(name, repo, d, hours):
     if counts:
         blocks.append((f"Открытых тикетов: {counts.get('total_count', '?')}", []))
 
+    # сверка веток: журнал намерений против реальности на GitHub (§ 14.3)
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
-    prs = gh_json(f"/repos/{repo}/pulls?state=open&per_page=100")
-    if branches is not None and prs is not None:
-        with_pr = {p["head"]["ref"] for p in prs}
-        held = " ".join(c[0] for c in claims)
-        junk = [b["name"] for b in branches
-                if b["name"] not in ("main", "master") and b["name"] not in with_pr
-                and not any(n in held for n in re.findall(r"\d+", b["name"]))]
-        if junk:
-            items = [f"`{b}`" for b in junk[:15]]
-            if len(junk) > 15:
-                items.append(f"… ещё {len(junk) - 15}")
-            blocks.append((f"Ветки без PR и без захвата: {len(junk)}", items))
+    if branches is not None:
+        real = {b["name"] for b in branches} - {"main", "master"}
+        f = d / "BRANCHES.md"
+        recorded = set(re.findall(r"`([^`]+)`", f.read_text(encoding="utf-8"))) if f.exists() else set()
+        leaks = sorted(real - recorded)
+        ghosts = sorted(recorded - real)
+        if leaks:
+            items = [f"`{b}`" for b in leaks[:15]]
+            if len(leaks) > 15:
+                items.append(f"… ещё {len(leaks) - 15}")
+            blocks.append((f"Утечки: ветка есть, записи нет — {len(leaks)}", items))
+        if ghosts:
+            blocks.append((f"Записи без веток: {len(ghosts)}", [f"`{b}`" for b in ghosts[:15]]))
+        if not leaks and not ghosts:
+            blocks.append((f"Ветки сходятся с журналом: {len(real)}", []))
     return blocks
 
 
