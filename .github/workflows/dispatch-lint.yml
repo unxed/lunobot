@@ -19,4 +19,7 @@ jobs:
             echo "== $f"
             python3 check_dispatch.py "$f" || status=1
           done
+          for p in projects/*/; do
+            python3 check_branches.py "$(basename "$p")" || status=1
+          done
           exit $status
