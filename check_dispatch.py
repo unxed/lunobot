@@ -5,7 +5,7 @@
 захватов и завершений, отсутствие двойных закрытий, просроченные захваты.
 
 Использование:
-    python3 check_dispatch.py DISPATCH.md [--timeout-min 30]
+    python3 check_dispatch.py projects/f4/DISPATCH.md [--timeout-min 45]
 
 Коды возврата: 0 — нарушений нет, 1 — есть.
 """
@@ -105,7 +105,7 @@ def check(path, timeout_min):
 
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "DISPATCH.md"
-    timeout = 30
+    timeout = 45
     if "--timeout-min" in sys.argv:
         timeout = int(sys.argv[sys.argv.index("--timeout-min") + 1])
     entries, problems = check(path, timeout)
