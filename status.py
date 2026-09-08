@@ -186,25 +186,38 @@ def report(name, repo, d, hours):
 
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
     done = gh_json(f"/search/issues?q=repo:{repo}+is:pr+is:merged+merged:>={since}&per_page=50")
-    items = []
-    hidden = 0
+    groups, loose, hidden = {}, [], 0
     if done and done.get("items"):
         for pr in done["items"]:
             if SERVICE_PR.search(pr["title"]):
                 hidden += 1
                 continue
             found = re.findall(r"#(\d+)", pr["title"] + " " + (pr.get("body") or "")[:400])
-            issues = list(dict.fromkeys(n for n in found if n != str(pr["number"])))
-            fix = f"[PR #{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
+            issues = [n for n in dict.fromkeys(found) if n != str(pr["number"])]
+            entry = (pr["number"], pr["html_url"], pr["title"][:70])
             if issues:
-                base = ", ".join(f"[#{n}](https://github.com/{repo}/issues/{n})" for n in issues)
-                items.append(f"{base} → {fix}")
+                groups.setdefault(issues[0], []).append(entry)
             else:
-                items.append(fix)
-    elif done:
-        items.append("Ничего не влито.")
+                loose.append(entry)
+
+    items = []
+    # порядок — от свежего к старому по самому свежему PR в группе: ключ строки тикет,
+    # но читать её всё равно удобнее сверху вниз по времени
+    for issue, prs in sorted(groups.items(), key=lambda g: -max(p[0] for p in g[1])):
+        prs.sort(key=lambda p: -p[0])
+        head = f"[#{issue}](https://github.com/{repo}/issues/{issue})"
+        # номер тикета уже стоит слева — из заголовка PR его убираем
+        title = re.sub(rf"\s*\(#{issue}\)|^#{issue}\s+", "", prs[0][2]).strip()
+        first = f"[PR #{prs[0][0]}]({prs[0][1]}) {title}"
+        line = f"{head} → {first}"
+        if len(prs) > 1:
+            rest = ", ".join(f"[PR #{n}]({u})" for n, u, _ in prs[1:])
+            line += f" · ещё: {rest}"
+        items.append(line)
+    for n, u, t in sorted(loose, key=lambda p: -p[0]):
+        items.append(f"[PR #{n}]({u}) {t}")
     if hidden:
-        items.append(f"_скрыто служебных записей бота: {hidden}_")
+        items.append(f"скрыто служебных записей бота: {hidden}")
     blocks.append((f"Сделано за {hours} ч — влитые PR", items))
 
     counts = gh_json(f"/search/issues?q=repo:{repo}+is:issue+is:open&per_page=1")
