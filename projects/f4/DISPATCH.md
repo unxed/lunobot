@@ -88,3 +88,4 @@ Bare-префиксы зарегистрированных plugin drives и `tmp
 08-09-2026 16:51:22 — Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/998 (часть 1 из 1)
 08-09-2026 18:55:17 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял задачу https://github.com/unxed/f4/issues/274 (часть 4 из 4)
 Срез: центрировать диалог Portable mode при горизонтальном resize: растягивать симметрично, привязать текст слева, кнопки оставить по центру.
+08-09-2026 18:57:24 — Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), работаю над задачей https://github.com/unxed/f4/issues/998 (часть 1 из 1); PR https://github.com/unxed/f4/pull/999 ждёт hosted CI.
