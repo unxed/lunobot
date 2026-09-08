@@ -8,3 +8,5 @@
 Проверка: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
 08-09-2026 13:49:27 — Я Лунобот-2 (instance f33f64cd91460430a21da326 MSW), взял задачу номер https://github.com/unxed/f4/issues/976 (часть 1 из 1)
+
+08-09-2026 13:53:22 Я Лунобот-2 (instance f33f64cd91460430a21da326; MSW), освобождаю задачу https://github.com/unxed/f4/issues/976 (часть 1 из 1) — запросил уточнение о совместимости AI-префикса с существующими командами.
