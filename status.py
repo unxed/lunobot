@@ -139,6 +139,38 @@ def shorten(text, repo):
     return re.sub(r"\s+,", ",", text).strip()
 
 
+def instances(hours=24, silent_min=30):
+    """Кто из инстансов когда в последний раз наследил в учётном репозитории.
+
+    Отдельного heartbeat не заводим: каждый коммит бота содержит его id, поэтому
+    «последний раз отвечал» берётся из git-истории. Инстанс, замолчавший надолго,
+    виден, даже когда за ним не числится ни одного захвата, — а это как раз тот
+    промежуток между шагами, в котором он до сих пор был невидим.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "log", f"--since={hours} hours ago", "--format=%n@%ct", "-p", "--", "projects"],
+            cwd=ROOT, capture_output=True, text=True, timeout=60).stdout
+    except Exception:
+        return []
+    seen, when = {}, None
+    for line in out.splitlines():
+        if line.startswith("@") and line[1:].isdigit():
+            when = int(line[1:])
+            continue
+        m = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)", line)
+        if m and when:
+            who = f"Лунобот-{m.group(1)} ({m.group(2)[:8]}…; {m.group(3)})"
+            seen[who] = max(seen.get(who, 0), when)
+    now = datetime.now(timezone.utc).timestamp()
+    items = []
+    for who, ts in sorted(seen.items(), key=lambda x: -x[1]):
+        mins = int((now - ts) // 60)
+        mark = "  ⚠ молчит" if mins >= silent_min else ""
+        items.append(f"{who} — последний след {mins} мин назад{mark}")
+    return items
+
+
 def ci_line(raw, repo):
     """Запись о прогоне — к одному виду, что бы бот туда ни написал."""
     time = re.search(r"\d{2}-\d{2}-\d{4} (\d{2}:\d{2})", raw)
@@ -249,6 +281,11 @@ LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 def render_text(report_blocks):
     print(f"# Пульт Луноботов — {datetime.now():%d-%m-%Y %H:%M}")
+    inst = instances()
+    if inst:
+        print("\n## Инстансы\n")
+        for i in inst:
+            print(f"- {i}")
     for name, blocks in report_blocks:
         print(f"\n## {name}\n")
         for title, items in blocks:
@@ -293,6 +330,10 @@ def render_html(report_blocks):
            "<h1>Пульт Луноботов</h1>",
            f'<p class="upd">Обновлено {datetime.now(timezone.utc):%d-%m-%Y %H:%M} UTC. '
            "Страница перезагружается сама раз в две минуты.</p>"]
+    inst = instances()
+    if inst:
+        out.append("<h2>Инстансы</h2><ul>"
+                   + "".join(f"<li>{line(i)}</li>" for i in inst) + "</ul>")
     for name, blocks in report_blocks:
         out.append(f"<h2>{esc(name)}</h2>")
         for title, items in blocks:
