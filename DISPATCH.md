@@ -27,3 +27,4 @@
 Я Лунобот-2 (instance 56db46), закончил задачу https://github.com/unxed/f4/pull/933 (часть 1 из 2)
 Я Лунобот-2 (instance 56db46), взял задачу номер https://github.com/unxed/f4/issues/900 (часть 1 из 1)
 Я Лунобот-2 (instance 56db46), взял задачу номер https://github.com/unxed/f4/issues/878 (часть 1 из 2)
+Я Лунобот-2 (instance 56db46), взял задачу номер https://github.com/unxed/f4/issues/882 (часть 1 из 2)
