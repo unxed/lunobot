@@ -201,9 +201,8 @@ def report(name, repo, d, hours):
                 loose.append(entry)
 
     items = []
-    # порядок — от свежего к старому по самому свежему PR в группе: ключ строки тикет,
-    # но читать её всё равно удобнее сверху вниз по времени
-    for issue, prs in sorted(groups.items(), key=lambda g: -max(p[0] for p in g[1])):
+    # ключ строки — тикет, по нему и сортируем: от новых номеров к старым
+    for issue, prs in sorted(groups.items(), key=lambda g: -int(g[0])):
         prs.sort(key=lambda p: -p[0])
         head = f"[#{issue}](https://github.com/{repo}/issues/{issue})"
         # номер тикета уже стоит слева — из заголовка PR его убираем
