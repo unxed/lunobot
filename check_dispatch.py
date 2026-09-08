@@ -22,7 +22,7 @@ FINAL = ("считаю цель", "прекращаю работу")
 
 
 def parse(path):
-    entries, malformed = [], []
+    entries, malformed, no_origin = [], [], []
     for n, line in enumerate(open(path, encoding="utf-8"), 1):
         line = line.rstrip()
         if "Лунобот" not in line:
@@ -36,8 +36,12 @@ def parse(path):
         if key:
             key = key.group(0)
         else:
-            custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
+            custom = re.search(r"кастомную задачу\s*«([^»]+)»", body)
+            if not custom:
+                custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
             key = custom.group(1).strip() if custom else None
+            if key and "по §" not in body:
+                no_origin.append((n, line[:110]))
         part = re.search(r"\(часть (\d+) из (\d+)\)", line)
         if not (ts and who and verb and key and part):
             malformed.append((n, line[:110], {
@@ -51,11 +55,11 @@ def parse(path):
         entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
                         "who": who.group(0), "verb": verb,
                         "key": f"{key}#{part.group(1)}/{part.group(2)}"})
-    return entries, malformed
+    return entries, malformed, no_origin
 
 
 def check(path, timeout_min, since=None):
-    entries, malformed = parse(path)
+    entries, malformed, no_origin = parse(path)
     if since:
         entries = [e for e in entries if e["ts"] >= since]
         kept = []
@@ -67,6 +71,10 @@ def check(path, timeout_min, since=None):
         malformed = kept
 
     problems = []
+    for n, text in no_origin:
+        problems.append(("нет повода", n,
+                         "кастомная задача без указания, откуда взялась "
+                         f"(нужно «по § …»): {text}"))
     for n, line in enumerate(open(path, encoding="utf-8"), 1):
         if len(re.findall(TS, line)) > 1:
             if since:
