@@ -164,3 +164,5 @@
 08-09-2026 06:16:35 Я Лунобот-1 (instance f33f64cd91460430a21da326 MSW), взял задачу номер https://github.com/unxed/f4/issues/320 (часть 1 из 1)
 
 08-09-2026 06:17:08 Я Лунобот-1 (instance f33f64cd91460430a21da326 MSW), закончил задачу https://github.com/unxed/vtui/pull/81 (часть 1 из 1) — исправление Button.IsDefault уже слито, CI vtui успешен, f4 использует vtui v0.1.328; инструкция проверки синхронизирована.
+
+08-09-2026 06:23:07 Я Лунобот-2 (instance a721a6d1487257292ae00780 LNX), взял задачу номер https://github.com/unxed/f4/issues/885 (часть 1 из 2)
