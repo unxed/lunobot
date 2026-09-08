@@ -14,7 +14,7 @@ import sys
 from datetime import datetime, timedelta
 
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
-ID = r"Я Лунобот-(?P<num>\d+) \(instance (?P<inst>[0-9a-f]{6,24}); (?P<plt>[A-Z]{3})\)"
+ID = r"Я Лунобот-(?P<num>\d+) \((?:instance|node) (?P<inst>[0-9a-f]{6,24}); (?P<plt>[A-Z]{3})\)"
 VERBS = ("взял", "закончил", "освобождаю", "разблокировано по таймауту", "работаю")
 
 
