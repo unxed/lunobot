@@ -75,7 +75,7 @@ def active_claims(project_dir):
     holders = {}
     for line in read_lines(project_dir / "DISPATCH.md"):
         ts = re.match(TS, line)
-        who = re.search(r"Лунобот-(\d+) \((?:instance|node) [0-9a-f]+; ([A-Z]{3})\)", line)
+        who = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]+); ([A-Z]{3})\)", line)
         if not (ts and who) or not re.search(r"взял|работаю", line):
             continue
         key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", line)
@@ -93,12 +93,19 @@ def active_claims(project_dir):
         prev = holders.get(full)
         if not prev or stamp > prev[0]:
             origin = re.search(r"по (§ ?[\d. п]*\d)", line)
-            holders[full] = (stamp, f"Лунобот-{who.group(1)} ({who.group(2)})",
+            holders[full] = (stamp,
+                             f"Лунобот-{who.group(1)} ({who.group(2)[:8]}…; {who.group(3)})",
                              origin.group(1).strip() if origin else "", part_txt, key)
     return [(k, *v) for k, v in holders.items()]
 
 
 RUN_NUMBERS = {}
+
+# PR, которые правили только служебные записи бота в репозитории проекта. Их вообще
+# не должно было быть (§ 14.4), они остались от старых правил — и это чистый инфошум.
+SERVICE_PR = re.compile(
+    r"(?i)^(docs?|chore)\s*:\s*(record|track|refresh|finalize|reconcile|correct|update)\b"
+    r"|branch inventory|lunobot (branch|slice)|^record .*\bstatus\b")
 
 
 def shorten(text, repo):
@@ -180,8 +187,12 @@ def report(name, repo, d, hours):
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
     done = gh_json(f"/search/issues?q=repo:{repo}+is:pr+is:merged+merged:>={since}&per_page=50")
     items = []
+    hidden = 0
     if done and done.get("items"):
         for pr in done["items"]:
+            if SERVICE_PR.search(pr["title"]):
+                hidden += 1
+                continue
             found = re.findall(r"#(\d+)", pr["title"] + " " + (pr.get("body") or "")[:400])
             issues = list(dict.fromkeys(n for n in found if n != str(pr["number"])))
             fix = f"[PR #{pr['number']}]({pr['html_url']}) {pr['title'][:70]}"
@@ -192,6 +203,8 @@ def report(name, repo, d, hours):
                 items.append(fix)
     elif done:
         items.append("Ничего не влито.")
+    if hidden:
+        items.append(f"_скрыто служебных записей бота: {hidden}_")
     blocks.append((f"Сделано за {hours} ч — влитые PR", items))
 
     counts = gh_json(f"/search/issues?q=repo:{repo}+is:issue+is:open&per_page=1")
