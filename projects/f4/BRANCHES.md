@@ -5,4 +5,3 @@
 
 
 
-09-09-2026 19:40:48 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка codex/f33f64cd91460430a21da326/lunobot-1/coverage-plughost-manager для задачи «покрыть manager пакета internal/plughost»
