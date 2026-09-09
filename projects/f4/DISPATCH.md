@@ -17,4 +17,3 @@
 
 
 
-09-09-2026 19:54:19 Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть диалог proxy settings пакета internal/dialog» по § 22 п. 3 (Codecov main 62.24%; settings_proxy.go 15.78% / 76 строк; часть 1 из 1)
