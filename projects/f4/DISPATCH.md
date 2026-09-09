@@ -17,3 +17,4 @@
 
 
 
+09-09-2026 20:06:07 Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть testutil paths» по § 22 п. 3 (Codecov main 62.24%; internal/testutil/paths.go 25.58% / 43 строки; часть 1 из 1)
