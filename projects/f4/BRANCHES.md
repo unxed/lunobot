@@ -5,3 +5,4 @@
 
 
 
+09-09-2026 20:45:19 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка codex/f33f64cd91460430a21da326/lunobot-1/coverage-panel-usermenu-script для задачи «покрыть usermenu script пакета internal/panel»
