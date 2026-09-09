@@ -193,21 +193,43 @@ def instances(hours=24, silent_min=30):
     return out
 
 
-def instances_block(silent_min=30):
+def pending_nodes():
+    """Узлы, за которыми ещё что-то числится в учёте."""
+    text = ""
+    for p in (ROOT / "projects").glob("*/*.md"):
+        text += p.read_text(encoding="utf-8", errors="ignore")
+    return set(re.findall(r"[0-9a-f]{24}", text))
+
+
+def instances_block(silent_min=30, forget_min=180):
+    """Живые инстансы и те, за кем остался хвост.
+
+    Мёртвый инстанс, за которым ничего не числится, показывать незачем: он бы висел
+    в списке сутками и превращал предупреждение в фон.
+    """
+    pending = pending_nodes()
     items = []
     for i in instances():
-        mark = "  ⚠ молчит" if i["mins"] >= silent_min else ""
-        items.append(f"{i['who']} — последний след {i['mins']} мин назад{mark}")
+        has_tail = any(n.startswith(i["node"].rstrip("…")) for n in pending)
+        if i["mins"] >= forget_min and not has_tail:
+            continue
+        if i["mins"] < silent_min:
+            items.append(f"{i['who']} — последний след {i['mins']} мин назад")
+        elif has_tail:
+            items.append(f"{i['who']} — молчит {i['mins']} мин, и за ним ещё числится работа")
+        else:
+            items.append(f"{i['who']} — молчит {i['mins']} мин, хвостов не осталось")
     return items
 
 
 def fleet_line(silent_min=30):
-    inst = instances()
+    inst = [i for i in instances() if i["mins"] < 180]
     if not inst:
         return ""
     alive = [i for i in inst if i["mins"] < silent_min]
     if not alive:
-        return f"Флот стоит: молчат все {len(inst)} инстансов."
+        return (f"Флот стоит: молчат все {len(inst)} инстансов. "
+                "Перезапусти воркеров — брошенные шаги они подберут сами по таймауту.")
     return f"Флот: работают {len(alive)} из {len(inst)}."
 
 
@@ -219,18 +241,26 @@ def ci_line(raw, repo, now=None):
         age = int((now - datetime.strptime(stamp.group(1), "%d-%m-%Y %H:%M:%S")).total_seconds() // 60)
         if age >= STALE_MIN:
             abandoned = f"  ⚠ брошен {age} мин назад"
+    # id узла выкидываем до разбора, иначе он сойдёт за хеш коммита
+    raw = re.sub(r"\(?(?:node|instance) [0-9a-f]{6,}; [A-Z]{3}\)?", "", raw)
+    raw = re.sub(r"Я Лунобот-\d+\s*,?", "", raw)
     time = re.search(r"\d{2}-\d{2}-\d{4} (\d{2}:\d{2})", raw)
-    pr = re.search(r"/pull/(\d+)", raw)
-    sha = re.search(r"\b([0-9a-f]{7,40})\b", raw)
+    pr = re.search(r"/pull/(\d+)", raw) or re.search(r"PR #(\d+)", raw)
+    sha = re.search(r"комм(?:ит|ита)\s*`?([0-9a-f]{7,40})`?", raw) or \
+        re.search(r"\b([0-9a-f]{7,40})\b", raw)
     run = re.search(r"/actions/runs/(\d+)|\brun (\d{6,})\b", raw)
-    if not (pr and run):
-        return shorten(raw, repo) + abandoned
-    run_id = run.group(1) or run.group(2)
+    run_no = re.search(r"прогон #(\d+)", raw)
+    if not (pr and (run or run_no)):
+        # не разобрали — хотя бы уберём длинный id узла, он тут ни к чему
+        return re.sub(r"\(node ([0-9a-f]{8})[0-9a-f]+; ([A-Z]{3})\)", r"(\1…; \2)",
+                      shorten(raw, repo)) + abandoned
+    run_id = (run.group(1) or run.group(2)) if run else None
     parts = [time.group(1) if time else "",
              f"[PR #{pr.group(1)}](https://github.com/{repo}/pull/{pr.group(1)})"]
     if sha:
         parts.append(f"[`{sha.group(1)[:7]}`](https://github.com/{repo}/commit/{sha.group(1)})")
-    parts.append(shorten(f"run {run_id}", repo))
+    parts.append(shorten(f"run {run_id}", repo) if run_id
+                 else f"[прогон #{run_no.group(1)}](https://github.com/{repo}/actions)")
     return " · ".join(p for p in parts if p) + abandoned
 
 
@@ -249,7 +279,11 @@ def report(name, repo, d, hours):
             mark = "  ⚠ протух" if age > STALE_MIN else ""
             head = " · ".join(x for x in (shorten(key, repo), part_txt, origin) if x)
             items.append(f"{head} — {who}, {age} мин{mark}")
-    blocks.append(("В работе", items))
+    stale = [i for i in items if "протух" in i]
+    blocks.append(("В работе", items,
+                   "Протухший захват освободится сам: его снимет любой бот в начале круга. "
+                   "Если стоит весь флот — перезапусти воркеров, руками чистить нечего."
+                   if stale else ""))
 
     pending = [l for l in read_lines(d / "CI.md") if "http" in l or "run " in l]
     # время берём из самой свежей записи учёта: боты пишут в своих часовых поясах
@@ -258,8 +292,11 @@ def report(name, repo, d, hours):
                        read_lines(d / "DISPATCH.md") + pending) if m]
     ci_now = effective_now(marks, d.relative_to(ROOT) if str(d).startswith(str(ROOT)) else "projects")
     if pending:
-        blocks.append((f"Непроверенные прогоны CI: {len(pending)}",
-                       [ci_line(l, repo, ci_now) for l in pending[:10]]))
+        ci_items = [ci_line(l, repo, ci_now) for l in pending[:10]]
+        blocks.append((f"Непроверенные прогоны CI: {len(pending)}", ci_items,
+                       "Брошенный прогон разбирает любой бот (§ 14.2): зелёный — довести шаг "
+                       "и влить PR, красный — в очередь. Сам посмотреть: `gh run view <номер>`."
+                       if any("брошен" in i for i in ci_items) else ""))
 
     if not repo:
         blocks.append(("GitHub", ["В паспорте проекта нет ссылки на репозиторий."]))
@@ -319,7 +356,10 @@ def report(name, repo, d, hours):
             orphan.append(f"[PR #{p['number']}]({p['html_url']}) {p['title'][:60]}"
                           + (f" — владелец молчит {mins} мин" if mins else " — владельца не определить"))
         if orphan:
-            blocks.append((f"PR без владельца: {len(orphan)}", orphan))
+            blocks.append((f"PR без владельца: {len(orphan)}", orphan,
+                           "Работа сделана, но не влита. Перезапущенный бот подберёт её вместе "
+                           "с шагом (§ 6.3). Если ждать некогда — `gh pr merge <номер>` "
+                           "после зелёного CI."))
 
     # сверка веток: журнал намерений против реальности на GitHub (§ 14.3)
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
@@ -334,15 +374,24 @@ def report(name, repo, d, hours):
             items = [f"`{b}`" for b in leaks[:15]]
             if len(leaks) > 15:
                 items.append(f"… ещё {len(leaks) - 15}")
-            blocks.append((f"Утечки: ветка есть, записи нет — {len(leaks)}", items))
+            blocks.append((f"Утечки: ветка есть, записи нет — {len(leaks)}", items,
+                           "Владелец жив — допишет запись сам. Инстанс мёртв и PR нет — "
+                           f"ветка мусорная: `git push origin --delete <ветка>` в {repo}."))
         if ghosts:
-            blocks.append((f"Записи без веток: {len(ghosts)}", [f"`{b}`" for b in ghosts[:15]]))
+            blocks.append((f"Записи без веток: {len(ghosts)}", [f"`{b}`" for b in ghosts[:15]],
+                           "Ветку уже удалили, а строка осталась. Уберёт бот при следующей "
+                           "уборке; если флот стоит — удали строку из BRANCHES.md."))
         if not leaks and not ghosts:
             blocks.append((f"Ветки сходятся с журналом: {len(real)}", []))
     return blocks
 
 
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+
+
+def unpack(block):
+    """Блок — (заголовок, строки) или (заголовок, строки, подсказка что делать)."""
+    return block if len(block) == 3 else (block[0], block[1], "")
 
 
 def render_text(report_blocks):
@@ -354,8 +403,11 @@ def render_text(report_blocks):
             print(f"- {i}")
     for name, blocks in report_blocks:
         print(f"\n## {name}\n")
-        for title, items in blocks:
+        for block in blocks:
+            title, items, hint = unpack(block)
             print(f"### {title}\n")
+            if hint:
+                print(f"  {hint}\n")
             for i in items:
                 print(f"- {i}")
             print()
@@ -403,8 +455,11 @@ def render_html(report_blocks):
                    + "".join(f"<li>{line(i)}</li>" for i in inst) + "</ul>")
     for name, blocks in report_blocks:
         out.append(f"<h2>{esc(name)}</h2>")
-        for title, items in blocks:
+        for block in blocks:
+            title, items, hint = unpack(block)
             out.append(f"<h3>{esc(title)}</h3>")
+            if hint:
+                out.append(f'<p class="upd">{line(hint)}</p>')
             if items:
                 out.append("<ul>" + "".join(f"<li>{line(i)}</li>" for i in items) + "</ul>")
     out.append("</body></html>")

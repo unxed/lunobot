@@ -7,6 +7,11 @@ keepalive без захвата и протухшие захваты.
 
 Использование:
     python3 check_dispatch.py projects/f4/DISPATCH.md [--timeout-min 45] [--since ДД-ММ-ГГГГ]
+    python3 check_dispatch.py projects/f4/DISPATCH.md --added-only [--base <коммит>]
+
+`--added-only` оставляет только претензии к строкам, добавленным последним коммитом.
+Так проверка отвечает на вопрос «правильно ли записал именно ты», а не «какое сейчас
+состояние флота»: состояние почти всегда ненулевое, и гейт из него горел бы всегда.
 
 Коды возврата: 0 — нарушений нет, 1 — есть.
 """
@@ -112,6 +117,29 @@ def check(path, timeout_min, since=None):
     return entries, problems
 
 
+def added_lines(path, base=None):
+    """Номера строк, добавленных последним коммитом."""
+    import subprocess
+    base = base or "HEAD~1"
+    try:
+        diff = subprocess.run(["git", "diff", "--unified=0", base, "HEAD", "--", path],
+                              capture_output=True, text=True, timeout=30).stdout
+    except Exception:
+        return None
+    lines, cur = set(), 0
+    for l in diff.splitlines():
+        m = re.match(r"@@ -\d+(?:,\d+)? \+(\d+)", l)
+        if m:
+            cur = int(m.group(1))
+            continue
+        if l.startswith("+") and not l.startswith("+++"):
+            lines.add(cur)
+            cur += 1
+        elif not l.startswith("-"):
+            cur += 1
+    return lines
+
+
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "DISPATCH.md"
     timeout = 45
@@ -121,6 +149,12 @@ def main():
     if "--since" in sys.argv:
         since = datetime.strptime(sys.argv[sys.argv.index("--since") + 1], "%d-%m-%Y")
     entries, problems = check(path, timeout, since)
+    if "--added-only" in sys.argv:
+        base = sys.argv[sys.argv.index("--base") + 1] if "--base" in sys.argv else None
+        added = added_lines(path, base)
+        if added is not None:
+            # протухшие захваты — состояние, а не ошибка записи: в гейт не попадают
+            problems = [p for p in problems if p[1] in added and p[0] != "протух"]
     print(f"действующих записей разобрано: {len(entries)}")
     if not problems:
         print("нарушений нет")

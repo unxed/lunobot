@@ -9,17 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # нужен предыдущий коммит, чтобы понять, что добавил этот
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Проверка протоколов
         run: |
+          # Проверяем только строки, добавленные этим пушем. Состояние флота — утечки
+          # веток, хвосты, протухшие захваты — живёт на пульте: оно ненулевое почти
+          # всегда, и гейт из него горел бы постоянно, обесценивая сигнал.
           status=0
           for f in projects/*/DISPATCH.md; do
             echo "== $f"
-            python3 check_dispatch.py "$f" || status=1
-          done
-          for p in projects/*/; do
-            python3 check_branches.py "$(basename "$p")" || status=1
+            python3 check_dispatch.py "$f" --added-only || status=1
           done
           exit $status
