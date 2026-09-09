@@ -5,3 +5,4 @@
 
 
 
+09-09-2026 19:54:19 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка codex/f33f64cd91460430a21da326/lunobot-1/coverage-dialog-settings-proxy для задачи «покрыть диалог proxy settings пакета internal/dialog»
