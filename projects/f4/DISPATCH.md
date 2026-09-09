@@ -5,3 +5,5 @@
 Проверка: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
 09-09-2026 15:00:00 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами пакет internal/vtvibe» по § 22 п. 3 (Codecov main 61.31%; пакет 67.77%; часть 1 из 1)
+
+09-09-2026 14:50:20 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами proxy settings helpers» по § 22 п. 3 (Codecov main 61.39%; файл 0.00%; часть 1 из 1)
