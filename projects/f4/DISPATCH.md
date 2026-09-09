@@ -16,4 +16,3 @@
 
 
 
-09-09-2026 18:10:20 Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть transport RPC пакета internal/plughost» по § 22 п. 3 (Codecov main 62.25%; transport_rpc.go 32.78% / 61 строка; часть 1 из 1)
