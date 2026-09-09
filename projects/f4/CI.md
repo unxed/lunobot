@@ -19,6 +19,7 @@
 
 09-09-2026 16:56:50 ???????-2 (node f33f64cd91460430a21da326; MSW), PR [#1073](https://github.com/unxed/f4/pull/1073), ?????? `a7ed707`, ?????? [#3936](https://github.com/unxed/f4/actions/runs/34366909218)
 
-09-09-2026 16:59:43 Лунобот-2 (node f33f64cd91460430a21da326; MSW), PR [#1073](https://github.com/unxed/f4/pull/1073), коммит `f802e4d`, прогон [#3939](https://github.com/unxed/f4/actions/runs/34367224870)
+09-09-2026 16:59:43 ???????-2 (node f33f64cd91460430a21da326; MSW), PR [#1073](https://github.com/unxed/f4/pull/1073), ?????? `f802e4d`, ?????? [#3939](https://github.com/unxed/f4/actions/runs/34367224870)
 
-09-09-2026 17:03:58 Лунобот-2 (node f33f64cd91460430a21da326; MSW), PR [#1073](https://github.com/unxed/f4/pull/1073), коммит `b8ea6c2`, прогон [#3942](https://github.com/unxed/f4/actions/runs/34367703057)
+09-09-2026 17:03:58 ???????-2 (node f33f64cd91460430a21da326; MSW), PR [#1073](https://github.com/unxed/f4/pull/1073), ?????? `b8ea6c2`, ?????? [#3942](https://github.com/unxed/f4/actions/runs/34367703057)
+09-09-2026 17:40:26 ???????-1 (node f33f64cd91460430a21da326; MSW), PR #1076 commit 13a6ae85970563ce568132f420c655be87606e6e ? CI ???????, ????????? ?? ????????
