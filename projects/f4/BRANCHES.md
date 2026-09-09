@@ -3,4 +3,6 @@
 Ветки, заведённые Луноботами. Записывается ДО создания ветки, удаляется ПОСЛЕ её
 физического удаления на GitHub. Формат и смысл расхождений — § 14.3 инструкции.
 
-09-09-2026 11:31:05 Лунобот-1, branch `codex/f33f64cd91460430a21da326/lunobot-1/coverage-ios` for custom task coverage-plugins-ios under section 22.3 (part 1 of 1)
+09-09-2026 08:48:08 Лунобот-1, ветка `codex/f33f64cd91460430a21da326/lunobot-1/coverage-ttyx` для кастомной задачи «покрыть тестами пакет internal/ttyx» по § 22 п. 3 (часть 1 из 1)
+
+09-09-2026 11:50:51 Лунобот-2, branch `codex/f33f64cd91460430a21da326/lunobot-2/1037-free-space` для задачи #1037 «Add Free space information (Ctrl+L)» по § 17 (часть 1 из 1)
