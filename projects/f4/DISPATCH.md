@@ -4,7 +4,4 @@
 
 Проверка: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
-
-
-
-
+09-09-2026 12:34:30 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами пакет internal/netproxy» по § 22 п. 3 (Codecov main 61.06%, пакет 63.59%; часть 1 из 1)
