@@ -5,3 +5,5 @@
 ????????: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
 09-09-2026 22:00:25 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял задачу https://github.com/unxed/f4/issues/1014 (часть 2 из 2)
+
+09-09-2026 22:00:30 Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами пакет internal/terminal/session_unix.go» по § 22 п. 3 (часть 1 из 1)
