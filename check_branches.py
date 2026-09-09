@@ -52,17 +52,26 @@ def main():
     real = {b["name"] for b in gh_json(f"/repos/{repo}/branches?per_page=100")
             if b["name"].startswith("codex/")}
 
+    # ветка с открытым PR — не мусор: её доводят вместе с PR (§ 6.3)
+    try:
+        with_pr = {p["head"]["ref"] for p in gh_json(f"/repos/{repo}/pulls?state=open&per_page=100")}
+    except Exception:
+        with_pr = set()
     leaks, ghosts = sorted(real - recorded), sorted(recorded - real)
     if not leaks and not ghosts:
         print(f"{project}: веток Луноботов {len(real)}, все записаны")
         return 0
     for b in leaks:
         print(f"[утечка] ветка есть, записи нет: {b}")
-        print("         запись делается ДО создания ветки (§ 14.3). Твоя — допиши сейчас;")
-        print("         чужая — найди шаг, который её завёл, и почини причину.")
+        if b in with_pr:
+            print("         с неё открыт PR — не удалять: доводится вместе с PR (§ 6.3).")
+        else:
+            print("         запись делается ДО создания ветки (§ 14.3). Твоя — допиши сейчас;")
+            print("         чужая и старше 45 минут без PR — удаляй, владелец не вернётся.")
     for b in ghosts:
         print(f"[хвост]  запись есть, ветки нет: {b}")
         print("         ветку удалили — удали и запись; не дошёл до создания — доведи.")
+        print("         запись старше 45 минут — мертва в любом случае, убирай.")
     return 1
 
 
