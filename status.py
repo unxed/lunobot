@@ -295,7 +295,7 @@ def report(name, repo, d, hours):
         ci_items = [ci_line(l, repo, ci_now) for l in pending[:10]]
         blocks.append((f"Непроверенные прогоны CI: {len(pending)}", ci_items,
                        "Брошенный прогон разбирает любой бот (§ 14.2): зелёный — довести шаг "
-                       "и влить PR, красный — в очередь. Сам посмотреть: `gh run view <номер>`."
+                       "и влить PR, красный — в очередь. Самому посмотреть: `gh run view <номер>`."
                        if any("брошен" in i for i in ci_items) else ""))
 
     if not repo:
