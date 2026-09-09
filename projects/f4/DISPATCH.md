@@ -7,3 +7,4 @@
 
 09-09-2026 16:20:00 Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами пакет internal/plughost» по § 22 п. 3 (Codecov main 61.5%; пакет internal/plughost 50.55%, extui.go 6.09% / 443 строки; часть 1 из 1)
 
+09-09-2026 15:23:20 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть internal/terminal/far2l_auth.go» по § 22 п. 3 (Codecov main 61.27%; far2l_auth.go 0.00%; часть 1 из 1)
