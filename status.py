@@ -310,7 +310,9 @@ def report(name, repo, d, hours):
             if SERVICE_PR.search(pr["title"]):
                 hidden += 1
                 continue
-            found = re.findall(r"#(\d+)", pr["title"] + " " + (pr.get("body") or "")[:400])
+            # номер тикета — без ведущего нуля и не длиннее пяти цифр: иначе в тикеты
+            # попадают шестнадцатеричные цвета вида #044289 из описания PR
+            found = re.findall(r"#([1-9]\d{0,4})\b", pr["title"] + " " + (pr.get("body") or "")[:400])
             issues = [n for n in dict.fromkeys(found) if n != str(pr["number"])]
             entry = (pr["number"], pr["html_url"], pr["title"][:70])
             if issues:
