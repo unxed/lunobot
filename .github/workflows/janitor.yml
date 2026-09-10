@@ -1,0 +1,47 @@
+name: janitor
+
+# Механическая часть ритуала: снять захваты замолчавших, выбросить из очереди строки
+# по влитым PR, убрать записи о несуществующих ветках. Раньше это делали боты в начале
+# каждого круга — по измерениям, на учёт и обзор чужого у них уходило больше половины
+# всех действий. Скрипт делает то же самое надёжнее и бесплатно.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: janitor
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 300   # живость инстансов считается по истории коммитов
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Подмести учёт
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 janitor.py
+
+      - name: Сохранить
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "нечего коммитить"
+            exit 0
+          fi
+          git config user.name  'lunobot-janitor'
+          git config user.email 'janitor@users.noreply.github.com'
+          git commit -am 'janitor: подмёл учёт'
+          git pull --rebase -q
+          git push
