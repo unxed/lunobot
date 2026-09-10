@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-SILENT_MIN = 45
+SILENT_MIN = 90
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
 WHO = r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]+); ([A-Z]{3})\)"
 DRY = "--dry-run" in sys.argv
@@ -57,6 +57,26 @@ def last_seen():
     return seen
 
 
+def branch_activity(repo):
+    """Последний пуш в каждую ветку codex/* — второй источник живости: бот, который пишет
+    код, пушит в свою ветку постоянно, даже если учёт не трогает."""
+    out = {}
+    for b in gh(f"/repos/{repo}/branches?per_page=100") or []:
+        name = b["name"]
+        if not name.startswith("codex/"):
+            continue
+        parts = name.split("/")
+        if len(parts) < 4 or not parts[2].startswith("lunobot-"):
+            continue
+        node, num = parts[1], parts[2].split("-", 1)[1]
+        c = gh(f"/repos/{repo}/commits/{b['commit']['sha']}") or {}
+        date = (c.get("commit") or {}).get("committer", {}).get("date")
+        if date:
+            ts = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+            out[(num, node)] = max(out.get((num, node), 0), ts)
+    return out
+
+
 def blocks(text):
     """Файл как список абзацев: одна запись — один абзац."""
     return [b for b in re.split(r"\n\s*\n", text) if b.strip()]
@@ -88,6 +108,10 @@ def main():
         if not d.is_dir():
             continue
         repo = repo_of(d)
+        alive = dict(seen)
+        if repo:
+            for k, ts in branch_activity(repo).items():
+                alive[k] = max(alive.get(k, 0), ts)
 
         # 1. захваты замолчавших инстансов
         f = d / "DISPATCH.md"
@@ -98,7 +122,7 @@ def main():
                 if not m or not re.match(TS, b.strip()):
                     kept.append(b)
                     continue
-                ts = seen.get((m.group(1), m.group(2)))
+                ts = alive.get((m.group(1), m.group(2)))
                 silent = (now - ts) / 60 if ts else SILENT_MIN + 1
                 (gone if silent > SILENT_MIN else kept).append(b)
             total += save(f, kept, gone, f"владелец молчит дольше {SILENT_MIN} мин")

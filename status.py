@@ -25,7 +25,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
-STALE_MIN = 45
+STALE_MIN = 90
 
 
 def gh_json(path):
@@ -124,7 +124,7 @@ def active_claims(project_dir):
 RUN_NUMBERS = {}
 
 # PR, которые правили только служебные записи бота в репозитории проекта. Их вообще
-# не должно было быть (§ 14.4), они остались от старых правил — и это чистый инфошум.
+# не должно было быть (§ 3), они остались от старых правил — и это чистый инфошум.
 SERVICE_PR = re.compile(
     r"(?i)^(docs?|chore)\s*:\s*(record|track|refresh|finalize|reconcile|correct|update)\b"
     r"|branch inventory|lunobot (branch|slice)|^record .*\bstatus\b")
@@ -281,7 +281,7 @@ def report(name, repo, d, hours):
             items.append(f"{head} — {who}, {age} мин{mark}")
     stale = [i for i in items if "протух" in i]
     blocks.append(("В работе", items,
-                   "Протухший захват освободится сам: его снимет любой бот в начале круга. "
+                   "Протухший захват освободится сам: его снимет любой бот сам. "
                    "Если стоит весь флот — перезапусти воркеров, руками чистить нечего."
                    if stale else ""))
 
@@ -294,7 +294,7 @@ def report(name, repo, d, hours):
     if pending:
         ci_items = [ci_line(l, repo, ci_now) for l in pending[:10]]
         blocks.append((f"Непроверенные прогоны CI: {len(pending)}", ci_items,
-                       "Брошенный прогон разбирает любой бот (§ 14.2): зелёный — довести шаг "
+                       "Брошенный прогон разбирает любой бот (§ 5): зелёный — довести шаг "
                        "и влить PR, красный — в очередь. Самому посмотреть: `gh run view <номер>`."
                        if any("брошен" in i for i in ci_items) else ""))
 
@@ -360,10 +360,10 @@ def report(name, repo, d, hours):
         if orphan:
             blocks.append((f"PR без владельца: {len(orphan)}", orphan,
                            "Работа сделана, но не влита. Перезапущенный бот подберёт её вместе "
-                           "с шагом (§ 6.3). Если ждать некогда — `gh pr merge <номер>` "
+                           "с шагом (§ 6). Если ждать некогда — `gh pr merge <номер>` "
                            "после зелёного CI."))
 
-    # сверка веток: журнал намерений против реальности на GitHub (§ 14.3)
+    # сверка веток: журнал намерений против реальности на GitHub (§ 8)
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
     if branches is not None:
         # сверяем только территорию Луноботов: всё остальное завёл человек
@@ -377,13 +377,13 @@ def report(name, repo, d, hours):
             if len(leaks) > 15:
                 items.append(f"… ещё {len(leaks) - 15}")
             blocks.append((f"Утечки: ветка есть, записи нет — {len(leaks)}", items,
-                           "Владелец жив — допишет запись сам. Молчит дольше 45 минут и PR "
-                           "с ветки нет — её удалит любой бот в начале круга (§ 14.3). "
+                           "Владелец жив — допишет запись сам. Молчит дольше 90 минут и PR "
+                           "с ветки нет — её удалит любой бот сам (§ 8). "
                            f"Не дожидаясь: `git push origin --delete <ветка>` в {repo}."))
         if ghosts:
             blocks.append((f"Записи без веток: {len(ghosts)}", [f"`{b}`" for b in ghosts[:15]],
-                           "Ветку уже удалили, а строка осталась. Строка старше 45 минут "
-                           "мертва, её уберёт любой бот в начале круга (§ 14.3); если флот "
+                           "Ветку уже удалили, а строка осталась. Строка без ветки "
+                           "мертва, её уберёт любой бот сам (§ 8); если флот "
                            "стоит — удали её из BRANCHES.md сам."))
         if not leaks and not ghosts:
             blocks.append((f"Ветки сходятся с журналом: {len(real)}", []))
