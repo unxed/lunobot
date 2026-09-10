@@ -240,7 +240,7 @@ def ci_line(raw, repo, now=None):
     if stamp and now:
         age = int((now - datetime.strptime(stamp.group(1), "%d-%m-%Y %H:%M:%S")).total_seconds() // 60)
         if age >= STALE_MIN:
-            abandoned = f"  ⚠ брошен {age} мин назад"
+            abandoned = f"  ⚠ ждёт разбора {age} мин"
     # id узла выкидываем до разбора, иначе он сойдёт за хеш коммита
     raw = re.sub(r"\(?(?:node|instance) [0-9a-f]{6,}; [A-Z]{3}\)?", "", raw)
     raw = re.sub(r"Я Лунобот-\d+\s*,?", "", raw)
