@@ -6,3 +6,5 @@
 
 10-09-2026 07:10:32 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял кастомную задачу «покрыть тестами пакет internal/terminal/console_overlay_windows» по § 22 п. 3 (Codecov main 1e7dd2d4, 0.98%, 306 строк; часть 1 из 1)
 10-09-2026 07:15:24 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), работаю над кастомной задачей «покрыть тестами пакет internal/terminal/console_overlay_windows» (часть 1 из 1)
+
+10-09-2026 07:19:20 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял задачу https://github.com/unxed/f4/issues/1096 (часть 1 из 1)
