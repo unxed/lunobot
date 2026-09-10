@@ -133,8 +133,15 @@ def main():
             kept, gone = [], []
             for b in blocks(f.read_text(encoding="utf-8")):
                 m = re.search(r"/pull/(\d+)|PR #(\d+)", b)
-                if not m or not re.match(TS, b.strip()):
+                ts_m = re.match(TS, b.strip())
+                if not ts_m:
                     kept.append(b)
+                    continue
+                if not m:
+                    # строка про main: живёт не дольше трёх часов — прогон давно завершён
+                    stamp = datetime.strptime(ts_m.group(1), "%d-%m-%Y %H:%M:%S")
+                    age_h = (datetime.now() - stamp).total_seconds() / 3600
+                    (gone if age_h > 3 else kept).append(b)
                     continue
                 pr = gh(f"/repos/{repo}/pulls/{m.group(1) or m.group(2)}")
                 (gone if pr and pr.get("state") == "closed" else kept).append(b)
