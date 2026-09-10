@@ -5,11 +5,8 @@
 ????????: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
 
-10-09-2026 07:33:51 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами пакет internal/terminal/session_unix.go» по § 22 п. 3 (часть 1 из 1)
 
-10-09-2026 07:33:51 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), работаю над кастомную задачу «покрыть тестами пакет internal/terminal/session_unix.go» (часть 1 из 1)
 
-10-09-2026 07:37:35 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), работаю над кастомной задачей «покрыть тестами пакет internal/terminal/session_unix.go» (часть 1 из 1)
 
 10-09-2026 07:41:21 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял кастомную задачу «допокрыть тестами пакет internal/wincon/overlay_windows.go» по § 22 п. 3 (Codecov main a0b4b9fc, 0.89%, 336 строк; часть 1 из 1)
 10-09-2026 07:43:59 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), работаю над кастомной задачей «допокрыть тестами пакет internal/wincon/overlay_windows.go» (часть 1 из 1)
