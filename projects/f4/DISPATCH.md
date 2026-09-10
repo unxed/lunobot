@@ -4,9 +4,4 @@
 
 ????????: `python3 check_dispatch.py projects/f4/DISPATCH.md`
 
-09-09-2026 22:00:25 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял задачу https://github.com/unxed/f4/issues/1014 (часть 2 из 2)
-
-09-09-2026 22:00:30 Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть тестами пакет internal/terminal/session_unix.go» по § 22 п. 3 (часть 1 из 1)
-09-09-2026 22:03:56 Лунобот-2 (node f33f64cd91460430a21da326; MSW), работаю над кастомной задачей «покрыть тестами пакет internal/terminal/session_unix.go» (часть 1 из 1)
-
-09-09-2026 22:07:16 Я Лунобот-1 (node f33f64cd91460430a21da326; MSW), работаю над задачей https://github.com/unxed/f4/issues/1014 (часть 2 из 2)
+10-09-2026 06:40:05 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял кастомную задачу «покрыть тестами пакет internal/wincon/overlay_windows» по § 22 п. 3 (Codecov head 58043cf5, 0.89%, 336 строк; часть 1 из 1)
