@@ -15,7 +15,9 @@ keepalive без захвата и протухшие захваты.
 
 Коды возврата: 0 — нарушений нет, 1 — есть.
 """
+import os
 import re
+import subprocess
 import sys
 from datetime import datetime, timedelta
 
@@ -140,8 +142,35 @@ def added_lines(path, base=None):
     return lines
 
 
+def wrong_place(path):
+    """Проверяет, что файл учёта — тот самый, а не одноимённый в чужом репозитории.
+
+    Живой случай: бот вёл учёт в клоне проекта, в DISPATCH.md в его корне. Записи
+    делались исправно и коммитились, но пульт и линтер читают учётный репозиторий,
+    поэтому инстанса не было видно пять часов. Ни одна проверка формата такого не
+    ловит: содержимое файла было безупречным, неверным было его место.
+    """
+    real = os.path.abspath(path)
+    if os.sep + "projects" + os.sep not in real:
+        return (f"файл учёта должен лежать в projects/<проект>/, а лежит здесь: {real}. "
+                "Похоже, это клон проекта, а не учётного репозитория")
+    try:
+        origin = subprocess.run(
+            ["git", "-C", os.path.dirname(real) or ".", "remote", "get-url", "origin"],
+            capture_output=True, text=True, timeout=10).stdout.strip()
+    except Exception:
+        return None  # не в git — не наше дело, формат проверим как обычно
+    if origin and "lunobot" not in origin:
+        return (f"учёт ведётся в чужом репозитории: origin = {origin}. "
+                "Записи туда никто не читает — пиши в клон unxed/lunobot")
+    return None
+
+
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else "DISPATCH.md"
+    if misplaced := wrong_place(path):
+        print(f"НЕ ТОТ РЕПОЗИТОРИЙ: {misplaced}")
+        return 1
     timeout = 45
     if "--timeout-min" in sys.argv:
         timeout = int(sys.argv[sys.argv.index("--timeout-min") + 1])
