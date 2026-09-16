@@ -14,4 +14,6 @@
 
 16-09-2026 03:01:00 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), main после merge PR #1163, прогон [#35049725043](https://github.com/unxed/f4/actions/runs/35049725043) завершился failure: flaky `plugins/cloudfox/TestWebDAVEdgeCancellationDuringStreamedPUT` на Windows/arm64 (`cancelled PUT did not return`); повтор failed jobs запущен
 
+16-09-2026 05:08:16 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), main после merge PR #1163, прогон [#35049725043](https://github.com/unxed/f4/actions/runs/35049725043) attempt 2, коммит `8aac4c92ad4cbfc9e69d8b76543cf873c48324b5`, success; Codecov `64.04%`
+
 ???????, ??????? ???????? ? ????????? ??????? ?? ????????. ?????? ? ? 14.2 ??????????.
