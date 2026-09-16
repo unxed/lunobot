@@ -2,6 +2,8 @@
 
 Журнал намерений создания веток под codex/; записи сверяются с GitHub.
 
+16-09-2026 07:45:05 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), ветка `codex/a721a6d1487257292ae00780/lunobot-1/coverage-bootstrap` для повышения покрытия `internal/app/bootstrap.go`
+
 16-09-2026 07:24:01 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), ветка `codex/a721a6d1487257292ae00780/lunobot-1/coverage-vtvibe-host` для повышения покрытия `internal/app/vtvibe_host.go`
 
 11-09-2026 05:04:46 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), ветка `codex/a721a6d1487257292ae00780/lunobot-1/main-7b4b3dc` для исправления красного main на коммите `7b4b3dc80b9d69a52739a2a671c8df18dfa932ea`
