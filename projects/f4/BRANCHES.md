@@ -2,6 +2,8 @@
 
 Журнал намерений создания веток под codex/; записи сверяются с GitHub.
 
+16-09-2026 09:30:34 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), ветка `codex/a721a6d1487257292ae00780/lunobot-1/coverage-mediainfo-iso` для повышения покрытия `plugins/mediainfo/parse_iso.go`
+
 16-09-2026 09:03:14 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), ветка `codex/a721a6d1487257292ae00780/lunobot-1/coverage-actions-helpers` для повышения покрытия `internal/app/actions.go`
 
 16-09-2026 08:42:07 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), ветка `codex/a721a6d1487257292ae00780/lunobot-1/coverage-fuse-list` для повышения покрытия `internal/panel/fuse_list.go`
