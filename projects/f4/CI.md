@@ -61,3 +61,5 @@
 16-09-2026 09:05:48 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), PR #1175, коммит `805f3f80b15f629396c48ae2348cd360bb29dd8e`, quick [#35066788740](https://github.com/unxed/f4/actions/runs/35066788740), CI [#35066802442](https://github.com/unxed/f4/actions/runs/35066802442)
 
 16-09-2026 09:10:19 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), PR #1175, исправление synthetic PanelsFrame, коммит `99cc21e344b97c2f62625ebe7537bc443953429f`, quick [#35067169864](https://github.com/unxed/f4/actions/runs/35067169864), CI [#35067174796](https://github.com/unxed/f4/actions/runs/35067174796)
+
+16-09-2026 09:15:39 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), PR #1175, исправление synthetic frame lifecycle, коммит `0f87b21b0fa54ebfb3ceedfa75ab2265f86434e8`, quick [#35067606615](https://github.com/unxed/f4/actions/runs/35067606615), CI [#35067610813](https://github.com/unxed/f4/actions/runs/35067610813)
