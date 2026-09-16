@@ -2,4 +2,4 @@
 
 ???????, ??????? ???????? ? ????????? ??????? ?? ????????. ?????? ? ? 14.2 ??????????.
 
-16-09-2026 01:30:06 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), кастомная задача «покрыть тестами internal/app (sheet/compare helpers) и internal/panel (playlist/player model)» по § 5 п. 6, PR [#1160](https://github.com/unxed/f4/pull/1160), коммит `7c69cca3289671b305756b7cb3f18eb1d6543480`, matrix-прогон [#35044284739](https://github.com/unxed/f4/actions/runs/35044284739)
+16-09-2026 01:33:42 Я Лунобот-1 (node a721a6d1487257292ae00780; LNX), main, коммит `091a0d19216904cbce57fa2b51fbf54d4bd591b8`, прогон [#35044558422](https://github.com/unxed/f4/actions/runs/35044558422)
