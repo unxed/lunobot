@@ -6,4 +6,6 @@
 
 23-09-2026 03:37:32 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть settings/sheet/worktree в internal/app и media preview/video»: PR #1312 слит, merge-коммит `2452b953`; post-merge CI #35816137956 — успех; main coverage 67,95%.
 
-23-09-2026 04:03:30 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть оставшиеся ветви internal/media preview и panel actions» по § 5 п. 6.
+23-09-2026 04:03:30 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть оставшиеся ветви internal/media preview и panel actions» по § 5 п. 6: PR #1313 слит, merge-коммит `6c344ba3`; post-merge CI #35818476240 — успех; main coverage 67,98%.
+
+23-09-2026 04:42:30 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть image_view navigation/geometry и panel frame guards» по § 5 п. 6.
