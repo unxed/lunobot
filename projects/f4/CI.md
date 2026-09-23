@@ -11,3 +11,4 @@ PR #1316, merge-коммит `312f7fcd`, post-merge CI #35826020336 — успе
 PR #1318, merge-коммит `e48fc6c6`, post-merge CI #35828225750 — успех; main coverage 67,75%.
 PR #1319, merge-коммит `bb32ae11`, post-merge CI #35829739911 — успех; main coverage 67,68%.
 PR #1321, merge-коммит `b88d90d0`, post-merge CI #35831794446 — успех.
+PR #1322, merge-коммит `a47b39ad`, post-merge CI #35848311126 — успех.
