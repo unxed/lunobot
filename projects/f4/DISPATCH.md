@@ -14,4 +14,6 @@
 
 23-09-2026 06:25:36 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть panel navigation/path guards и media quick-preview errors»: PR #1316 слит, merge-коммит `312f7fcd`; post-merge CI #35826020336 — успех; main coverage 68,01%.
 
-23-09-2026 06:26:20 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть успешный JPEG Exif preview и frame VFS/history guards» по § 5 п. 6.
+23-09-2026 06:53:50 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть успешный JPEG Exif preview и frame VFS/history guards»: PR #1318 слит, merge-коммит `e48fc6c6`; post-merge CI #35828225750 — успех; main coverage 67,75%.
+
+23-09-2026 06:54:30 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть navigateToPath для текущего VFS, абсолютных директорий и URI guards» по § 5 п. 6.
