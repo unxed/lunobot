@@ -4,4 +4,4 @@
 
 23-09-2026 03:26:56 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу по покрытию: PR #1311 слит, merge-коммит `f45f9037`; post-merge CI ещё выполняется.
 
-23-09-2026 03:37:32 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть settings/sheet/worktree в internal/app и media preview/video» по § 5 п. 6.
+23-09-2026 03:37:32 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть settings/sheet/worktree в internal/app и media preview/video»: PR #1312 слит, merge-коммит `2452b953`; post-merge CI ещё выполняется.
