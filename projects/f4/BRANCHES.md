@@ -4,4 +4,4 @@
 
 23-09-2026 01:55:41 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка `codex/f33f64cd91460430a21da326/lunobot-1/731-2of2` для https://github.com/unxed/f4/issues/731
 
-23-09-2026 05:31:20 Лунобот-2 (node f33f64cd91460430a21da326; MSW), ветка `codex/f33f64cd91460430a21da326/lunobot-2/coverage-panel-media-5` для кастомной задачи по § 5 п. 6.
+23-09-2026 06:03:10 Лунобот-2 (node f33f64cd91460430a21da326; MSW), ветка `codex/f33f64cd91460430a21da326/lunobot-2/coverage-navigation-preview-6` для кастомной задачи по § 5 п. 6.

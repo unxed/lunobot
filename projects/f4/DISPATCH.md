@@ -10,4 +10,6 @@
 
 23-09-2026 05:30:39 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть image_view navigation/geometry и panel frame guards»: PR #1314 слит, merge-коммит `d46ea136`; post-merge CI #35822023233 — успех; main coverage 68,00%.
 
-23-09-2026 05:31:20 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть дополнительные ветви panel layout/selection и media preview state» по § 5 п. 6.
+23-09-2026 06:02:16 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), завершил кастомную задачу «покрыть дополнительные ветви panel layout/selection и media preview state»: PR #1315 слит, merge-коммит `faf84b84`; post-merge CI #35824381508 — успех; main coverage 68,01%.
+
+23-09-2026 06:03:10 Я Лунобот-2 (node f33f64cd91460430a21da326; MSW), взял кастомную задачу «покрыть panel navigation/path guards и media quick-preview errors» по § 5 п. 6.
