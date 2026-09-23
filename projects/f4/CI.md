@@ -15,3 +15,4 @@ PR #1322, merge-коммит `a47b39ad`, post-merge CI #35848311126 — успе
 PR #1324, merge-коммит `abdf6143`, post-merge CI #35853066799 — успех.
 PR #1325, merge-коммит `cde4027e`, post-merge CI #35854745077 — успех после перезапуска flaky Windows ARM64 job.
 PR #1327, merge-коммит `896de108`, post-merge CI #35857560228 — успех.
+PR #1328, merge-коммит `a22d33e6`, post-merge CI #35909504868 — успех.
