@@ -20,3 +20,4 @@ PR #1329, merge-коммит `cf74cc69`, post-merge CI #35912300482 — успе
 PR #1330, merge-коммит `1716cf95`, post-merge CI #35915996139 — успех после повторного запуска transient TLS-failure job.
 PR #1377, merge-коммит `3a11f383`, post-merge CI #36053019125 — успех.
 PR #1378, merge-коммит `c765f20b`, post-merge CI #36056399476 — успех.
+PR #1379, commit `dbf2d592`, CI #36060471625 — выполняется.
