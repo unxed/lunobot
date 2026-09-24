@@ -19,4 +19,4 @@ PR #1328, merge-коммит `a22d33e6`, post-merge CI #35909504868 — успе
 PR #1329, merge-коммит `cf74cc69`, post-merge CI #35912300482 — успех.
 PR #1330, merge-коммит `1716cf95`, post-merge CI #35915996139 — успех после повторного запуска transient TLS-failure job.
 
-PR #1373, quick CI #36023408527 и full CI #36023416232 — запущены; результат не проверен.
+24-09-2026 15:54:35 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1289 (часть 2 из 2), PR [#1373](https://github.com/unxed/f4/pull/1373), коммит `ba7d61d6`, прогоны [quick #36023408527](https://github.com/unxed/f4/actions/runs/36023408527) и [full #36023416232](https://github.com/unxed/f4/actions/runs/36023416232)
