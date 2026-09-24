@@ -13,5 +13,3 @@
 24-09-2026 20:29:42 Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял тикет https://github.com/unxed/f4/issues/1359 (часть 1 из 1)
 
 24-09-2026 20:50:00 Лунобот-1 (node f33f64cd91460430a21da326; MSW), завершил тикет https://github.com/unxed/f4/issues/1359: PR #1378 слит, post-merge CI #36056399476 успешен
-
-24-09-2026 20:55:00 Лунобот-1 (node f33f64cd91460430a21da326; MSW), взял тикет https://github.com/unxed/f4/issues/285 (первый срез: общий classic-движок кастомной отрисовки графических backend’ов)
