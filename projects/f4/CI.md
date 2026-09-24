@@ -21,6 +21,6 @@ PR #1330, merge-коммит `1716cf95`, post-merge CI #35915996139 — успе
 
 24-09-2026 19:18:22 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1289 (часть 2 из 2), PR [#1373](https://github.com/unxed/f4/pull/1373), merge-коммит `8566a043`; post-merge CI на main ещё не появился.
 
-24-09-2026 19:04:00 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1288 (часть 2 из 2), PR [#1374](https://github.com/unxed/f4/pull/1374), коммит `78ccef68`; новые прогоны после удаления неиспользуемого импорта ещё не появились.
+24-09-2026 19:26:00 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1288 (часть 2 из 2), PR [#1374](https://github.com/unxed/f4/pull/1374), коммит `9dd67c83`; новые прогоны после инициализации панелей в регрессионном тесте ещё не появились.
 
 24-09-2026 19:19:03 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1294 (часть 1 из 1), PR [#1375](https://github.com/unxed/f4/pull/1375), merge-коммит `36641f8b`; post-merge CI на main ещё не появился.
