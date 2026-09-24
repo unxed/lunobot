@@ -2,8 +2,4 @@
 
 Журнал намерений создания веток под codex/; записи сверяются с GitHub.
 
-24-09-2026 15:54:35 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка `codex/f33f64cd91460430a21da326/lunobot-1/1289-2of2` для https://github.com/unxed/f4/issues/1289
-
 24-09-2026 16:04:02 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка `codex/f33f64cd91460430a21da326/lunobot-1/1288-2of2` для https://github.com/unxed/f4/issues/1288
-
-24-09-2026 16:18:05 Лунобот-1 (node f33f64cd91460430a21da326; MSW), ветка `codex/f33f64cd91460430a21da326/lunobot-1/1294-1of1` для https://github.com/unxed/f4/issues/1294
