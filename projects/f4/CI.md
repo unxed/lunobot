@@ -19,8 +19,8 @@ PR #1328, merge-коммит `a22d33e6`, post-merge CI #35909504868 — успе
 PR #1329, merge-коммит `cf74cc69`, post-merge CI #35912300482 — успех.
 PR #1330, merge-коммит `1716cf95`, post-merge CI #35915996139 — успех после повторного запуска transient TLS-failure job.
 
-24-09-2026 18:53:18 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1289 (часть 2 из 2), PR [#1373](https://github.com/unxed/f4/pull/1373), коммит `17bb6a60`, новые прогоны GitHub Actions пока не появились после исправления.
+24-09-2026 18:53:18 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1289 (часть 2 из 2), PR [#1373](https://github.com/unxed/f4/pull/1373), коммит `17bb6a60`, прогоны [quick #36030280971](https://github.com/unxed/f4/actions/runs/36030280971) и [full #36030285598](https://github.com/unxed/f4/actions/runs/36030285598) идут.
 
-24-09-2026 18:53:18 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1288 (часть 2 из 2), PR [#1374](https://github.com/unxed/f4/pull/1374), коммит `3695882e`, новые прогоны GitHub Actions пока не появились после исправления.
+24-09-2026 18:53:18 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1288 (часть 2 из 2), PR [#1374](https://github.com/unxed/f4/pull/1374), коммит `3695882e`, прогоны [quick #36030455355](https://github.com/unxed/f4/actions/runs/36030455355) и [full #36030460840](https://github.com/unxed/f4/actions/runs/36030460840) идут.
 
-24-09-2026 18:46:36 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1294 (часть 1 из 1), PR [#1375](https://github.com/unxed/f4/pull/1375), коммит `92269b9d`, GitHub Actions пока не появился.
+24-09-2026 18:57:04 Лунобот-1 (node f33f64cd91460430a21da326; MSW), тикет https://github.com/unxed/f4/issues/1294 (часть 1 из 1), PR [#1375](https://github.com/unxed/f4/pull/1375), коммит `16cf6205`; предыдущие [quick #36029523439](https://github.com/unxed/f4/actions/runs/36029523439) успешен, [full #36029559765](https://github.com/unxed/f4/actions/runs/36029559765) красный из-за gofmt и отдельного Windows process-tree теста, новые прогоны после форматирования ещё не появились.
