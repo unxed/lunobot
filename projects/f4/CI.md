@@ -2,5 +2,5 @@
 
 ???????, ??????? ???????? ? ????????? ??????? ?? ????????. ?????? ? ? 14.2 ??????????.
 
-25-09-2026 22:29:20 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), main, коммит `973df17e`, прогон [#36196947421](https://github.com/unxed/f4/actions/runs/36196947421)
-25-09-2026 22:37:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1408, PR [#1428](https://github.com/unxed/f4/pull/1428), коммит `602f63c2`, прогон [#36197638514](https://github.com/unxed/f4/actions/runs/36197638514)
+25-09-2026 22:53:52 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), main, коммит `afb5412e`, прогон [#36198809405](https://github.com/unxed/f4/actions/runs/36198809405)
+25-09-2026 22:47:57 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1413, PR [#1429](https://github.com/unxed/f4/pull/1429), коммит `66ab8b00`, прогон [#36198784105](https://github.com/unxed/f4/actions/runs/36198784105)
