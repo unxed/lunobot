@@ -2,6 +2,4 @@
 
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
 
-PR #128, merge-коммит `a12e61dd`, post-merge CI #36060770977 — успех.
-PR #129, merge-коммит `039fc776`, post-merge CI #36064255664 — успех.
-PR #130, merge-коммит `047f1525`, post-merge CI #36065761257 — успех.
+25-09-2026 21:05:33 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1392, PR [#131](https://github.com/unxed/vtui/pull/131), коммит `ea464fab`, прогон [#36189599967](https://github.com/unxed/vtui/actions/runs/36189599967)
