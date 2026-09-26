@@ -4,5 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 Проверка: `python3 check_dispatch.py projects/vtui/DISPATCH.md`
-
-26-09-2026 08:44:57 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/285 (часть 2): токены "ушей" кнопки (SymCharFlag), следующий срез после чекбокса/радио
