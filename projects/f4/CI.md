@@ -3,4 +3,4 @@
 ???????, ??????? ???????? ? ????????? ??????? ?? ????????. ?????? ? ? 14.2 ??????????.
 
 25-09-2026 23:07:17 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), main, коммит `4fc9a35a`, прогон [#36199730508](https://github.com/unxed/f4/actions/runs/36199730508)
-26-09-2026 00:09:30 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1390, PR [#1431](https://github.com/unxed/f4/pull/1431), коммит `f6ea33f0`, прогон [#36203770074](https://github.com/unxed/f4/actions/runs/36203770074)
+26-09-2026 00:14:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1390, PR [#1431](https://github.com/unxed/f4/pull/1431), коммит `e385beef` (правка gosec-замечаний по nosec-комментариям), прогон [#36204081597](https://github.com/unxed/f4/actions/runs/36204081597)
