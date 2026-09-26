@@ -58,12 +58,12 @@ def last_seen():
 
 
 def branch_activity(repo):
-    """Последний пуш в каждую ветку codex/* — второй источник живости: бот, который пишет
+    """Последний пуш в каждую ветку lunobot/* — второй источник живости: бот, который пишет
     код, пушит в свою ветку постоянно, даже если учёт не трогает."""
     out = {}
     for b in gh(f"/repos/{repo}/branches?per_page=100") or []:
         name = b["name"]
-        if not name.startswith("codex/"):
+        if not name.startswith("lunobot/"):
             continue
         parts = name.split("/")
         if len(parts) < 4 or not parts[2].startswith("lunobot-"):

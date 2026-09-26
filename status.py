@@ -349,7 +349,7 @@ def report(name, repo, d, hours):
         orphan = []
         for p in prs:
             ref = p["head"]["ref"]
-            if not ref.startswith("codex/"):
+            if not ref.startswith("lunobot/"):
                 continue
             node = ref.split("/")[1] if ref.count("/") >= 3 else ""
             mins = next((m for n, m in silent.items() if node.startswith(n.rstrip("…"))), None)
@@ -367,7 +367,7 @@ def report(name, repo, d, hours):
     branches = gh_json(f"/repos/{repo}/branches?per_page=100")
     if branches is not None:
         # сверяем только территорию Луноботов: всё остальное завёл человек
-        real = {b["name"] for b in branches if b["name"].startswith("codex/")}
+        real = {b["name"] for b in branches if b["name"].startswith("lunobot/")}
         f = d / "BRANCHES.md"
         recorded = set(re.findall(r"`([^`]+)`", f.read_text(encoding="utf-8"))) if f.exists() else set()
         leaks = sorted(real - recorded)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Сверка журнала веток с GitHub.
 
-Ветка под codex/ без записи в BRANCHES.md — утечка: кто-то завёл её мимо § 8.
+Ветка под lunobot/ без записи в BRANCHES.md — утечка: кто-то завёл её мимо § 8.
 Запись без ветки — незавершённая уборка. Ветки, названные иначе, заводит человек,
 их проверка не касается.
 
@@ -50,7 +50,7 @@ def main():
     journal = (d / "BRANCHES.md").read_text(encoding="utf-8") if (d / "BRANCHES.md").exists() else ""
     recorded = set(re.findall(r"`([^`]+)`", journal))
     real = {b["name"] for b in gh_json(f"/repos/{repo}/branches?per_page=100")
-            if b["name"].startswith("codex/")}
+            if b["name"].startswith("lunobot/")}
 
     # ветка с открытым PR — не мусор: её доводят вместе с PR (§ 6)
     try:
