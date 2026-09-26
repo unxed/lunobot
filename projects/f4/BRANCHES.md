@@ -31,3 +31,6 @@
 26-09-2026 12:07:12 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1186-1of1` для https://github.com/unxed/f4/issues/1186
 26-09-2026 12:07:12 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1463-1of1` для https://github.com/unxed/f4/issues/1463
 26-09-2026 13:00:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1478-1of1` для https://github.com/unxed/f4/issues/1478
+26-09-2026 14:00:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1404-2of2` для https://github.com/unxed/f4/issues/1404
+26-09-2026 14:00:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/fishplus-docs-refresh` для доко-очистки FISH+.md/WINDOWS_PORT.md (не привязан к тикету)
+26-09-2026 14:10:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1178-3of3` для https://github.com/unxed/f4/issues/1178
