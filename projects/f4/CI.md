@@ -4,6 +4,5 @@
 
 26-09-2026 10:09:15 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR [#1464](https://github.com/unxed/f4/pull/1464) (срочный hotfix Quality-гейта), прогон не проверен
 
-26-09-2026 09:36:38 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR [#1460](https://github.com/unxed/f4/pull/1460) (f4#1459), прогон не проверен
 26-09-2026 09:36:38 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR [#1462](https://github.com/unxed/f4/pull/1462) (f4#1415, часть 2), прогон не проверен
 
