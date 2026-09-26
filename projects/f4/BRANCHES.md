@@ -19,5 +19,7 @@
 26-09-2026 10:08:30 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/ci-wine-shellcheck` для hotfix shellcheck в wine.yml (не привязан к тикету)
 26-09-2026 10:13:05 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/ci-wine-e2e-fix` для расследования падения End-to-end under Wine на main (не привязан к тикету)
 26-09-2026 10:35:46 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1178-1of2` для https://github.com/unxed/f4/issues/1178
+26-09-2026 10:37:43 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/415-1of1` для https://github.com/unxed/f4/issues/415
+26-09-2026 10:37:43 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/277-1of1` для https://github.com/unxed/f4/issues/277
 26-09-2026 09:27:56 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1459-1of1` для https://github.com/unxed/f4/issues/1459
 26-09-2026 09:29:12 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/1415-2of2` для https://github.com/unxed/f4/issues/1415
