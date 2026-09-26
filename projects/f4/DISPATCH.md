@@ -1,9 +1,6 @@
 # DISPATCH — f4
 26-09-2026 09:37:50 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1461 (часть 1): docs/WINE.md журнал + корзина (trash) в posix-режиме под Wine
-26-09-2026 10:35:46 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1461 (часть 1): docs/WINE.md журнал + корзина (trash) в posix-режиме под Wine — CI перепрогоняется после фикса гейта winescape
+26-09-2026 11:43:52 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1461 (часть 1): docs/WINE.md журнал + корзина (trash) в posix-режиме под Wine — фикс gosec G115, CI перепрогоняется
 
 26-09-2026 10:35:46 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1178 (часть 1): билд-тег lite (без colorer4go/wine/GUI/mp3/FUSE/облаков) + CI + README
-
-26-09-2026 10:37:43 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/415 (часть 1): менеджер точек монтирования для *nix (unmount, автопоявление в меню дисков, sudo)
-
-26-09-2026 10:37:43 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/277: location link в XML стилей — резолвить не от catalog.xml; переименование Colorer scheme → Color style
+26-09-2026 11:43:52 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1178 (часть 1): билд-тег lite (без colorer4go/wine/GUI/mp3/FUSE/облаков) + CI + README
