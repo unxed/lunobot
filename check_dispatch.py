@@ -5,6 +5,15 @@
 формат строк, отсутствие записей о законченной работе, повторные захваты одного шага,
 keepalive без захвата и протухшие захваты.
 
+Каждая строка захвата («взял», не «работаю») обязана нести ровно одну метку маршрута —
+`[batch: lunobot/batch/<проект>/<N>]` или `[urgent: <причина>]` — решение из § 4 инструкции
+про батчинг/срочность, зафиксированное машиночитаемо, а не только текстом абзаца. Строка
+без метки или с меткой неверного формата проваливает гейт (см. `route_error`, kind
+«маршрут»). Это ответ на два повторных лапса координирующей модели с забытым батчингом
+(§ 7.2, инцидент bot-pr-queue и повторный случай с покрытием тестами) — текстовое
+напоминание в инструкции читается один раз и забывается, а этот гейт запускается перед
+каждым пушем.
+
 Использование:
     python3 check_dispatch.py projects/f4/DISPATCH.md [--timeout-min 45] [--since ДД-ММ-ГГГГ]
     python3 check_dispatch.py projects/f4/DISPATCH.md --added-only [--base <коммит>]
@@ -27,9 +36,51 @@ LIVE = ("взял", "работаю")
 CLOSED = ("закончил", "освобождаю", "разблокировано по таймауту")
 FINAL = ("считаю цель", "прекращаю работу")
 
+# Метка маршрута (§ 4, § 8): обязательна в конце каждой строки ЗАХВАТА («взял»), не нужна
+# для keepalive («работаю»). Ровно один из двух видов, ничего третьего.
+ROUTE_MARKER = re.compile(r"\[(batch|urgent):\s*(.+?)\]\s*$")
+BATCH_TARGET = re.compile(r"^lunobot/batch/[^/\s]+/\d+$")
+BARE_URGENT = {"срочно", "срочная", "срочная работа", "срочно!", "urgent"}
+
+
+def route_error(line):
+    """Проверяет метку маршрута в конце строки захвата. Возвращает текст ошибки или None.
+
+    `[batch: lunobot/batch/<проект>/<N>]` — рутинная работа уходит в текущую ветку пачки;
+    `<N>` должен быть тем самым счётчиком, который живьём смотрят в BRANCHES.md/CI.md перед
+    захватом, а не любым числом. Формат строки это не проверит (гейт не ходит в сеть за
+    BRANCHES.md), но хотя бы вынуждает написать путь в правильной форме.
+
+    `[urgent: <причина>]` — причина обязана называть конкретный пункт правила (содержит
+    «§») или быть прямой цитатой команды владельца (в «ёлочках»); голое «срочно» без
+    основания не проходит — это и есть тот самый лапс, который метка должна сделать
+    структурно невозможным.
+    """
+    m = ROUTE_MARKER.search(line)
+    if not m:
+        return ("строка захвата без метки маршрута — нужна ровно одна в конце строки: "
+                "[batch: lunobot/batch/<проект>/<N>] (N — текущий счётчик пачки, "
+                "смотри в BRANCHES.md/CI.md перед захватом) или [urgent: <причина>] "
+                "(причина — пункт правила «§ …» или прямая цитата команды владельца); см. § 8")
+    kind, content = m.group(1), m.group(2).strip()
+    if kind == "batch":
+        if not BATCH_TARGET.match(content):
+            return (f"метка [batch: {content}] не по формату — нужно "
+                     "lunobot/batch/<проект>/<N>, номер N — реальный текущий счётчик "
+                     "из BRANCHES.md/CI.md")
+    else:  # urgent
+        if content.lower().strip("!.") in BARE_URGENT:
+            return (f"метка [urgent: {content}] — голое «срочно» без основания; нужен "
+                     "конкретный пункт правила (например «по § 5 п. 2») или прямая цитата "
+                     "команды владельца")
+        if "§" not in content and "«" not in content:
+            return (f"метка [urgent: {content}] не называет ни пункт правила (§ …), ни "
+                     "прямую цитату владельца («…»)")
+    return None
+
 
 def parse(path):
-    entries, malformed, no_origin = [], [], []
+    entries, malformed, no_origin, route = [], [], [], []
     for n, line in enumerate(open(path, encoding="utf-8"), 1):
         line = line.rstrip()
         if "Лунобот" not in line:
@@ -64,11 +115,14 @@ def parse(path):
         part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
         entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
                         "who": who.group(0), "verb": verb, "key": f"{key}#{part_key}"})
-    return entries, malformed, no_origin
+        if verb == "взял":
+            if err := route_error(line):
+                route.append((n, line[:160], err))
+    return entries, malformed, no_origin, route
 
 
 def check(path, timeout_min, since=None):
-    entries, malformed, no_origin = parse(path)
+    entries, malformed, no_origin, route = parse(path)
     if since:
         entries = [e for e in entries if e["ts"] >= since]
         def fresh(text):
@@ -76,8 +130,11 @@ def check(path, timeout_min, since=None):
             return not (m and datetime.strptime(m.group(1), "%d-%m-%Y") < since)
         malformed = [x for x in malformed if fresh(x[1])]
         no_origin = [x for x in no_origin if fresh(x[1])]
+        route = [x for x in route if fresh(x[1])]
 
     problems = []
+    for n, text, msg in route:
+        problems.append(("маршрут", n, msg + f": {text}"))
     for n, text in no_origin:
         problems.append(("нет повода", n,
                          "кастомная задача без указания, откуда взялась "
