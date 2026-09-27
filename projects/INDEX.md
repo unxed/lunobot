@@ -8,3 +8,4 @@
 2. [vtui](vtui/PROJECT.md)
 3. [tar](tar/PROJECT.md)
 4. [zipper](zipper/PROJECT.md)
+5. [zip](zip/PROJECT.md)
