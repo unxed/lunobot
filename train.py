@@ -143,7 +143,7 @@ def cut(repo, sign):
         print(f"staging: {len(own)} коммит(ов), старшему {age:.0f} мин — поезд ещё не созрел "
               f"(порог {MIN_COMMITS} коммитов или {MAX_AGE_MIN} мин)")
         return 0
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now(timezone.utc).strftime("%y%m%d-%H%M")
     project = repo.split("/")[1]
     branch = f"{TRAIN_PREFIX}{project}/{stamp}"
     api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
