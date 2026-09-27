@@ -9,3 +9,5 @@
 27-09-2026 03:53:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/312 (часть 1 из 4), PR [#1551](https://github.com/unxed/f4/pull/1551), коммит `a619103`, прогон [#5278](https://github.com/unxed/f4/actions/runs/36292685714)
 
 27-09-2026 13:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1551 (ProcList часть 1) — падал на langfmt (.lng не форматированы) и errcheck (defer controller.Close()); оба пофикшены лично (7b72ff0c), жду свежий прогон
+
+27-09-2026 14:30:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/batch/f4/3 перебазирована на main лично (был конфликт в manager.go — main уже смержил PR #1551 ProcList, разрешил вручную сохранив оба плагина), force-push fa1d0cdc
