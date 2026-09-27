@@ -10,3 +10,5 @@
 
 27-09-2026 08:45:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), обе ветки `.../1178-ios-plugin-parts2to4` и `.../1178-android-plugin-parts2to4` смержены в `lunobot/batch/f4/2` (коммиты b1c40e89, 5e8adb05, конфликты в build.yml/plugring_firstparty.go/_test.go разрешены руками) и физически удалены на GitHub — iOS и Android теперь оба полностью (части 1-4) в пачке
 
+27-09-2026 03:25:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/312-proclist-1of4` для https://github.com/unxed/f4/issues/312 (часть 1 из 4)
+
