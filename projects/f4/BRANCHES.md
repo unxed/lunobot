@@ -26,3 +26,5 @@
 
 27-09-2026 14:35:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 9-я запись, коммит `8060e3f8` (кастомная задача «#1178: финальный шаг 10-11/11» — TestLiteBuildExcludesSQLiteDependency + TestRegularBuildStillIncludesSQLiteDependency в cmd/f4/lite_deps_test.go; guard корректно Skip, не Fatal: internal/sheet/store.go тянет github.com/ncruces/go-sqlite3 безусловно в обеих сборках, это уже задокументировано владельцем #1178 в manager.go/rpc_plugin.go, отдельный будущий тикет, не блокер; замер размера -tags lite: -184320 байт/-180.0 KiB/-0.31% — реальный, но маленький выигрыш от вычищенного кода plugins/sqlite, а не от ухода go-sqlite3/wazero из бинарника, который из-за internal/sheet остаётся; задача #1178 в её заявленном скоупе (tar/zipper-индексация + sqlite-плагин) закрыта, полное честное резюме всей 11-шаговой цепочки — в теле коммита)
 
+27-09-2026 15:35:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/312-proclist-2of4` для https://github.com/unxed/f4/issues/312 (часть 2 из 4)
+
