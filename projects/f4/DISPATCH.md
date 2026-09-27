@@ -13,3 +13,5 @@
 
 27-09-2026 16:13:26 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «https://github.com/unxed/f4/issues/1572, красный main: multiarc real-exec тесты (7z/tar/unzip) на macOS и Windows — доделать существующую ветку claude/project-thread-xnolva (не компилируется, item 6), проверить через sandbox.yml, запушить в main» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
 
+27-09-2026 16:34:44 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «красный main (продолжение SetAppID/#1573): те же undefined SetAppID в трёх ОТДЕЛЬНЫХ Go-модулях plugins/ios/go.mod, plugins/android/go.mod, plugins/cloudfox/go.mod (каждый со своим go.sum, PR #1573 поправил только корневой go.mod) — добавить ту же replace-директиву на github.com/unxed/wayland в каждый из трёх, обновить их go.sum» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
+
