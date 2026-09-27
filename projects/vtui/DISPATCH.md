@@ -10,3 +10,5 @@
 27-09-2026 21:00:30 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над кастомной задачей «дежурство на main vtui: следить за прогонами ci.yml на main, при красном — диагностировать и чинить, повторять» (без красных прогонов пока)
 
 27-09-2026 21:58:10 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял https://github.com/unxed/vtui/issues/11 (FreeBSD support for gogpu: убрать freebsd из билд-тегов gogpu_stub.go, включить RunGogpuHost для FreeBSD, добавить freebsd/netbsd в билд-теги x11_host.go/gui_api.go) [batch: lunobot/batch/vtui/1]
+
+27-09-2026 22:00:55 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над кастомной задачей «дежурство на main vtui: следить за прогонами ci.yml на main, при красном — диагностировать и чинить, повторять» (main зелёный, последний прогон conclusion=success)
