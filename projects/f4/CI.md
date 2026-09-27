@@ -6,6 +6,3 @@
 
 27-09-2026 20:00:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX; субагент), тикет https://github.com/unxed/f4/issues/312 (часть 4 из 4, финальная), коммит `3c1420dc` ушёл в ту же пачку `lunobot/batch/f4/4` (см. BRANCHES.md) — PR за пачку не открывался (2 записи из 10, ветка младше часа с момента ребейза владельцем): полная матрица не запускается, только `quick`, прогон https://github.com/unxed/f4/actions/runs/36298188066 (не проверен, был in_progress на момент записи)
 
-27-09-2026 20:45:00 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; субагент), PR #1584 (autopeasant, Home Manager) — конфликт из-за переноса nix.yml (#1583) разрешён: новая джоба flake-checks перенесена в build.yml с собственным path-фильтром, не задублирована с nix-vendor-hash. Смержен владельцем вручную 20:28. Отдельно всплывшая vendorHash-проблема закрыта follow-up PR #1586 (autopeasant). main на коммите ca6a1c15
-
-27-09-2026 21:15:00 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; субагент), TestDriveMenu_CtrlN* флейк (PR #1587) — это гонка в самом тесте, не регрессия: два теста не изолировали vtui.FrameManager через SwapFrameManager, оставшийся фоновый directory-load воркер от предыдущего теста мог засорить стек кадров. Добавлен t.Cleanup(swapFrameManager) по образцу соседних тестов. PR [#1588](https://github.com/unxed/f4/pull/1588), quick.yml зелёный (run 36350619587), Touch #1587
