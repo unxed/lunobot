@@ -2,9 +2,12 @@
 
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
 
-26-09-2026 23:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1522 (issue #128) — фикс data race запушен (atomic.Int32), жду свежий прогон
-26-09-2026 23:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1525 (issue #1504) — фикс фикстуры теста запушен, жду свежий прогон
-26-09-2026 23:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1526 (issue #1505) — фикс gosec+Windows-теста запушен, жду свежий прогон
-26-09-2026 23:05:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1527 (issue #1502, рекурсивная смена владельца/прав)
-26-09-2026 23:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1528 (issue #1415, индикатор переноса строки)
+26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1522 (issue #128) упал на gosec (G109/G115) в моём же новом коде — чиню сам
+26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1527 (issue #1502) упал на реальном тесте (symlink-leaf в рекурсии) — разбираюсь
+26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1528 (issue #1415) упал на ошибке компиляции теста («undefined: got») — разбираюсь
+27-09-2026 00:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1531 (issue #378) — исправил ineffassign сам (92e5da9d), запушил, жду свежий прогон
+27-09-2026 00:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR https://github.com/unxed/f4/pull/1535 (покрытие netfox/fusefs) открыт субагентом, CI запущен
+27-09-2026 00:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR https://github.com/unxed/f4/pull/1536 (issue #884, кэш HighlightRule) открыт субагентом, CI запущен
+26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1532 (issue #1239) попал под concurrency-баг (27 CANCELLED), перезапущен другим субагентом
+26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1534 (срочный откат bot-pr-queue concurrency, без тикета)
 
