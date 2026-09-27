@@ -33,3 +33,16 @@ fine-grained токена (тот же repository-access-list симптом, ч
 (или дать push через другой токен/SSH), дальше по накатанной: пуш ветки →
 обновить пин в vtui → зелёный ci.yml → PR в vtui → апстрим-PR в
 neurlang/wayland (per правило владельца — доработки wayland слать в апстрим).
+
+## ЗАВЕРШЕНО (кроме апстрима)
+
+Блокер снят владельцем (PAT получил доступ к unxed/wayland). Патч запушен,
+vtui/go.mod обновлён, CI зелёный (один известный флейк Cocoa darwin/amd64,
+не связан, прошёл на повторе). PR в vtui: https://github.com/unxed/vtui/pull/162.
+
+Апстрим-ветка готова и запушена в unxed/wayland: `upstream/xkb-go-wayland-keymap`
+(один коммит, от чистого master апстрима, не смешана с ещё не смерженным SetAppID).
+`gh pr create --repo neurlang/wayland` отказал — права PAT на СТОРОННИЙ репозиторий
+(другой класс ограничения, чем было с unxed/wayland). Текст готов в scratchpad
+(`neurlang_wayland_PR_TEXT_ready_to_open.md`), открыть вручную:
+https://github.com/neurlang/wayland/compare/master...unxed:wayland:upstream/xkb-go-wayland-keymap
