@@ -11,5 +11,3 @@
 
 27-09-2026 16:12:00 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/444 (эмпирическая проверка PTY-последовательности на macOS-раннере, субагент ещё в работе)
 
-27-09-2026 16:13:26 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «https://github.com/unxed/f4/issues/1572, красный main: multiarc real-exec тесты (7z/tar/unzip) на macOS и Windows — доделать существующую ветку claude/project-thread-xnolva (не компилируется, item 6), проверить через sandbox.yml, запушить в main» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
-
