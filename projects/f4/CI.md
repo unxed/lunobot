@@ -11,3 +11,7 @@
 27-09-2026 13:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1551 (ProcList часть 1) — падал на langfmt (.lng не форматированы) и errcheck (defer controller.Close()); оба пофикшены лично (7b72ff0c), жду свежий прогон
 
 27-09-2026 14:30:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/batch/f4/3 перебазирована на main лично (был конфликт в manager.go — main уже смержил PR #1551 ProcList, разрешил вручную сохранив оба плагина), force-push fa1d0cdc
+
+27-09-2026 16:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1178 (финальный шаг — вынос plugins/sqlite), PR https://github.com/unxed/f4/pull/1554, жду прогон
+
+27-09-2026 15:35:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1552, PR https://github.com/unxed/f4/pull/1553, жду прогон

@@ -28,3 +28,5 @@
 
 27-09-2026 15:35:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/312-proclist-2of4` для https://github.com/unxed/f4/issues/312 (часть 2 из 4)
 
+
+27-09-2026 16:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` открыт как PR https://github.com/unxed/f4/pull/1554 — простаивала с коммита `8060e3f8` (2026-09-27T04:11:29Z) больше 12 часов без PR, что нарушало смысл батчинга; счётчик пачки сдвигается на `lunobot/batch/f4/4`
