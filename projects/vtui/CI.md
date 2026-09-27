@@ -1,3 +1,5 @@
 # CI — vtui
 
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
+
+27-09-2026 04:00:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR https://github.com/unxed/vtui/pull/147 — нашёл дубль TestFitInside (старый в graphics_native_test.go, новый табличный в graphics_scale_test.go), убрал старый (f8fdecc), жду свежий прогон
