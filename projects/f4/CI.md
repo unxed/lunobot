@@ -9,5 +9,6 @@
 27-09-2026 00:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR https://github.com/unxed/f4/pull/1535 (покрытие netfox/fusefs) открыт субагентом, CI запущен
 27-09-2026 00:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR https://github.com/unxed/f4/pull/1536 (issue #884, кэш HighlightRule) открыт субагентом, CI запущен
 26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1532 (issue #1239) попал под concurrency-баг (27 CANCELLED), перезапущен другим субагентом
-26-09-2026 23:59:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), запущен CI на PR https://github.com/unxed/f4/pull/1534 (срочный откат bot-pr-queue concurrency, без тикета)
+27-09-2026 00:35:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1534 (откат bot-pr-queue) смержен в main (00:13:31Z) — баг снят
+27-09-2026 00:35:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1532 (issue #1239) — отменённый прогон 36280318345 перезапущен (gh run rerun --failed), сейчас queued
 
