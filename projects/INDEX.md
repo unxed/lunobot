@@ -6,3 +6,4 @@
 
 1. [f4](f4/PROJECT.md)
 2. [vtui](vtui/PROJECT.md)
+3. [tar](tar/PROJECT.md)
