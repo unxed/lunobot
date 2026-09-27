@@ -2,4 +2,4 @@
 
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
 
-27-09-2026 05:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #146 (Wayland SetAppID) — нашёл gosec G115 на uint32(len(data)) для WM_CLASS (x11_host.go), добавил #nosec с обоснованием (a55cd36), жду свежий прогон
+27-09-2026 05:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #146 (Wayland SetAppID) — нашёл ещё gosec G115 в vmenu.go (box-drawing rune->uint64), добавил #nosec (4a4f880), жду свежий прогон
