@@ -8,6 +8,4 @@
 
 27-09-2026 05:05:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/batch/f4/2` — PR #1544 закрыт (открыл слишком рано, до зрелости пачки — каждый пуш триггерил полную матрицу); ветка живая, копится дальше без открытого PR до 10 строк/часа простоя
 
-27-09-2026 08:05:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/1178-ios-plugin-parts2to4` для https://github.com/unxed/f4/issues/1178 (iOS часть 1 из 4 уже влита в lunobot/batch/f4/2 прямым коммитом, субагент доводит части 2-4 поверх неё, потом мержу веткой в пачку)
-
-27-09-2026 08:05:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/1178-android-plugin-parts2to4` для https://github.com/unxed/f4/issues/1178 (Android часть 1 из 4 уже влита в lunobot/batch/f4/2 прямым коммитом, субагент доводит части 2-4 поверх неё, потом мержу веткой в пачку)
+27-09-2026 08:45:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), обе ветки `.../1178-ios-plugin-parts2to4` и `.../1178-android-plugin-parts2to4` смержены в `lunobot/batch/f4/2` (коммиты b1c40e89, 5e8adb05, конфликты в build.yml/plugring_firstparty.go/_test.go разрешены руками) и физически удалены на GitHub — iOS и Android теперь оба полностью (части 1-4) в пачке
