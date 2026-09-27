@@ -8,5 +8,7 @@
 
 27-09-2026 11:40:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/batch/f4/3` — новый активный счётчик пачки, 1 запись (кастомная задача «#1178: plugins/sqlite → RPC-плагин», части 1-4)
 
+27-09-2026 03:39:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 2-я запись, коммит `b713554` (кастомная задача «#1178: bump tar/zipper, tarindex_simple в -tags lite», шаги 7-8/11)
+
 27-09-2026 03:25:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/312-proclist-1of4` для https://github.com/unxed/f4/issues/312 (часть 1 из 4)
 
