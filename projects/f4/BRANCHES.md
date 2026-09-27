@@ -10,5 +10,13 @@
 
 27-09-2026 03:39:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 2-я запись, коммит `b713554` (кастомная задача «#1178: bump tar/zipper, tarindex_simple в -tags lite», шаги 7-8/11)
 
+27-09-2026 03:48:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 3-я запись, коммит `dc3e199` (кастомная задача «#1178: plugins/sqlite → RPC-плагин», часть 1/4 — свой go.mod, rpc_plugin.go, cmd/sqlite-plugin, убрана регистрация из manager.go)
+
+27-09-2026 03:48:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 4-я запись, коммит `55d2757` (та же задача, часть 2/4 — CI-джоба build-sqlite-plugin, публикация в release/nightly)
+
+27-09-2026 03:48:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 5-я запись, коммит `628f1b9` (та же задача, часть 3/4 — first-party запись sqlite в PlugRing-каталоге)
+
+27-09-2026 03:48:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 6-я запись, коммит `449cbb5` (та же задача, часть 4/4 — пункт меню SQLite client теперь ведёт в PlugRing, если плагин не установлен; задача полностью готова, все 4 части запушены)
+
 27-09-2026 03:25:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/312-proclist-1of4` для https://github.com/unxed/f4/issues/312 (часть 1 из 4)
 
