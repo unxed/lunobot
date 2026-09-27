@@ -67,3 +67,5 @@
   new sevenzip tag is cut, so zipper-produced .7z archives actually pick this up.
 - Sibling ticket unxed/zipper#21 ("support Zstandard (zstd) header compression")
   is a related but separate, algorithm-choice feature -- not touched here.
+
+27-09-2026 16:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «ревизия веток репозитория: подхватить полезное, удалить мусор» по § 10 [urgent: § 10 — прямая просьба владельца, гигиена веток]
