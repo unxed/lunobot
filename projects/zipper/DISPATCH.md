@@ -67,3 +67,5 @@
   new sevenzip tag is cut, so zipper-produced .7z archives actually pick this up.
 - Sibling ticket unxed/zipper#21 ("support Zstandard (zstd) header compression")
   is a related but separate, algorithm-choice feature -- not touched here.
+
+27-09-2026 18:35:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «unxed/sevenzip (write): Coverage workflow красный — реальные упавшие тесты после мержа #7+#8, плюс покрыть недостающее по явной просьбе владельца» по § 10 [urgent: § 10 — прямая просьба владельца, покрытие явно разрешено на этот раз]
