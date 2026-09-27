@@ -9,3 +9,4 @@
 3. [tar](tar/PROJECT.md)
 4. [zipper](zipper/PROJECT.md)
 5. [zip](zip/PROJECT.md)
+6. [xz](xz/PROJECT.md)
