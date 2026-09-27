@@ -18,3 +18,7 @@
 
 27-09-2026 03:48:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 6-я запись, коммит `449cbb5` (та же задача, часть 4/4 — пункт меню SQLite client теперь ведёт в PlugRing, если плагин не установлен; задача полностью готова, все 4 части запушены)
 
+27-09-2026 03:51:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 7-я запись, коммит `b92b6d8` (фикс-форвард: `quick` уронил TestCommandPaletteProductionCommandSurfaceInventory — добавлена запись аудита ProcessKey для sqlite.RPCPlugin, по образцу cloudfox/ios/android)
+
+27-09-2026 03:55:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), `lunobot/batch/f4/3` — 8-я запись, коммит `2facf24` (фикс-форвард: `quick` уронил TestAllDialogs_LayoutValidation/App.SQLite — добавлен skip app.sqlite рядом с app.plugring; и TestMergeFirstPartyPlugRingItemsAppendsAndDedupsByID — счётчик 3→4; `quick` зелёный после этого коммита)
+
