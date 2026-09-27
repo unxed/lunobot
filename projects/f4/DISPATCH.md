@@ -16,8 +16,10 @@
 
 27-09-2026 17:28:30 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/444 (эмпирическая проверка PTY-последовательности на macOS-раннере, субагент ещё в работе)
 
-27-09-2026 17:29:27 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял тикет https://github.com/unxed/f4/issues/1356 (часть 1 из N — по приоритету владельца: сначала тихий no-op — Ctrl+A/F5/F6/F8 без цели, затем группа 3 и 1, архивные операции последними) [urgent: «https://github.com/unxed/f4/issues/1356 обновился» — прямая команда владельца]
+27-09-2026 19:10:46 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «перенести Nix CI (workflow nix.yml — vendorHash-проверка) из отдельного workflow в общую параллельную матрицу build.yml» по § 10 (прямое указание владельца в чате) [urgent: «перенеси CI для Nix в общую матрицу параллельных CI» — прямая команда владельца]
 
-27-09-2026 17:47:02 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «красный main: Race (shard 0) — гонка данных, TestAllDialogs_LayoutValidation/AI.ListModels, предположительно internal/panel/list.go:2405 (readDirectoryEx) vs RefreshAll из internal/app/vtvibe_ap.go:365 (aiAttachAPSpec.func2), не связано с multiarc» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
+27-09-2026 19:11:53 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1563 (часть 1 из N: wasi-sdk сборка isoimg, субагент ещё ждёт прогон sandbox.yml)
 
-27-09-2026 19:10:46 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «перенести Nix CI (workflow nix.yml — vendorHash-проверка) из отдельного workflow в общую параллельную матрицу build.yml» по прямому указанию владельца [urgent: «перенеси CI для Nix в общую матрицу параллельных CI» — прямая команда владельца]
+27-09-2026 19:11:53 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/444 (эмпирическая проверка PTY-последовательности на macOS-раннере, субагент ещё в работе)
+
+27-09-2026 19:11:53 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1376 (Host-режим FAR всё ещё виснет, субагент ждёт очень долгий quick.yml из-за перегруженной очереди раннеров)
