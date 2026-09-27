@@ -21,3 +21,5 @@
 27-09-2026 17:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1178 (PR #1554) — Build sqlite-plugin (darwin/amd64) упал: cannot use vfs.MetadataExplicit as uint32 (нет явной конверсии); лично пофикшено, коммиты `0836167d`+`973f26d1`, жду свежий прогон
 
 27-09-2026 18:05:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), красный main после мержа #1554 (Touch #1178) — TestLiteBuildExcludesSQLiteDependency резолвил plugins/sqlite как путь внутри корневого модуля, что больше не работает после его выноса в свой go.mod; тегам go list в тесте не хватало tarindex_simple (как в build-lite), PR https://github.com/unxed/f4/pull/1556, коммит `7da77d92`, прогон https://github.com/unxed/f4/actions/runs/36295956196
+
+27-09-2026 17:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX; субагент), тикет https://github.com/unxed/f4/issues/312 (часть 3 из 4), коммит `4eda0086` ушёл пачкой в ветку `lunobot/batch/f4/4` (см. BRANCHES.md) — PR за пачку не открывался (1 запись из 10, ветка младше часа): полная матрица не запускается, только `quick`, прогон https://github.com/unxed/f4/actions/runs/36296386837
