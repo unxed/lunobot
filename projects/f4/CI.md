@@ -5,3 +5,5 @@
 27-09-2026 09:05:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), lunobot/batch/f4/2, коммит `aa690821`, прогон quick https://github.com/unxed/f4/actions/runs/36288708370 (предыдущий прогон 36288317936 упал — ключи аудита были iosfs./androidfs., а тест берёт префикс по имени каталога plugins/ios и plugins/android, не по имени пакета; тем же коммитом перенёс wine.yml джобой в build.yml и убрал max-parallel по прямой просьбе владельца)
 
 27-09-2026 09:35:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fe92c401` (PR #1547 закрыт автоматически — по прямой просьбе владельца отправил коммит прямо в main, fast-forward, без ожидания PR/полной матрицы), прогон https://github.com/unxed/f4/actions/runs/36288936044
+
+27-09-2026 08:20:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), лично (не субагентом) починил красный main: восстановил max-parallel (5 джоб), починил Nightly/Release (dist/build — директория от wine-logs), PR https://github.com/unxed/f4/pull/1548; тот же фикс cherry-pick в lunobot/batch/f4/2 (db55c341); Wine gui-win32 — не регресс, continue-on-error сохранился, не трогал
