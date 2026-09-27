@@ -9,3 +9,5 @@
 26-09-2026 14:20:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `codex/19d368003c6c048e43dbec70/lunobot-3/285-3of3` для https://github.com/unxed/f4/issues/285 (геометрия чекбокса/радио под GlyphStyleRounded)
 
 27-09-2026 06:00:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/batch/vtui/1` — новый счётчик пачки для vtui, первая запись (codecov upload)
+
+27-09-2026 04:05:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/19d368003c6c048e43dbec70/lunobot-3/136-gui-font-hotswap-1of4` для https://github.com/unxed/vtui/issues/136 (часть 1 из 4 — Wayland)
