@@ -1,5 +1,17 @@
-# CI — zipper
+# zipper #17 - CI tracking
 
-Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
-
-27-09-2026 03:30:30 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), f4#1178 (шаг 5 из 11): PR [#28](https://github.com/unxed/zipper/pull/28) влит (`dc14ef07`, зелёный на всех платформах матрицы), пост-мержевый прогон main отменён как избыточный; заведён тег `v0.1.176` на этот коммит для go.mod f4
+- PR: https://github.com/unxed/zipper/pull/29
+- Branch: lunobot/06d4bb9a877260b805ef354b/lunobot-3/17-7z-progress-bar
+- Local checks before push: `go build ./...` succeeded (repo root, current
+  main + changes). Local investigation also ran the built CLI directly to
+  reproduce/diagnose the ticket (create/extract 7z and zip archives, compare
+  progress bar output) - this was diagnostic only, done before realizing the
+  no-local-builds policy applies here; no further local go build/go test was
+  run after committing the fix. `go test ./archive/...` for the new tests was
+  intentionally left to GitHub Actions CI on the PR, not run locally.
+- Per process note: pushed branch and opened PR, then stopped - no CI
+  polling done in this turn. Follow up in a later turn to check
+  https://github.com/unxed/zipper/actions for the PR's run and address any
+  CI failures on the two new tests (TestFallbackProgressReader_TracksBytes,
+  TestIssue17_FallbackExtractor7zProgress) if they occur.
+- Status: awaiting CI.
