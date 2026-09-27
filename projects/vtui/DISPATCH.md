@@ -5,4 +5,3 @@
 
 27-09-2026 19:13:40 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу «https://github.com/unxed/vtui/issues/10, часть 3 из 3: проводка X11-пути vtui на unxed/xkb-go/x11.NewKeymapFromX11Device с фоллбеком на keytrans при неудаче» [urgent: «поступи с ним по инструкции Лунобота» — прямая команда владельца, см. также § 10]
 
-27-09-2026 19:13:40 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «отправить в апстрим godesktop/xkb-go готовую часть 1-2 из unxed/xkb-go#2 (X11 GetMap/GetNames/GetControls decoder + x11.NewKeymapFromX11Device)» по § 10 (прямая команда владельца в vtui#10) [urgent: «когда закончишь, обязательно отправь эти наработки в upstream» — прямая команда владельца]
