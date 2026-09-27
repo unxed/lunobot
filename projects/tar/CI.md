@@ -2,6 +2,6 @@
 
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
 
-27-09-2026 03:17:30 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), f4#1178 (шаг 3 из 11, IndexBackend — runtime-выбор sqlite/arcidx без build tag), PR [#11](https://github.com/unxed/tar/pull/11), коммит `d20c72a` (фикс-форвард по первому красному прогону — IndexArchive игнорировал backend при создании свежего индекса), прогон [#36290962362](https://github.com/unxed/tar/actions/runs/36290962362)
+27-09-2026 03:19:30 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), f4#1178 (шаг 3 из 11): PR [#11](https://github.com/unxed/tar/pull/11) влит (`3d8c49f0`), пост-мержевый прогон main отменён как избыточный (PR был актуален относительно main); заведён тег `v0.1.137` на этот коммит — первый релиз tar с arcidx (#9) + tarindex_simple (#10) + IndexBackend (#11) — для unxed/zipper
 
 27-09-2026 03:17:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), кастомная задача «настроить публикацию покрытия tar в Codecov (по образцу vtui)» по § 10, PR [#12](https://github.com/unxed/tar/pull/12), коммит `4fe21a6`, прогон [#15](https://github.com/unxed/tar/actions/runs/36290934818)
