@@ -4,10 +4,13 @@
     train.py land                      в рабочем клоне, на своей ветке поверх lunobot/staging
     train.py tick  <owner/repo> --sign "<подпись § 9>"
     train.py eject <owner/repo> <sha>... --reason "<ссылка на упавший job>"
+    train.py covered <owner/repo> <sha>
     train.py bisect <owner/repo> --os <раннер> --cmd "<команда песочницы>"
 
 land  — переносит твои коммиты (origin/lunobot/staging..HEAD) на вершину staging и пушит,
         с повторами при гонке. PR не открывает никогда.
+covered — быстрый ответ автору после land: зелёный/красный/ещё едет — по первому завершённому
+        quick на его коммите или потомке (quick на staging не отменяется, каждый прогон доезжает).
 tick  — идемпотентный шаг проводника; запускай в начале каждого круга. Поезд в пути: зелёный —
         вливает (fast-forward main, иначе merge-коммит), красный — печатает, кого выкидывать;
         поезда нет, а staging созрел — режет новый поезд и открывает за него PR.
@@ -65,8 +68,9 @@ def land():
             sys.exit("конфликт при переносе на staging — разреши его сам (git rebase "
                      "origin/lunobot/staging), это твой код, и запусти land снова")
         if run("git", "push", "-q", "origin", f"HEAD:{STAGING}", check=False).returncode == 0:
-            print(f"приземлено в {STAGING}: {len(msgs)} коммит(ов), вершина "
-                  f"{run('git', 'rev-parse', 'HEAD').stdout.strip()}")
+            head = run('git', 'rev-parse', 'HEAD').stdout.strip()
+            print(f"приземлено в {STAGING}: {len(msgs)} коммит(ов), вершина {head}\n"
+                  f"результат quick позже: train.py covered <owner/repo> {head}")
             return 0
         time.sleep(2 + 3 * attempt)
         run("git", "fetch", "-q", "origin", STAGING)
@@ -265,6 +269,21 @@ def rerun(failed):
             run("gh", "run", "rerun", m.group(2), "--failed", "--repo", m.group(1), check=False)
 
 
+def covered(repo, sha):
+    """Результат quick для коммита в staging: первый завершённый прогон на нём или потомке."""
+    runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?branch={STAGING}&per_page=30")
+    for r in sorted(runs["workflow_runs"], key=lambda r: r["created_at"]):
+        if r["status"] != "completed" or r["conclusion"] in ("cancelled", "skipped"):
+            continue
+        cmp = api(f"repos/{repo}/compare/{sha}...{r['head_sha']}", check=False)
+        if cmp and cmp.get("status") in ("ahead", "identical"):
+            verdict = "зелёный" if r["conclusion"] == "success" else "КРАСНЫЙ"
+            print(f"{verdict}: {r['html_url']} (прогон на {r['head_sha'][:9]})")
+            return 0 if r["conclusion"] == "success" else 1
+    print("ещё едет: завершённого quick на этом коммите или его потомке пока нет")
+    return 0
+
+
 def tick(repo, sign):
     pr = train_pr(repo)
     if not pr:
@@ -334,6 +353,8 @@ def main(argv):
     opt = lambda k: rest[rest.index(k) + 1] if k in rest else None
     if cmd == "land":
         return land()
+    if cmd == "covered" and len(rest) == 2:
+        return covered(rest[0], rest[1])
     if cmd == "tick" and rest and opt("--sign"):
         return tick(rest[0], opt("--sign"))
     if cmd == "bisect" and rest and opt("--os") and opt("--cmd"):
