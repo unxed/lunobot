@@ -16,3 +16,4 @@
 27-09-2026 00:20:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1494 (netfox/fishplus: доступ к файловой системе WSL-дистрибутива через wsl.exe вместо \\wsl.localhost\)
 27-09-2026 00:20:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «аудит ванильных Go-зависимостей f4 на предмет замены форками unxed/*» по прямой просьбе владельца
 27-09-2026 00:35:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «ограничить strategy.max-parallel в build.yml» — безопасная замена откаченному bot-pr-queue, экономия пула раннеров без риска чужих отмен
+27-09-2026 01:05:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял PR https://github.com/unxed/f4/pull/1535 (ветка coverage-netfox-fusefs) — фикс syscall.Kill без platform-тега в internal/fusefs/cli_coverage_test.go:90 (падает на Windows)
