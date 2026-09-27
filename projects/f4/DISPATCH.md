@@ -21,4 +21,4 @@
 
 27-09-2026 20:51:23 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял диагностику TestDriveMenu_CtrlNThroughFrameManagerDoesNotForkWorkspace (упало на PR https://github.com/unxed/f4/pull/1587 — внешний контрибьютор, Nix-пакетирование, тест из internal/panel явно не связан с содержимым PR) [urgent: «поймал падение, тоже субагенту задачка» — прямая команда владельца]
 
-27-09-2026 20:51:23 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «f4#1563 следующая часть: собрать реальный end-to-end пайплайн isoimg.wasm через каркас plugins/observer (PR #1570) — проверить wasm-validate/wasm-opt и настоящий вызов через wazero» по прямому указанию владельца [urgent: «убедись, что идёт работа... по 1563» — прямая команда владельца]
+27-09-2026 20:51:23 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял https://github.com/unxed/f4/issues/1563 (следующая часть: собрать реальный end-to-end пайплайн isoimg.wasm через каркас plugins/observer PR#1570 — проверить wasm-validate/wasm-opt и настоящий вызов через wazero) [urgent: «убедись, что идёт работа... по 1563» — прямая команда владельца]
