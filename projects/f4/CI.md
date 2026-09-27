@@ -17,3 +17,5 @@
 27-09-2026 15:35:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1552, PR https://github.com/unxed/f4/pull/1553, жду прогон
 
 27-09-2026 04:40:00 Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/312 (часть 2 из 4), PR [#1555](https://github.com/unxed/f4/pull/1555), коммит `ccc4095`, прогон [#5283](https://github.com/unxed/f4/actions/runs/36294964697)
+
+27-09-2026 17:15:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/f4/issues/1178 (PR #1554) — Build sqlite-plugin (darwin/amd64) упал: cannot use vfs.MetadataExplicit as uint32 (нет явной конверсии); лично пофикшено, коммиты `0836167d`+`973f26d1`, жду свежий прогон
