@@ -1,9 +1,10 @@
-# CI — zipper
+# zipper/sevenzip CI log
 
-Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
+## unxed/sevenzip PR #8 (branch lunobot/e2d630e0524e1c081b5e1572/lunobot-3/22-7z-header-compression, base write)
 
-27-09-2026 14:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/zipper/issues/17, PR https://github.com/unxed/zipper/pull/29, жду прогон
-
-27-09-2026 14:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/zipper/issues/19, PR https://github.com/unxed/zipper/pull/30, жду прогон
-
-27-09-2026 15:45:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/zipper/issues/21, PR https://github.com/unxed/sevenzip/pull/7 (зависимость unxed/sevenzip, не сам zipper), жду прогон
+- Pushed 2026-09-27. Not built/tested locally (no-local-builds policy) -- gofmt -l
+  was run locally (formatting/parse check only, not a build) and reported clean.
+- Per process note: pushed the branch, opened the PR, commented on the ticket, and
+  ended the turn without polling GitHub Actions. CI status on PR #8 is unknown as of
+  this entry -- check `gh pr checks 8 --repo unxed/sevenzip` in a later pass before
+  merging.
