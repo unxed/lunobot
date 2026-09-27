@@ -12,3 +12,5 @@
 
 
 27-09-2026 16:12:00 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; субагент), тикет https://github.com/unxed/f4/issues/1563 (часть 1 из N), PR [#1570](https://github.com/unxed/f4/pull/1570), коммит по ветке `lunobot/19d368003c6c048e43dbec70/lunobot-1/1563-1ofN`, прогон [#5323](https://github.com/unxed/f4/actions/runs/36331267848)
+
+27-09-2026 16:29:00 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; субагент), тикет https://github.com/unxed/f4/issues/1572, ветка `fix/multiarc-realexec-crossplatform`, PR [#1574](https://github.com/unxed/f4/pull/1574) — прогон ещё не проверен; ВНИМАНИЕ, известная коллизия: этот же тикет уже был захвачен строкой в DISPATCH.md (доделать ветку `claude/project-thread-xnolva`), та ветка на момент открытия PR #1574 ещё жива и не доведена до PR (последний коммит `2f387af1`, нестабильно). Первый, кто доведёт свою сторону до зелёного, — вливает и закрывает ОБЕ записи (эту и капчу в DISPATCH.md); вторую сторону просто не мержить/забросить, без дублирующего фикса
