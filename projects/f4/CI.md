@@ -9,3 +9,5 @@
 27-09-2026 08:20:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), лично (не субагентом) починил красный main: восстановил max-parallel (5 джоб), починил Nightly/Release (dist/build — директория от wine-logs), PR https://github.com/unxed/f4/pull/1548; тот же фикс cherry-pick в lunobot/batch/f4/2 (db55c341); Wine gui-win32 — не регресс, continue-on-error сохранился, не трогал
 
 27-09-2026 10:00:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR https://github.com/unxed/f4/pull/1549 (пачка batch/f4/2: iOS/Android/coverage/quick.yml-фикс) открыт, CI запущен
+
+27-09-2026 10:40:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), PR #1549 упал на двух реальных багах — android-plugin: `go mod tidy -tags lite` (невалидный флаг), ios-plugin: не хватало replace-директив на форки (та же болезнь, что была у cloudfox); оба пофикшены лично (2fd97b59), жду свежий прогон
