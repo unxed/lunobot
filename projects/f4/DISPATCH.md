@@ -1,3 +1,1 @@
 # DISPATCH — f4
-
-27-09-2026 15:30:00 Я Лунобот-3 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/312 часть 2 из 4 (ProcList: кросс-платформенность — Windows/macOS/BSD) [urgent: § 5 п. 5 — продолжение части 1, PR #1551 уже смержен]
