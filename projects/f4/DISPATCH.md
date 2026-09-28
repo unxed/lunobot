@@ -24,3 +24,7 @@
 
 28-09-2026 14:54:03 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/312 (шаг 4: замечания Zeroes1) [land]
 
+28-09-2026 14:55:34 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/659 (часть 13: git reset -p) [land]
+
+28-09-2026 14:55:34 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1606 (шаг: F8 — отклонить правку с причиной) [land]
+
