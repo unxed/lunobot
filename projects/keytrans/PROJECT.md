@@ -23,9 +23,9 @@
   раскладках — фикс влит в main через PR unxed/keytrans#7), #3 (arm64
   трамплин для purego-фоллбека — сам трамплин уже реализован без
   ассемблера в `variadic_syscall.go`, padding-трюк вместо реального
-  trampoline, см. его комментарий; PR unxed/keytrans#9 добавляет
-  юнит-тесты этой логики и arm64-проверки в CI, тикет не закрыт ботом по
-  § 3 п. 3).
+  trampoline, см. его комментарий; PR unxed/keytrans#9 влит 28-09-2026:
+  юнит-тесты этой логики, cross-compile+vet darwin/arm64 и job arm64 в CI;
+  тикет не закрыт ботом по § 3 п. 3).
 - `xkb-go` (в контексте #1): `Context` в `context.go`/`rules.go` читает
   XKB-данные через `os.Open`/`os.ReadFile` по реальным путям файловой
   системы, а не через `fs.FS`/`embed.FS` — вшить данные `go:embed`
