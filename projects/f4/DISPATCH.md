@@ -6,3 +6,5 @@
 
 28-09-2026 06:28:44 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1602 (пятая проверка полноты) [land]
 
+28-09-2026 06:29:33 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «покрыть тестами ещё файлы internal/app (65.5% по замеру Codecov), кроме vtvibe_ap*.go, actions_table.go/actions.go, calendar_ui.go — уже тронуты этой сессией» по § 5 п. 6 [land]
+
