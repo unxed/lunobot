@@ -518,21 +518,28 @@ def heal(repo):
 
 
 def stuck(repo):
-    """Метрика результата, а не активности: двигается ли main. Печатается каждым tick'ом.
+    """Метрика результата, а не активности: как долго УЖЕ ПРИЗЕМЛЁННАЯ работа ждёт main.
     Флот может выглядеть очень занятым (десятки land, поезд за поездом) и при этом не
-    доставлять ничего — именно так прошли 9.5 часов 28-09-2026."""
-    main = api(f"repos/{repo}/commits/main")
-    since = datetime.fromisoformat(main["commit"]["committer"]["date"].replace("Z", "+00:00"))
-    hours = (datetime.now(timezone.utc) - since).total_seconds() / 3600
-    ahead = compare(repo, main["sha"], api(f"repos/{repo}/branches/{STAGING}")["commit"]["sha"])
-    closed = [p for p in api(f"repos/{repo}/pulls?state=closed&per_page=50")
-              if p["head"]["ref"].startswith(TRAIN_PREFIX) and not p["merged_at"]
-              and datetime.fromisoformat(p["closed_at"].replace("Z", "+00:00")) > since]
-    print(f"main не двигался {hours:.1f} ч; staging впереди на {ahead['ahead_by']} коммит(ов); "
-          f"поездов закрыто без мержа за это время: {len(closed)}")
-    if hours > STUCK_HOURS and ahead["ahead_by"]:
-        print(f"ИНЦИДЕНТ ПРОЦЕССА: main стоит дольше {STUCK_HOURS} ч при непустом staging. "
-              "§ 4 «ретро круга»: новую работу не брать, найти причину, починить конвейер и "
+    доставлять ничего — именно так прошли 9.5 часов 28-09-2026.
+
+    Меряется возраст самого старого коммита staging, которого нет в main (дата коммиттера —
+    это момент land: land переносит коммиты rebase'ом). Не возраст вершины main: поезд
+    вливается fast-forward'ом, коммиты сохраняют старые даты, и «main стоит N часов»
+    показывало бы застой сразу после мержа; а в проекте, где main долго не нужен был, один
+    свежий коммит в staging поднимал бы ложный инцидент."""
+    main = api(f"repos/{repo}/branches/main")["commit"]["sha"]
+    staging = api(f"repos/{repo}/branches/{STAGING}")["commit"]["sha"]
+    own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
+    if not own:
+        print("staging не впереди main — приземлённая работа вся в main")
+        return 0
+    oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
+                 for c in own)
+    hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
+    print(f"в staging {len(own)} коммит(ов) ждут main; старший — {hours:.1f} ч")
+    if hours > STUCK_HOURS:
+        print(f"ИНЦИДЕНТ ПРОЦЕССА: приземлённая работа ждёт main дольше {STUCK_HOURS} ч. "
+              "§ 4 «ретро круга»: найти, почему не едет поезд, починить конвейер и "
               "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
         return 1
     return 0
