@@ -45,6 +45,10 @@ MIN_COMMITS = 5
 MAX_AGE_MIN = 30
 # Прогоны main здесь не отменяются никогда — решение владельца («Preserve every main run»).
 PRESERVE_MAIN = {"unxed/vtui"}
+# Зависимости f4, которые f4 подтягивает через go.mod: после мержа поезда в main — следующий
+# тег vX.Y.Z (projects/<проект>/PROJECT.md, «Релизы»). Без тега исправление не доедет до f4
+# (28-09-2026 поезд vtui #166 влит, тег никто не поставил, #1571 в f4 проверить было нельзя).
+TAG_AFTER_MERGE = {"unxed/vtui"}
 TRAILER = re.compile(r"^(Touch|Lunobot-Task):\s*(.+)$", re.M)
 CHECK = re.compile(r"^Проверить:\s*\n(.*?)(?:\n\s*\n[A-Z][\w-]+:|\Z)", re.M | re.S)
 # Коммит, чинящий красный staging: ручная починка (land --fix-staging) или автооткат tick'а.
@@ -588,6 +592,8 @@ def train_step(repo, sign):
     else:
         run("gh", "pr", "merge", str(n), "--repo", repo, "--merge", "--delete-branch")
         how = "merge-коммит (main ушёл вперёд — прогон main не отменять, § 7.3)"
+    if repo in TAG_AFTER_MERGE:
+        tag_next(repo)
     print(f"поезд #{n} ВЛИТ ({how}). Теперь по каждому тикету — «Пробуйте!» с текстом ниже "
           "и подписью (§ 7.3, § 9), TRIAGE → проверяют:")
     for key, texts in tickets(repo, compare(repo, pr["base"]["sha"], head)["commits"]).items():
@@ -595,6 +601,25 @@ def train_step(repo, sign):
         for t in texts:
             print(t)
     return 0
+
+
+def tag_next(repo):
+    """Следующий последовательный тег vX.Y.Z на вершине main (если она ещё без тега)."""
+    head = api(f"repos/{repo}/branches/main")["commit"]["sha"]
+    tags = api(f"repos/{repo}/tags?per_page=100") or []
+    if any(t["commit"]["sha"] == head for t in tags):
+        return
+    vers = [tuple(map(int, m.groups())) for t in tags
+            if (m := re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", t["name"]))]
+    if not vers:
+        print(f"{repo}: нет тегов vX.Y.Z — тег не ставлю, реши вручную")
+        return
+    a, b, c = max(vers)
+    tag = f"v{a}.{b}.{c + 1}"
+    r = run("gh", "api", f"repos/{repo}/git/refs", "-f", f"ref=refs/tags/{tag}", "-f",
+            f"sha={head}", check=False)
+    print(f"{repo}: тег {tag} на {head[:9]}" if r.returncode == 0 else
+          f"{repo}: тег {tag} не создан: {r.stderr.strip()}")
 
 
 def eject(repo, shas, reason):
