@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Дежурный флота (§ 4, «Дежурный субагент»): следит, что координатор не простаивает.
+
+    fleet_watch.py --node <24 hex> [--min 4] [--interval 60] [--once]
+
+Раз в --interval секунд обновляет учётный клон и печатает строку ТОЛЬКО когда есть повод
+разбудить координатора:
+
+  ПРОСТОЙ   — живых захватов этого узла в projects/*/DISPATCH.md меньше --min, а работа есть
+  КРАСНОЕ   — train.py health по проекту со staging вернул 1 (красный staging/main, застой)
+  ПРОТУХ    — захват этого узла держится дольше 45 минут без отметки
+
+Одинаковый повод повторяется не чаще раза в 5 минут. Только чтение: ничего не пушит, ничего
+не захватывает. Дежурный субагент гоняет его через Monitor и пересылает каждую строку
+координатору (SendMessage to: main) — сам субагентов запускать он не может.
+"""
+import os
+import re
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+REPEAT = timedelta(minutes=5)
+STALE = timedelta(minutes=45)
+TS = re.compile(r"^(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}) ")
+
+
+def sh(*cmd, timeout=180):
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, timeout=timeout)
+        return p.returncode, p.stdout + p.stderr
+    except subprocess.TimeoutExpired:
+        return 124, ""
+
+
+def projects():
+    text = open(os.path.join(ROOT, "projects", "INDEX.md"), encoding="utf-8").read()
+    return re.findall(r"^\d+\.\s*\[([^\]]+)\]", text, re.M)
+
+
+def captures(node):
+    out = []
+    for p in projects():
+        path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
+        if not os.path.exists(path):
+            continue
+        for line in open(path, encoding="utf-8"):
+            if node in line and ("взял" in line or "работаю" in line):
+                m = TS.match(line)
+                ts = (datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S")
+                      .replace(tzinfo=timezone.utc) if m else None)
+                out.append((p, ts, line.strip()))
+    return out
+
+
+def free_work():
+    found = []
+    for p in projects():
+        tri = os.path.join(ROOT, "projects", p, "TRIAGE.md")
+        dis = os.path.join(ROOT, "projects", p, "DISPATCH.md")
+        if not os.path.exists(tri):
+            continue
+        taken = open(dis, encoding="utf-8").read() if os.path.exists(dis) else ""
+        for line in open(tri, encoding="utf-8"):
+            m = re.match(r"\|\s*(\d+)\s*\|\s*([^|]+)\|\s*свободен\s*\|", line)
+            if m and f"/issues/{m.group(1)}" not in taken:
+                found.append(f"{p}#{m.group(1)}(п{m.group(2).strip()})")
+        rc, out = sh("python3", "check_triage.py", p)
+        drift = len(re.findall(r"^\[расхождение\]", out, re.M))
+        if rc and drift:
+            found.append(f"{p}: расхождений TRIAGE {drift}")
+    return found
+
+
+def staged_repos():
+    rc, out = sh("python3", "-c", "import train; print('\\n'.join(train.staged_repos()))")
+    return [r for r in out.split() if "/" in r] if rc == 0 else []
+
+
+def check(node, minimum, last):
+    sh("git", "pull", "-q", "--rebase")
+    now = datetime.now(timezone.utc)
+    events = []
+    live = captures(node)
+    if len(live) < minimum:
+        work = free_work()
+        events.append(("ПРОСТОЙ", f"захватов узла {len(live)} < {minimum}; свободная работа: "
+                       f"{', '.join(work[:12]) or 'по § 5 п. 6 (покрытие) или следующий проект'}"))
+    for p, ts, line in live:
+        if ts and now - ts > STALE:
+            events.append((f"ПРОТУХ {line[:60]}", f"захват держится "
+                           f"{int((now - ts).total_seconds() // 60)} мин: {line[:160]}"))
+    if not last.get("_health") or now - last["_health"] > timedelta(minutes=5):
+        last["_health"] = now
+        for repo in staged_repos():
+            rc, out = sh("python3", "train.py", "health", repo)
+            if rc == 1:
+                lines = [l for l in out.splitlines() if re.search(r"КРАСН|ИНЦИДЕНТ", l)]
+                events.append((f"КРАСНОЕ {repo}", f"{repo}: " + " | ".join(lines)[:400]))
+    for key, text in events:
+        if key not in last or now - last[key] > REPEAT:
+            last[key] = now
+            print(f"{now:%H:%M:%S}Z {key.split()[0]}: {text}", flush=True)
+
+
+def main(argv):
+    opt = lambda k, d=None: argv[argv.index(k) + 1] if k in argv else d
+    node = opt("--node")
+    if not node:
+        print(__doc__)
+        return 2
+    minimum, interval, last = int(opt("--min", "4")), int(opt("--interval", "60")), {}
+    while True:
+        check(node, minimum, last)
+        if "--once" in argv:
+            return 0
+        time.sleep(interval)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
