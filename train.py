@@ -287,36 +287,64 @@ def guess_os(name):
     return "ubuntu-latest"
 
 
+def sandbox_cmd(os_label, script):
+    """sandbox.yml исполняет `$SANDBOX_COMMAND` без разбора shell (bash) или через
+    Invoke-Expression (pwsh на Windows). В bash `&&`, `|` и кавычки без обёртки уходят
+    аргументами в go — и КАЖДЫЙ префикс бисекта красный, снова ложный виновник. Поэтому для
+    bash — один токен `bash -c` с ${IFS} вместо пробелов; pwsh 7 понимает `&&` сам."""
+    if os_label.startswith("windows"):
+        return script
+    return "bash -c " + script.replace(" ", "${IFS}")
+
+
 def pick_target(names):
     """ОС и команда бисекта по ВСЕМ упавшим job'ам, а не по первому в списке.
 
     Поезд режется только из зелёного quick (linux/amd64 build+vet+test), так что падение
     поезда почти всегда либо платформенное, либо lint/vet-специфичное. Платформенный Test/Race
     job — бисектим на его ОС; одни только Lint/Vet/Quality — `go vet` на linux."""
+    vet_test = "go vet ./... && go test -count=1 ./..."
     names = [n or "" for n in names]
     tests = [n for n in names if re.search(r"\b(Test|Race|Build and test)\b", n)]
     non_linux = [n for n in tests if not re.search(r"linux", n, re.I)]
     if non_linux:
-        return guess_os(non_linux[0]), "go vet ./... && go test -count=1 ./..."
+        return guess_os(non_linux[0]), vet_test
     if tests:
-        return guess_os(tests[0]), "go vet ./... && go test -count=1 ./..."
-    return "ubuntu-latest", "gofmt -l . | (! grep .) && go vet ./..."
+        return guess_os(tests[0]), vet_test
+    return "ubuntu-latest", 'test -z "$(gofmt -l .)" && go vet ./...'
 
 
-def bisect(repo, pr, os_label, cmd):
-    """Параллельный бисект: по ветке и прогону песочницы на КАЖДЫЙ префикс поезда сразу,
-    плюс контрольный прогон на базе поезда (main): без него красная база делает «виновником»
-    первый же коммит поезда (трижды случилось с невиновным 6f8fffd9, #1611/#1612/#1620)."""
-    refs = [(f"bisect/{pr['number']}/base-{pr['base']['sha'][:9]}", pr["base"]["sha"])]
-    refs += [(f"bisect/{pr['number']}/{i:02d}-{c['sha'][:9]}", c["sha"])
-             for i, c in enumerate(train_commits(repo, pr))]
+BISECT_ROUND = 12  # прогонов песочницы за раунд: пул аккаунта — 20 job'ов на всех
+
+
+def sample(lo, hi, k):
+    """До k индексов строго между lo и hi, равномерно."""
+    inner = list(range(lo + 1, hi))
+    if len(inner) <= k:
+        return inner
+    return sorted({inner[round(j * (len(inner) - 1) / (k - 1))] for j in range(k)})
+
+
+def bisect(repo, pr, os_label, cmd, good=-1, bad=None):
+    """Бисект раундами. Раунд — параллельные прогоны песочницы на префиксах поезда внутри окна
+    (good, bad]: оба конца окна (для самодостаточного вердикта) и до BISECT_ROUND точек между
+    ними. Первый раунд — ещё и контроль на базе поезда (main): без него красная база делает
+    «виновником» первый же коммит поезда (трижды — невиновный 6f8fffd9, #1611/#1612/#1620).
+    Раньше гонялся КАЖДЫЙ префикс сразу — на поезде из сотни коммитов это сотня прогонов."""
+    commits = train_commits(repo, pr)
+    bad = len(commits) - 1 if bad is None else bad
+    idx = sorted({i for i in [good, bad] if i >= 0} | set(sample(good, bad, BISECT_ROUND)))
+    refs = [(f"bisect/{pr['number']}/{i:03d}-{commits[i]['sha'][:9]}", commits[i]["sha"])
+            for i in idx]
+    if good < 0:
+        refs.insert(0, (f"bisect/{pr['number']}/base-{pr['base']['sha'][:9]}", pr["base"]["sha"]))
     for ref, sha in refs:
         api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{ref}", "-f", f"sha={sha}",
             check=False)
         run("gh", "workflow", "run", "sandbox.yml", "--repo", repo, "--ref", ref,
-            "-f", f"os={os_label}", "-f", f"command={cmd}")
-    print(f"бисект запущен: {os_label}, `{cmd}`, {len(refs)} прогонов (с контролем базы) — "
-          "результат разберёт следующий tick")
+            "-f", f"os={os_label}", "-f", f"command={sandbox_cmd(os_label, cmd)}")
+    print(f"бисект: окно ({good}, {bad}] из {len(commits)} коммитов, {len(refs)} прогонов "
+          f"({os_label}, `{cmd}`) — результат разберёт следующий tick")
 
 
 def bisect_refs(repo, n):
@@ -359,11 +387,20 @@ def red(repo, pr, failed):
             print(f"бисект: база поезда (main) сама красная — {base[0][1]['html_url']}. "
                   "Коммиты поезда НЕ выкидываются. СРОЧНО (§ 5 п. 2): красный main")
             return 1
-        bad = [ref for ref, r in verdict if r["conclusion"] != "success" and "/base-" not in ref]
-        if bad:
-            sha = next(c["sha"] for c in train_commits(repo, pr)
-                       if c["sha"].startswith(bad[0].rsplit("-", 1)[1]))
-            print(f"бисект: первый падающий префикс {bad[0]} — виновник {sha[:9]}")
+        res = {int(ref.rsplit("/", 1)[1].split("-")[0]): r["conclusion"] == "success"
+               for ref, r in verdict if "/base-" not in ref}
+        bads = [i for i, ok in res.items() if not ok]
+        if bads:
+            i_bad = min(bads)
+            i_good = max([i for i, ok in res.items() if ok and i < i_bad], default=-1)
+            commits = train_commits(repo, pr)
+            if i_bad - i_good > 1:
+                drop_bisect(repo, refs)
+                print(f"бисект: падает с префикса {i_bad}, зелёный до {i_good} — сужаю окно")
+                bisect(repo, pr, *pick_target(names), good=i_good, bad=i_bad)
+                return 0
+            sha = commits[i_bad]["sha"]
+            print(f"бисект: первый падающий префикс {i_bad} — виновник {sha[:9]}")
             # Ветки бисекта удаляет eject только при успехе: если откат не лёг, следующий
             # tick увидит тот же готовый вердикт, а не запустит бисект заново по кругу.
             return eject(repo, [sha], f"бисект по {pr['html_url']}, первым падает {sha[:9]}")
