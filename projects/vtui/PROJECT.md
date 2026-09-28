@@ -7,6 +7,7 @@
   отдельная ветка -> PR за каждый шаг. Проверено 28-09-2026 по факту
   существования `origin/lunobot/staging` и смерженных
   `lunobot/train/vtui/*` PR в репозитории.
+- Быстрая проверка: `quick.yml` (push в `lunobot/**`) с 28-09-2026 гоняет параллельный job `Lint` — golangci-lint v2.13.1, `--new-from-rev=origin/main`, как в ci.yml; находки gosec ловятся до поезда.
 - Зависимости: нет
 - Покрытие: настроено (28-09-2026, Лунобот-3). Задание `Coverage` в
   `.github/workflows/ci.yml` (`go test -covermode=atomic ./...`, linux/amd64,
