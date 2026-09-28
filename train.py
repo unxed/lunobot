@@ -40,6 +40,9 @@ import time
 from datetime import datetime, timezone
 
 STAGING = "lunobot/staging"
+# Явный refspec со знаком +: single-branch клон (gh repo clone --depth=N) не содержит staging в
+# remote.origin.fetch, и голый `git fetch origin lunobot/staging` не обновляет origin/lunobot/staging.
+STAGING_REFSPEC = f"+refs/heads/{STAGING}:refs/remotes/origin/{STAGING}"
 TRAIN_PREFIX = "lunobot/train/"
 MIN_COMMITS = 5
 MAX_AGE_MIN = 30
@@ -128,7 +131,7 @@ def who(c):
 
 
 def land(fix=False):
-    run("git", "fetch", "-q", "origin", STAGING)
+    run("git", "fetch", "-q", "origin", STAGING_REFSPEC)
     commits = run("git", "log", "--format=%H%x00%B%x01", f"origin/{STAGING}..HEAD").stdout
     msgs = [c.split("\0", 1) for c in commits.split("\x01") if c.strip()]
     if not msgs:
@@ -164,7 +167,7 @@ def land(fix=False):
                   f"результат quick позже: train.py covered <owner/repo> {head}")
             return 0
         time.sleep(2 + 3 * attempt)
-        run("git", "fetch", "-q", "origin", STAGING)
+        run("git", "fetch", "-q", "origin", STAGING_REFSPEC)
     sys.exit("staging шесть раз подряд ушёл вперёд — повтори land чуть позже")
 
 
