@@ -8,7 +8,21 @@
   существования `origin/lunobot/staging` и смерженных
   `lunobot/train/vtui/*` PR в репозитории.
 - Зависимости: нет
-- Покрытие: настройка не проверялась, уточнить прежде чем брать задачи по покрытию
+- Покрытие: настроено (28-09-2026, Лунобот-3). Задание `Coverage` в
+  `.github/workflows/ci.yml` (`go test -covermode=atomic ./...`, linux/amd64,
+  CGO_ENABLED=0) гоняется на PR (поезда) и main; профиль — артефакт
+  `coverage` и, с 28-09-2026, загрузка в Codecov (OIDC, без CODECOV_TOKEN,
+  `fail_ci_if_error: false`). Публичный API
+  `https://api.codecov.io/api/v2/gh/unxed/repos/vtui/report/` заработает после
+  первого прогона на main с этой правкой (до того отвечает «branch main not in
+  our records»); до тех пор цифры — `gh run download <run main CI> -n coverage`.
+  В `line_coverage` второе число — состояние строки (0=hit/1=miss/2=partial).
+  На main (run 36416612450) — 69.5% операторов, цель 80%. Наименее покрытые
+  файлы с логикой без GUI: `properties.go` (32%), `far2l_extensions.go` (38%),
+  `validator.go` (52%), `protocol.go` (54%), `internal/uba/core.go` (58%),
+  `vui_loader.go` (63%); `semantic.go` поднят с 43.6% почти до 100%
+  (Lunobot-Task `coverage-vtui-semantic`). Нативные хосты (x11/wayland/gogpu/
+  ebiten/cocoa/win32) и `cmd/*` покрываются плохо по природе — их не брать.
 - Язык общения: по языку автора тикета
 - Особенности: библиотека, от которой зависит f4; правка, ломающая её API,
   требует парной правки в f4
