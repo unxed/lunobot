@@ -525,15 +525,36 @@ def stuck(repo):
     return 0
 
 
+def main_ci(repo):
+    """Последний прогон полной матрицы на вершине main. После мержа мимо поезда (владелец
+    влил staging руками, merge-коммит поезда, срочный PR) это ПЕРВАЯ проверка комбинации
+    на всех ОС — её результат должен увидеть следующий же круг, а не случайный бот."""
+    head = api(f"repos/{repo}/branches/main")["commit"]["sha"]
+    runs = api(f"repos/{repo}/actions/runs?branch=main&event=push&head_sha={head}&per_page=20")
+    runs = [r for r in runs["workflow_runs"] if r["name"] not in ("quick", "sandbox")]
+    if not runs:
+        print(f"main {head[:9]}: прогона полной матрицы нет")
+        return 0
+    r = max(runs, key=lambda r: r["created_at"])
+    if r["status"] != "completed":
+        print(f"main {head[:9]}: полная матрица идёт — {r['html_url']} (строка в CI.md, § 7.3)")
+        return 0
+    if r["conclusion"] in ("success", "skipped", "cancelled"):
+        print(f"main {head[:9]}: {r['conclusion']} — {r['html_url']}")
+        return 0
+    print(f"main {head[:9]}: КРАСНЫЙ — {r['html_url']}. СРОЧНО (§ 5 п. 2): красный main")
+    return 1
+
+
 def health(repo):
     state, info = staging_health(repo)
     last = info["last"]
     print(f"staging: {state}" + (f" — {last['html_url']}" if last else ""))
-    return max(stuck(repo), 1 if state == "red" else 0)
+    return max(stuck(repo), main_ci(repo), 1 if state == "red" else 0)
 
 
 def tick(repo, sign):
-    rc = max(stuck(repo), heal(repo))
+    rc = max(stuck(repo), main_ci(repo), heal(repo))
     return max(rc, train_step(repo, sign))
 
 
