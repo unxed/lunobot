@@ -5,8 +5,9 @@
 каталог по образцу соседних и впиши строку сюда.
 
 1. [f4](f4/PROJECT.md)
-2. [vtui](vtui/PROJECT.md)
-3. [tar](tar/PROJECT.md)
-4. [zipper](zipper/PROJECT.md)
-5. [zip](zip/PROJECT.md)
-6. [xz](xz/PROJECT.md)
+2. [keytrans](keytrans/PROJECT.md)
+3. [vtui](vtui/PROJECT.md)
+4. [tar](tar/PROJECT.md)
+5. [zipper](zipper/PROJECT.md)
+6. [zip](zip/PROJECT.md)
+7. [xz](xz/PROJECT.md)
