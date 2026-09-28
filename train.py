@@ -550,6 +550,15 @@ def main_ci(repo):
         return 0
     r = max(runs, key=lambda r: r["created_at"])
     if r["status"] != "completed":
+        # Упавший job виден задолго до конца матрицы (28-09-2026: семь групп падений были
+        # видны через ~20 минут, а прогон шёл ещё полчаса) — починку начинаем сразу.
+        jobs = api(f"repos/{repo}/actions/runs/{r['id']}/jobs?per_page=100", check=False) or {}
+        bad = [j["name"] for j in jobs.get("jobs", []) if j.get("conclusion") == "failure"]
+        if bad:
+            print(f"main {head[:9]}: полная матрица ещё идёт, но уже КРАСНАЯ ({len(bad)}: "
+                  f"{', '.join(bad[:6])}{' …' if len(bad) > 6 else ''}) — {r['html_url']}. "
+                  "СРОЧНО (§ 5 п. 2): красный main, не ждать конца прогона")
+            return 1
         print(f"main {head[:9]}: полная матрица идёт — {r['html_url']} (строка в CI.md, § 7.3)")
         return 0
     if r["conclusion"] in ("success", "skipped", "cancelled"):
