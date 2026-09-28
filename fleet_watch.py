@@ -97,7 +97,9 @@ def check(node, minimum, last):
         for repo in staged_repos():
             rc, out = sh("python3", "train.py", "health", repo)
             if rc == 1:
-                lines = [l for l in out.splitlines() if re.search(r"КРАСН|ИНЦИДЕНТ", l)]
+                # health пишет «staging: red» латиницей — без этого красный staging не виден
+                lines = [l for l in out.splitlines()
+                         if re.search(r"КРАСН|ИНЦИДЕНТ|^staging: red", l)]
                 events.append((f"КРАСНОЕ {repo}", f"{repo}: " + " | ".join(lines)[:400]))
     for key, text in events:
         if key not in last or now - last[key] > REPEAT:
