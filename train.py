@@ -578,7 +578,7 @@ def staged_repos():
         except OSError:
             continue
         m = re.search(r"^- Код: https://github\.com/([^/\s]+/[^/\s]+)", text, re.M)
-        if m and api(f"repos/{m.group(1)}/branches/{STAGING}", check=False):
+        if m and "commit" in (api(f"repos/{m.group(1)}/branches/{STAGING}", check=False) or {}):
             out.append(m.group(1))
     return out
 
