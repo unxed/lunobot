@@ -14,13 +14,15 @@ land  — переносит твои коммиты (origin/lunobot/staging..HE
         завершённый quick упал и починки после него нет) — ОТКАЗЫВАЕТ: конвейер стоит, пока
         его не починят (§ 7.2 п. 0). Починка — с --fix-staging и трейлером `Fixes-Staging:`.
 health — только чтение: состояние staging и сколько часов main не двигался; для ретро круга.
+        Плюс предупреждение (код не меняет): тикеты `в пути` в TRIAGE.md, чьи `Touch:` уже в main.
 covered — быстрый ответ автору после land: зелёный/красный/ещё едет — по первому завершённому
         quick на его коммите или потомке (quick на staging не отменяется, каждый прогон доезжает).
 tick  — идемпотентный шаг проводника; запускай в начале каждого круга. Сначала лечит staging:
         красный quick — один перезапуск, снова красный — откатывает виновника (коммиты между
         последним зелёным и первым красным quick, не больше трёх; больше — срочная задача).
-        Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит), красный —
-        бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
+        Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит) и, если tick
+        запущен из учётного клона, сам правит в TRIAGE.md `в пути` → `проверяют` по `Touch:`
+        коммитов поезда (коммит+пуш с `Lunobot-Instance:`); красный — бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
         staging с зелёным quick. Печатает, сколько часов main не двигался; больше двух —
         ИНЦИДЕНТ ПРОЦЕССА, код 1.
 bisect — вручную, когда падение платформенное/узкое и автоматический бисект (`go test ./...` на
@@ -32,6 +34,7 @@ eject — ревертит в staging коммиты-виновники крас
 (конфликт, красный поезд без выкидывания), 2 — ошибка использования.
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -65,6 +68,11 @@ MAX_AUTO_REVERT = 3
 # main стоит дольше этого при непустом staging — процесс не работает (инцидент 28-09-2026:
 # десять поездов подряд красные, main стоял 9.5 ч, пока флот продолжал приземлять).
 STUCK_HOURS = 2
+# Учётный клон — каталог, где лежит сам train.py (его запускают оттуда, § 7.2 п. 3).
+ACCOUNTING = os.path.dirname(os.path.abspath(__file__))
+IN_TRANSIT = re.compile(r"^(\|\s*(\d+)\s*\|[^|]*\|\s*)в пути(\s*\|)", re.M)
+# Окно сверки «в пути» с Touch: коммитов main (см. transit_warn).
+TRANSIT_WINDOW_H = 24
 
 
 def run(*cmd, check=True, cwd=None):
@@ -585,12 +593,109 @@ def health(repo):
     state, info = staging_health(repo)
     last = info["last"]
     print(f"staging: {state}" + (f" — {last['html_url']}" if last else ""))
-    return max(stuck(repo), main_ci(repo), 1 if state == "red" else 0)
+    rc = max(stuck(repo), main_ci(repo), 1 if state == "red" else 0)
+    transit_warn(repo)
+    return rc
 
 
 def tick(repo, sign):
     rc = max(stuck(repo), main_ci(repo), heal(repo))
-    return max(rc, train_step(repo, sign))
+    rc = max(rc, train_step(repo, sign))
+    transit_warn(repo)
+    return rc
+
+
+def own_numbers(repo, commits):
+    """Номера тикетов самого repo из `Touch:` коммитов (Touch: #N и Touch: <repo>#N)."""
+    return {int(k.split("#")[1]) for k in tickets(repo, commits) if k.startswith(f"{repo}#")}
+
+
+def triage_path(repo):
+    return os.path.join(ACCOUNTING, "projects", repo.split("/")[1], "TRIAGE.md")
+
+
+def mark_checking(repo, nums, sign):
+    """После вливания поезда: `в пути` → `проверяют` в TRIAGE.md учётного клона (§ 5.1).
+    Раньше tick это только печатал, и без ручной правки тикеты висели `в пути` вечно
+    (28-09-2026: f4 #659, #1604, #1606). Нет клона/файла, не main, любые незакоммиченные правки в клоне, нет id в
+    --sign — только сообщение: правь руками. В коммит идёт только TRIAGE.md (по имени). Комментарии и updatedAt не трогаются."""
+    path = triage_path(repo)
+    if not nums:
+        return
+    if not os.path.isdir(os.path.join(ACCOUNTING, ".git")) or not os.path.exists(path):
+        print("TRIAGE не правлю (нет учётного клона проекта рядом с train.py): "
+              "`в пути` → `проверяют` руками")
+        return
+    rel = os.path.relpath(path, ACCOUNTING)
+    git = lambda *a: run("git", "-c", "user.name=unxed", "-c",
+                         "user.email=1151423+unxed@users.noreply.github.com", *a,
+                         cwd=ACCOUNTING, check=False)
+    if git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "main":
+        print("TRIAGE не правлю: учётный клон не на main — `в пути` → `проверяют` руками")
+        return
+    if git("status", "--porcelain", "--untracked-files=no").stdout.strip():
+        print("TRIAGE не правлю: в учётном клоне есть незакоммиченные правки (чужие не трогаю, "
+              "в коммит идёт только TRIAGE.md) — `в пути` → `проверяют` руками")
+        return
+    m = re.search(r"((?:Лунобот|Lunobot)-\d+ \(node [0-9a-f]+; \w+)", sign or "")
+    if not m:
+        print("TRIAGE не правлю: в --sign нет id вида `Лунобот-N (node …; ПЛАТФОРМА)` для "
+              "трейлера Lunobot-Instance — `в пути` → `проверяют` руками")
+        return
+    inst = m.group(1) + ")"
+    tags = ""
+    subject = ""
+    for attempt in range(3):  # гонка с другим ботом/менеджером: pull --rebase и повтор
+        if git("pull", "--rebase", "-q", "origin", "main").returncode:
+            git("rebase", "--abort")
+            break
+        if not subject:  # правку делаем и коммитим один раз; повторы — только rebase и push
+            text = open(path, encoding="utf-8").read()
+            done = []
+
+            def fix(mo):
+                if int(mo.group(2)) in nums:
+                    done.append(int(mo.group(2)))
+                    return mo.group(1) + "проверяют" + mo.group(3)
+                return mo.group(0)
+            new = IN_TRANSIT.sub(fix, text)
+            if not done:
+                print("TRIAGE: тикетов поезда в состоянии `в пути` нет — править нечего")
+                return
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(new)
+            tags = ", ".join(f"#{n}" for n in sorted(done))
+            subject = f"{repo.split('/')[1]}: поезд влит, TRIAGE в пути → проверяют ({tags})"
+            git("add", "--", rel)
+            if git("commit", "-q", "-m", f"{subject}\n\nLunobot-Instance: {inst}\n", "--", rel).returncode:
+                git("checkout", "--", rel)
+                break
+        if git("push", "-q", "origin", "HEAD:main").returncode == 0:
+            print(f"TRIAGE: в пути → проверяют для {tags} (закоммитил и запушил)")
+            return
+    if subject and git("log", "-1", "--format=%s").stdout.strip() == subject:
+        git("reset", "-q", "--hard", "HEAD~1")  # свой непушнутый коммит не оставляем в клоне
+    print("TRIAGE: не удалось запушить правку `в пути` → `проверяют` (сеть/гонка) — сделай руками")
+
+
+def transit_warn(repo):
+    """Предупреждение (не ошибка): тикет `в пути` в TRIAGE.md, а его `Touch:` уже в main за
+    последние TRANSIT_WINDOW_H ч — «Пробуйте!» не разнесён, состояние не сдвинулось.
+    Коммиты без Touch: (эпоха PR) этим не видны — их состояние ведёт автор вручную."""
+    try:
+        text = open(triage_path(repo), encoding="utf-8").read()
+    except OSError:
+        return
+    transit = {int(m.group(2)) for m in IN_TRANSIT.finditer(text)}
+    if not transit:
+        return
+    since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
+    commits = api(f"repos/{repo}/commits?sha=main&since={since}&per_page=100", check=False) or []
+    stale = sorted(transit & own_numbers(repo, commits))
+    if stale:
+        print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
+              f"нет «Пробуйте!»: {', '.join(f'#{n}' for n in stale)}. Разнеси «Пробуйте!» "
+              "(§ 7.2 п. 4) и поставь `проверяют`")
 
 
 def train_step(repo, sign):
@@ -626,11 +731,13 @@ def train_step(repo, sign):
     if repo in TAG_AFTER_MERGE:
         tag_next(repo)
     print(f"поезд #{n} ВЛИТ ({how}). Теперь по каждому тикету — «Пробуйте!» с текстом ниже "
-          "и подписью (§ 7.3, § 9), TRIAGE → проверяют:")
-    for key, texts in tickets(repo, compare(repo, pr["base"]["sha"], head)["commits"]).items():
+          "и подписью (§ 7.3, § 9); TRIAGE → проверяют tick ставит сам, ниже итог:")
+    commits = compare(repo, pr["base"]["sha"], head)["commits"]
+    for key, texts in tickets(repo, commits).items():
         print(f"--- {key}")
         for t in texts:
             print(t)
+    mark_checking(repo, own_numbers(repo, commits), sign)
     return 0
 
 
@@ -682,7 +789,6 @@ def staged_repos():
     """Репозитории проектов из projects/INDEX.md (в порядке приоритета), у которых есть staging.
     Раньше tick звали по одному проекту руками — и vtui 28-09-2026 простоял 7 часов с
     необработанным поездом, потому что координатор помнил только про f4."""
-    import os
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "projects")
     out = []
     for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", open(os.path.join(root, "INDEX.md"),
