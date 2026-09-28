@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """Staging и поезда (§ 7.2 инструкции): единственный путь рутинной работы в main.
 
-    train.py land                      в рабочем клоне, на своей ветке поверх lunobot/staging
+    train.py land [--fix-staging]      в рабочем клоне, на своей ветке поверх lunobot/staging
     train.py tick  <owner/repo> --sign "<подпись § 9>"
+    train.py health <owner/repo>
     train.py eject <owner/repo> <sha>... --reason "<ссылка на упавший job>"
     train.py covered <owner/repo> <sha>
     train.py bisect <owner/repo> --os <раннер> --cmd "<команда песочницы>"
 
 land  — переносит твои коммиты (origin/lunobot/staging..HEAD) на вершину staging и пушит,
-        с повторами при гонке. PR не открывает никогда.
+        с повторами при гонке. PR не открывает никогда. Staging красный (последний
+        завершённый quick упал и починки после него нет) — ОТКАЗЫВАЕТ: конвейер стоит, пока
+        его не починят (§ 7.2 п. 0). Починка — с --fix-staging и трейлером `Fixes-Staging:`.
+health — только чтение: состояние staging и сколько часов main не двигался; для ретро круга.
 covered — быстрый ответ автору после land: зелёный/красный/ещё едет — по первому завершённому
         quick на его коммите или потомке (quick на staging не отменяется, каждый прогон доезжает).
-tick  — идемпотентный шаг проводника; запускай в начале каждого круга. Поезд в пути: зелёный —
-        вливает (fast-forward main, иначе merge-коммит), красный — печатает, кого выкидывать;
-        поезда нет, а staging созрел — режет новый поезд и открывает за него PR.
+tick  — идемпотентный шаг проводника; запускай в начале каждого круга. Сначала лечит staging:
+        красный quick — один перезапуск, снова красный — откатывает виновника (коммиты между
+        последним зелёным и первым красным quick, не больше трёх; больше — срочная задача).
+        Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит), красный —
+        бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
+        staging с зелёным quick. Печатает, сколько часов main не двигался; больше двух —
+        ИНЦИДЕНТ ПРОЦЕССА, код 1.
 bisect — вручную, когда падение платформенное/узкое и автоматический бисект (`go test ./...` на
         ОС упавшего job'а) его не ловит: свой раннер и своя команда. Результат разбирает tick.
 eject — ревертит в staging коммиты-виновники красного поезда и закрывает его PR; следующий
@@ -38,6 +46,14 @@ MAX_AGE_MIN = 30
 PRESERVE_MAIN = {"unxed/vtui"}
 TRAILER = re.compile(r"^(Touch|Lunobot-Task):\s*(.+)$", re.M)
 CHECK = re.compile(r"^Проверить:\s*\n(.*?)(?:\n\s*\n[A-Z][\w-]+:|\Z)", re.M | re.S)
+# Коммит, чинящий красный staging: ручная починка (land --fix-staging) или автооткат tick'а.
+HEAL = re.compile(r"^(Fixes-Staging|Staging-Revert):", re.M)
+# Больше стольких коммитов между последним зелёным и первым красным quick — откатывать
+# вслепую нельзя (заденет чужую работу), нужен бот: срочная задача § 5 п. 2.
+MAX_AUTO_REVERT = 3
+# main стоит дольше этого при непустом staging — процесс не работает (инцидент 28-09-2026:
+# десять поездов подряд красные, main стоял 9.5 ч, пока флот продолжал приземлять).
+STUCK_HOURS = 2
 
 
 def run(*cmd, check=True, cwd=None):
@@ -52,7 +68,61 @@ def api(path, *args, check=True):
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
-def land():
+def origin_repo():
+    url = run("git", "remote", "get-url", "origin", check=False).stdout.strip()
+    m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", url)
+    return m.group(1) if m else None
+
+
+def quick_runs(repo):
+    """Завершённые (не отменённые) прогоны quick на staging, новые первыми."""
+    rs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?branch={STAGING}&per_page=60")
+    rs = [r for r in rs["workflow_runs"] if r["status"] == "completed"
+          and r["conclusion"] not in ("cancelled", "skipped")]
+    return sorted(rs, key=lambda r: r["created_at"], reverse=True)
+
+
+def staging_health(repo):
+    """green | pending | healing | red, и подробности.
+
+    red — последний завершённый quick на staging упал, и после его вершины в staging нет
+    ни одного коммита-починки (трейлер Fixes-Staging:/Staging-Revert:). Всё, что приземлено
+    поверх красного без починки, красное вслепую: его quick ничего не говорит о нём самом."""
+    tip = api(f"repos/{repo}/branches/{STAGING}")["commit"]["sha"]
+    runs = quick_runs(repo)
+    info = {"tip": tip, "last": runs[0] if runs else None,
+            "green": next((r for r in runs if r["conclusion"] == "success"), None)}
+    if not runs:
+        return "pending", info
+    last = runs[0]
+    if last["conclusion"] == "success":
+        return ("green" if last["head_sha"] == tip else "pending"), info
+    if last["head_sha"] != tip:
+        after = compare(repo, last["head_sha"], tip)["commits"]
+        if any(HEAL.search(c["commit"]["message"]) for c in after):
+            return "healing", info
+    return "red", info
+
+
+def red_range(repo, info):
+    """Коммиты-кандидаты в виновники: от последнего зелёного quick до первого красного."""
+    runs = quick_runs(repo)
+    green = info["green"]
+    base = green["head_sha"] if green else api(f"repos/{repo}/branches/main")["commit"]["sha"]
+    newer = [r for r in runs if not green or r["created_at"] > green["created_at"]]
+    first_red = min(newer, key=lambda r: r["created_at"]) if newer else info["last"]
+    commits = compare(repo, base, first_red["head_sha"])["commits"]
+    return first_red, [c for c in commits if len(c["parents"]) == 1
+                       and not HEAL.search(c["commit"]["message"])]
+
+
+def who(c):
+    msg = c["commit"]["message"]
+    keys = [v.strip() for _, v in TRAILER.findall(msg)]
+    return f"{c['sha'][:9]} {msg.splitlines()[0][:70]} [{', '.join(keys) or 'без трейлера'}]"
+
+
+def land(fix=False):
     run("git", "fetch", "-q", "origin", STAGING)
     commits = run("git", "log", "--format=%H%x00%B%x01", f"origin/{STAGING}..HEAD").stdout
     msgs = [c.split("\0", 1) for c in commits.split("\x01") if c.strip()]
@@ -62,6 +132,22 @@ def land():
     if bad:
         sys.exit(f"коммиты без трейлера Touch:/Lunobot-Task: {', '.join(bad)} — проводник не "
                  "сможет разнести «Пробуйте!» по тикетам; допиши трейлер (git commit --amend)")
+    if fix and not any(re.search(r"^Fixes-Staging:", body, re.M) for _, body in msgs):
+        sys.exit("--fix-staging: хотя бы один коммит обязан нести трейлер "
+                 "`Fixes-Staging: <ссылка на красный quick>` — по нему остальные поймут, что "
+                 "staging лечится, и снова смогут приземлять")
+    repo = origin_repo()
+    if repo and not fix:
+        state, info = staging_health(repo)
+        if state == "red":
+            last = info["last"]
+            sys.exit(
+                f"staging КРАСНЫЙ: {last['html_url']} (вершина {last['head_sha'][:9]}). Конвейер "
+                "стоит — поверх красного не приземляют (§ 7.2 п. 0). Твои коммиты целы в клоне.\n"
+                "Сейчас у тебя § 5 п. 2: запусти `train.py tick " + repo + " --sign ...` (он "
+                "перезапустит quick или откатит однозначного виновника) либо почини причину "
+                "сам и приземли с `land --fix-staging` (трейлер `Fixes-Staging: <ссылка>`). "
+                "Потом повтори land.")
     for attempt in range(6):
         if run("git", "rebase", "-q", f"origin/{STAGING}", check=False).returncode:
             run("git", "rebase", "--abort", check=False)
@@ -131,7 +217,20 @@ def cut(repo, sign):
                   f"разреши вручную в клоне и запушь в {STAGING}\n{r.stderr.strip()}")
             return 1
         print("влил main в staging (там были коммиты мимо поезда)")
-        return tick(repo, sign)
+        return train_step(repo, sign)
+    # Поезд режется только до последнего коммита staging с зелёным quick: красный кусок
+    # staging в поезд не едет никогда. Иначе поезд заведомо красный, а бисект по нему ищет
+    # виновника в «базе, которая сама красная» (инцидент 28-09-2026, #1611–#1620).
+    green = next((r for r in quick_runs(repo) if r["conclusion"] == "success"
+                  and compare(repo, main_sha, r["head_sha"]).get("ahead_by", 0) > 0
+                  and compare(repo, r["head_sha"], staging["commit"]["sha"])["status"]
+                  in ("ahead", "identical")), None)
+    if not green:
+        print("в staging нет ни одного коммита впереди main с зелёным quick — поезд не режется; "
+              "если staging красный, это § 5 п. 2 (см. выше)")
+        return 0
+    cut_sha = green["head_sha"]
+    cmp = compare(repo, main_sha, cut_sha)
     own = [c for c in cmp["commits"] if len(c["parents"]) == 1]
     if not own:
         print("staging не впереди main — резать нечего")
@@ -146,12 +245,12 @@ def cut(repo, sign):
     stamp = datetime.now(timezone.utc).strftime("%y%m%d-%H%M")
     project = repo.split("/")[1]
     branch = f"{TRAIN_PREFIX}{project}/{stamp}"
-    api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
-        "-f", f"sha={staging['commit']['sha']}")
+    api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}", "-f", f"sha={cut_sha}")
     tk = tickets(repo, own)
     short = [k.replace(f"{repo}#", "#") for k in tk]
     title = f"Поезд {project} {stamp}: " + (", ".join(short) if short else f"{len(own)} коммитов")
-    body = [f"Поезд из `{STAGING}` ({len(own)} коммитов). Собран `train.py` — отдельных "
+    body = [f"Поезд из `{STAGING}` до `{cut_sha[:9]}` — последнего коммита с зелёным quick "
+            f"({green['html_url']}); {len(own)} коммитов. Собран `train.py` — отдельных "
             "бот-PR больше нет, всё рутинное едет так (LUNOBOT.md § 7.2).", ""]
     for key, texts in tk.items():
         body.append(f"### {key}")
@@ -187,15 +286,36 @@ def guess_os(name):
     return "ubuntu-latest"
 
 
+def pick_target(names):
+    """ОС и команда бисекта по ВСЕМ упавшим job'ам, а не по первому в списке.
+
+    Поезд режется только из зелёного quick (linux/amd64 build+vet+test), так что падение
+    поезда почти всегда либо платформенное, либо lint/vet-специфичное. Платформенный Test/Race
+    job — бисектим на его ОС; одни только Lint/Vet/Quality — `go vet` на linux."""
+    names = [n or "" for n in names]
+    tests = [n for n in names if re.search(r"\b(Test|Race|Build and test)\b", n)]
+    non_linux = [n for n in tests if not re.search(r"linux", n, re.I)]
+    if non_linux:
+        return guess_os(non_linux[0]), "go vet ./... && go test -count=1 ./..."
+    if tests:
+        return guess_os(tests[0]), "go vet ./... && go test -count=1 ./..."
+    return "ubuntu-latest", "gofmt -l . | (! grep .) && go vet ./..."
+
+
 def bisect(repo, pr, os_label, cmd):
-    """Параллельный бисект: по ветке и прогону песочницы на КАЖДЫЙ префикс поезда сразу."""
-    for i, c in enumerate(train_commits(repo, pr)):
-        ref = f"bisect/{pr['number']}/{i:02d}-{c['sha'][:9]}"
-        api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{ref}", "-f", f"sha={c['sha']}",
+    """Параллельный бисект: по ветке и прогону песочницы на КАЖДЫЙ префикс поезда сразу,
+    плюс контрольный прогон на базе поезда (main): без него красная база делает «виновником»
+    первый же коммит поезда (трижды случилось с невиновным 6f8fffd9, #1611/#1612/#1620)."""
+    refs = [(f"bisect/{pr['number']}/base-{pr['base']['sha'][:9]}", pr["base"]["sha"])]
+    refs += [(f"bisect/{pr['number']}/{i:02d}-{c['sha'][:9]}", c["sha"])
+             for i, c in enumerate(train_commits(repo, pr))]
+    for ref, sha in refs:
+        api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{ref}", "-f", f"sha={sha}",
             check=False)
         run("gh", "workflow", "run", "sandbox.yml", "--repo", repo, "--ref", ref,
             "-f", f"os={os_label}", "-f", f"command={cmd}")
-    print(f"бисект запущен: {os_label}, `{cmd}` — результат разберёт следующий tick")
+    print(f"бисект запущен: {os_label}, `{cmd}`, {len(refs)} прогонов (с контролем базы) — "
+          "результат разберёт следующий tick")
 
 
 def bisect_refs(repo, n):
@@ -227,13 +347,26 @@ def red(repo, pr, failed):
         if any(r is None or r["status"] != "completed" for _, r in verdict):
             print("бисект ещё идёт")
             return 0
-        bad = [ref for ref, r in verdict if r["conclusion"] != "success"]
-        drop_bisect(repo, refs)
+        base = [(ref, r) for ref, r in verdict if "/base-" in ref]
+        if base and base[0][1]["conclusion"] != "success":
+            drop_bisect(repo, refs)
+            run("gh", "pr", "close", str(n), "--repo", repo, "--delete-branch", "--comment",
+                f"Контрольный прогон бисекта на БАЗЕ поезда (main) тоже красный: "
+                f"{base[0][1]['html_url']}. Виноват не поезд — сломан main; это § 5 п. 2 "
+                "(красный main). Поезд закрыт, следующий режется после починки main.",
+                check=False)
+            print(f"бисект: база поезда (main) сама красная — {base[0][1]['html_url']}. "
+                  "Коммиты поезда НЕ выкидываются. СРОЧНО (§ 5 п. 2): красный main")
+            return 1
+        bad = [ref for ref, r in verdict if r["conclusion"] != "success" and "/base-" not in ref]
         if bad:
             sha = next(c["sha"] for c in train_commits(repo, pr)
                        if c["sha"].startswith(bad[0].rsplit("-", 1)[1]))
             print(f"бисект: первый падающий префикс {bad[0]} — виновник {sha[:9]}")
+            # Ветки бисекта удаляет eject только при успехе: если откат не лёг, следующий
+            # tick увидит тот же готовый вердикт, а не запустит бисект заново по кругу.
             return eject(repo, [sha], f"бисект по {pr['html_url']}, первым падает {sha[:9]}")
+        drop_bisect(repo, refs)
         attempt = attempts(failed)
         if attempt < 3:
             rerun(failed)
@@ -247,7 +380,7 @@ def red(repo, pr, failed):
         rerun(failed)
         print("первый перезапуск упавших job'ов — отсеиваем флейк")
         return 0
-    bisect(repo, pr, guess_os(names[0]), "go test -count=1 ./...")
+    bisect(repo, pr, *pick_target(names))
     return 0
 
 
@@ -284,7 +417,89 @@ def covered(repo, sha):
     return 0
 
 
+def heal(repo):
+    """Красный staging лечится раньше всего остального: пока он красный, land отказывает,
+    а поезд не режется. Шаги механические, как и у красного поезда:
+    1) один перезапуск упавшего quick (флейк);
+    2) снова красный, кандидатов в виновники ≤ MAX_AUTO_REVERT — откат их всех одним пушем
+       с трейлером Staging-Revert (авторы приземлят исправленное заново как новую работу);
+    3) кандидатов больше — срочная задача боту (§ 5 п. 2) с их списком."""
+    state, info = staging_health(repo)
+    if state == "healing":
+        print("staging: после красного quick приземлена починка — ждём её quick (не ты)")
+    if state != "red":
+        return 0
+    last = info["last"]
+    print(f"staging КРАСНЫЙ: {last['html_url']} (вершина {last['head_sha'][:9]})")
+    if last.get("run_attempt", 1) < 2:
+        run("gh", "run", "rerun", str(last["id"]), "--failed", "--repo", repo, check=False)
+        print("  перезапустил упавший quick — отсеиваем флейк")
+        return 0
+    first_red, culprits = red_range(repo, info)
+    print(f"  первый красный quick: {first_red['html_url']}; кандидаты в виновники "
+          f"(после последнего зелёного {'quick ' + info['green']['head_sha'][:9] if info['green'] else 'main'}):")
+    for c in culprits:
+        print(f"    {who(c)}")
+    if not culprits or len(culprits) > MAX_AUTO_REVERT:
+        print(f"  кандидатов {len(culprits)} — вслепую не откатываю. СРОЧНО (§ 5 п. 2): "
+              "«красный staging» — прочитать лог, починить причину, land --fix-staging")
+        return 1
+    with tempfile.TemporaryDirectory() as d:
+        run("git", "clone", "-q", "--filter=blob:none", "--branch", STAGING,
+            f"https://github.com/{repo}.git", d)
+        run("git", "config", "user.name", "unxed", cwd=d)
+        run("git", "config", "user.email", "1151423+unxed@users.noreply.github.com", cwd=d)
+        for c in reversed(culprits):
+            r = run("git", "revert", "--no-edit", c["sha"], cwd=d, check=False)
+            if r.returncode:
+                print(f"  откат {c['sha'][:9]} не лёг чисто — СРОЧНО (§ 5 п. 2): «красный "
+                      "staging», чинить вперёд, land --fix-staging")
+                return 1
+            msg = run("git", "log", "-1", "--format=%B", cwd=d).stdout
+            run("git", "commit", "-q", "--amend", "-m",
+                f"{msg.rstrip()}\n\nStaging-Revert: {first_red['html_url']}", cwd=d)
+        if run("git", "push", "-q", "origin", f"HEAD:{STAGING}", cwd=d, check=False).returncode:
+            print("  staging ушёл вперёд во время отката — следующий tick повторит")
+            return 0
+    print(f"  откатил {len(culprits)} коммит(ов) из staging. Авторам (по трейлерам выше): "
+          "починить и приземлить заново — это обычная новая работа, тикет снова «свободен»")
+    return 0
+
+
+def stuck(repo):
+    """Метрика результата, а не активности: двигается ли main. Печатается каждым tick'ом.
+    Флот может выглядеть очень занятым (десятки land, поезд за поездом) и при этом не
+    доставлять ничего — именно так прошли 9.5 часов 28-09-2026."""
+    main = api(f"repos/{repo}/commits/main")
+    since = datetime.fromisoformat(main["commit"]["committer"]["date"].replace("Z", "+00:00"))
+    hours = (datetime.now(timezone.utc) - since).total_seconds() / 3600
+    ahead = compare(repo, main["sha"], api(f"repos/{repo}/branches/{STAGING}")["commit"]["sha"])
+    closed = [p for p in api(f"repos/{repo}/pulls?state=closed&per_page=50")
+              if p["head"]["ref"].startswith(TRAIN_PREFIX) and not p["merged_at"]
+              and datetime.fromisoformat(p["closed_at"].replace("Z", "+00:00")) > since]
+    print(f"main не двигался {hours:.1f} ч; staging впереди на {ahead['ahead_by']} коммит(ов); "
+          f"поездов закрыто без мержа за это время: {len(closed)}")
+    if hours > STUCK_HOURS and ahead["ahead_by"]:
+        print(f"ИНЦИДЕНТ ПРОЦЕССА: main стоит дольше {STUCK_HOURS} ч при непустом staging. "
+              "§ 4 «ретро круга»: новую работу не брать, найти причину, починить конвейер и "
+              "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
+        return 1
+    return 0
+
+
+def health(repo):
+    state, info = staging_health(repo)
+    last = info["last"]
+    print(f"staging: {state}" + (f" — {last['html_url']}" if last else ""))
+    return max(stuck(repo), 1 if state == "red" else 0)
+
+
 def tick(repo, sign):
+    rc = max(stuck(repo), heal(repo))
+    return max(rc, train_step(repo, sign))
+
+
+def train_step(repo, sign):
     pr = train_pr(repo)
     if not pr:
         return cut(repo, sign)
@@ -331,7 +546,10 @@ def eject(repo, shas, reason):
         for sha in shas:
             r = run("git", "revert", "--no-edit", sha, cwd=d, check=False)
             if r.returncode:
-                sys.exit(f"revert {sha} не лёг чисто — ревертни руками в клоне staging")
+                print(f"revert {sha[:9]} не лёг чисто — СРОЧНО (§ 5 п. 2): откатить руками в "
+                      f"клоне staging или починить вперёд ({reason}). Вердикт бисекта сохранён, "
+                      "повторного бисекта не будет.")
+                return 1
             msg = run("git", "log", "-1", "--format=%B", cwd=d).stdout
             run("git", "commit", "-q", "--amend", "-m",
                 f"{msg.rstrip()}\n\nВыкинут из поезда: {reason}", cwd=d)
@@ -352,7 +570,9 @@ def main(argv):
     cmd, rest = argv[0], argv[1:]
     opt = lambda k: rest[rest.index(k) + 1] if k in rest else None
     if cmd == "land":
-        return land()
+        return land(fix="--fix-staging" in rest)
+    if cmd == "health" and len(rest) == 1:
+        return health(rest[0])
     if cmd == "covered" and len(rest) == 2:
         return covered(rest[0], rest[1])
     if cmd == "tick" and rest and opt("--sign"):
