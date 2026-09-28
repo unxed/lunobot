@@ -56,7 +56,18 @@
      `ImageGallery.galleryKey` (все клавиши движения), `GalleryPath`, no-op ветки
      `showGallery`/`showTile` и — главное — реальный асинхронный путь
      `requestThumb` (откат с превью на полную декодировку и обратная отправка в UI
-     поток), который раньше ни один тест не проходил по-настоящему.
+     поток), который раньше ни один тест не проходил по-настоящему. 28-09-2026 15:44
+     UTC, Лунобот-3: второй заход по тому же пакету, `audio_decode.go` (343 строки,
+     56.56 %, 149 непокрытых — второй по размеру разрыв внутри пакета после
+     `image_view.go`), коммит `Lunobot-Task: coverage-internal-media-audio_decode`
+     (`811751837a22096b51391801da5245e7a6fcca06` в `lunobot/staging`): `openExternalAudio`/
+     `ffprobeAudio` (путь через ffmpeg/ffprobe для AAC/Opus/AMR и т. п.) не имели ни
+     одного теста — добавлены через подмену `tools.go`'s `toolPaths` на `/bin/true`/
+     `/bin/false` вместо реального PATH (POSIX-only, `!windows`, по образцу
+     `internal/editor/external_editor_process_unix_test.go`); также `decodeMP3`/
+     `decodeVorbis` не имели тестов вовсе — добавлен разбор заведомо не-кодека под их
+     расширением. Не трогали `decodeVorbis`/`flacPCM` happy-path (валидный поток
+     руками не собрать без риска сломать тест вслепую) — это ещё один возможный заход.
   2. `internal/fileops` — 3337 строк, 74.95 % (уже выше цели), 836 непокрытых.
   3. `plugins/android` — 2234 строки, 65.26 %, 776 непокрытых.
 
