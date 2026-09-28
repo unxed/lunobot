@@ -4,4 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 28-09-2026 20:11:14 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/keytrans/issues/1 (встроить xkeyboard-config для полной X11-независимости) [pr]
-28-09-2026 20:11:14 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/keytrans/issues/3 (arm64 трамплин для purego-фоллбека) [pr]
