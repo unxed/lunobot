@@ -4,15 +4,29 @@
   ("pure go keyboard layout and text translation library for Unix windowing
   systems"), используется unxed/vtui для X11-раскладок (и не только).
 - Архитектура: `x11_factory.go` — фабрика бэкендов, перебирает по порядку:
-  `backend_xkbcommon.go` (FFI, purego) → `backend_x11xim.go` (FFI) →
-  `backend_purexkb.go` (чистый Go, xkb-go.NewKeymapFromNames по RMLVO-именам
-  из `_XKB_RULES_NAMES`) → `backend_dynamicxkb.go` → `backend_xkbcomp.go`
-  (внешний бинарник + xkb-go) → `backend_corex11.go` (эвристики).
-- Уже зависит от `github.com/jezek/xgb` и `github.com/unxed/xkb-go` (v0.1.8) —
-  инфраструктура для протокольного пути уже есть, просто версия xkb-go
-  старее той, что добавила пакет `x11` (GetMap/GetNames/GetControls,
-  `x11.NewKeymapFromX11Device`) в рамках unxed/vtui#10.
+  `backend_xkbgo_x11.go` (чистый Go, читает реальный keymap устройства по
+  проводному XKB-протоколу через `xkb-go/x11.NewKeymapFromX11Device` —
+  GetMap/GetNames/GetControls, без CGO/FFI) → `backend_xkbcommon.go` (FFI,
+  purego) → `backend_x11xim.go` (FFI) → `backend_purexkb.go` (чистый Go,
+  xkb-go.NewKeymapFromNames по RMLVO-именам из `_XKB_RULES_NAMES`) →
+  `backend_dynamicxkb.go` → `backend_xkbcomp.go` (внешний бинарник + xkb-go)
+  → `backend_corex11.go` (эвристики поверх сырого core-протокола, без
+  XKB-осведомлённости о полном keymap — последний фоллбэк).
+- Зависит от `github.com/jezek/xgb` и `github.com/unxed/xkb-go` (v0.1.9,
+  уже включает пакет `x11` с GetMap/GetNames/GetControls,
+  `x11.NewKeymapFromX11Device`, добавленный в рамках unxed/vtui#10; PR #6
+  этого репозитория уже использует его для `backend_xkbgo_x11.go`).
 - Задачи: тикеты этого репозитория.
 - Тикеты уже открыты (2026-08-01): #1 (встроить xkeyboard-config для полной
-  X11-независимости), #2 (баг Core X11 эвристик на 3+ раскладках), #3 (arm64
+  X11-независимости), #2 (баг Core X11 эвристик на 3+ раскладках — фикс
+  готовится в PR unxed/keytrans#7, см. `status/2.md`), #3 (arm64
   трамплин для purego-фоллбека).
+- `backend_corex11.go`: `xkb.ParseX11GetControlsReply` (из `xkb-go`,
+  переиспользуется без правки библиотеки) даёт число реально настроенных
+  XKB-групп через сырой запрос `GetControls`; `lookup()` использует его,
+  чтобы выбрать между старой эвристикой (только 2 группы, два разных
+  магических раскладки индексов) и равномерной раскладкой блоков
+  `width = symsPerKeycode/numGroups` для 3-4 групп.
+- CI: единственный workflow — `.github/workflows/coverage.yml`
+  (`go test -covermode=atomic ./...` на push в main/master и на каждый PR).
+  Нет `lunobot/staging`/`quick.yml`/`train.yml` — `Режим публикации: PR`.
