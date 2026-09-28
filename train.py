@@ -287,12 +287,21 @@ def guess_os(name):
     return "ubuntu-latest"
 
 
-def sandbox_cmd(os_label, script):
-    """sandbox.yml исполняет `$SANDBOX_COMMAND` без разбора shell (bash) или через
-    Invoke-Expression (pwsh на Windows). В bash `&&`, `|` и кавычки без обёртки уходят
-    аргументами в go — и КАЖДЫЙ префикс бисекта красный, снова ложный виновник. Поэтому для
-    bash — один токен `bash -c` с ${IFS} вместо пробелов; pwsh 7 понимает `&&` сам."""
+def sandbox_cmd(repo, ref, os_label, script):
+    """Команда для sandbox.yml с учётом того, КАК версия workflow на этом ref её исполняет
+    (workflow_dispatch берёт sandbox.yml с той ветки, на которой запускается):
+    - новая версия (`bash -c "$SANDBOX_COMMAND"`, f4 с 28-09-2026) — скрипт как есть;
+    - старая (`run: $SANDBOX_COMMAND`, без разбора shell) — `&&`, `|` без обёртки ушли бы
+      аргументами в go и сделали бы красным КАЖДЫЙ префикс бисекта; поэтому один токен
+      `bash -c` с ${IFS} вместо пробелов. Для старой версии обёртка обязательна, для новой —
+      запрещена (там ${IFS} раскрылся бы внешним bash, и выполнилось бы одно `go`).
+    pwsh (Windows) понимает `&&` в обеих версиях."""
     if os_label.startswith("windows"):
+        return script
+    wf = api(f"repos/{repo}/contents/.github/workflows/sandbox.yml?ref={ref}", check=False) or {}
+    import base64
+    text = base64.b64decode(wf.get("content", "")).decode("utf-8", "replace")
+    if 'bash -c "$SANDBOX_COMMAND"' in text:
         return script
     return "bash -c " + script.replace(" ", "${IFS}")
 
@@ -342,7 +351,7 @@ def bisect(repo, pr, os_label, cmd, good=-1, bad=None):
         api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{ref}", "-f", f"sha={sha}",
             check=False)
         run("gh", "workflow", "run", "sandbox.yml", "--repo", repo, "--ref", ref,
-            "-f", f"os={os_label}", "-f", f"command={sandbox_cmd(os_label, cmd)}")
+            "-f", f"os={os_label}", "-f", f"command={sandbox_cmd(repo, ref, os_label, cmd)}")
     print(f"бисект: окно ({good}, {bad}] из {len(commits)} коммитов, {len(refs)} прогонов "
           f"({os_label}, `{cmd}`) — результат разберёт следующий tick")
 
