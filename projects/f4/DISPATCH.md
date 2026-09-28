@@ -36,7 +36,7 @@
 
 28-09-2026 15:24:58 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/659 (следующая часть) [land]
 
-28-09-2026 15:24:58 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «покрытие тестами f4: ещё один непокрытый пакет» по § 5 п.6/§ 7.4 [land]
-
 28-09-2026 15:28:26 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/312 (поднять vtui до v0.1.377 в f4) [land]
+
+28-09-2026 15:33:28 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «красный staging f4: gosec G122 в internal/vtvibe/ap/undo_test.go (filepath.Walk symlink TOCTOU)» по § 5 п.2 [urgent: по § 5 п.2 — красный staging]
 
