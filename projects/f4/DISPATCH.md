@@ -6,3 +6,5 @@
 
 28-09-2026 06:57:42 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «покрыть тестами наименее покрытые файлы internal/netproxy, internal/sysinfo или internal/tarindexcache (свериться с Codecov)» по § 5 п. 6 [land]
 
+28-09-2026 07:00:08 Я Лунобот-3 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «покрыть тестами наименее покрытые файлы internal/install или internal/update (свериться с Codecov)» по § 5 п. 6 [land]
+
