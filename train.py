@@ -43,6 +43,9 @@ STAGING = "lunobot/staging"
 # Явный refspec со знаком +: single-branch клон (gh repo clone --depth=N) не содержит staging в
 # remote.origin.fetch, и голый `git fetch origin lunobot/staging` не обновляет origin/lunobot/staging.
 STAGING_REFSPEC = f"+refs/heads/{STAGING}:refs/remotes/origin/{STAGING}"
+# Попытки push в land(): при 6-8 параллельных ботах 6 попыток (~57 с backoff) исчерпывались раньше,
+# чем освобождалось окно (starvation); 12 попыток с backoff 2+3*n — около 4 минут.
+LAND_ATTEMPTS = 12
 TRAIN_PREFIX = "lunobot/train/"
 MIN_COMMITS = 5
 MAX_AGE_MIN = 30
@@ -156,7 +159,7 @@ def land(fix=False):
                 "перезапустит quick или откатит однозначного виновника) либо почини причину "
                 "сам и приземли с `land --fix-staging` (трейлер `Fixes-Staging: <ссылка>`). "
                 "Потом повтори land.")
-    for attempt in range(6):
+    for attempt in range(LAND_ATTEMPTS):
         if run("git", "rebase", "-q", f"origin/{STAGING}", check=False).returncode:
             run("git", "rebase", "--abort", check=False)
             sys.exit("конфликт при переносе на staging — разреши его сам (git rebase "
@@ -168,7 +171,7 @@ def land(fix=False):
             return 0
         time.sleep(2 + 3 * attempt)
         run("git", "fetch", "-q", "origin", STAGING_REFSPEC)
-    sys.exit("staging шесть раз подряд ушёл вперёд — повтори land чуть позже")
+    sys.exit(f"staging {LAND_ATTEMPTS} раз подряд ушёл вперёд — повтори land чуть позже")
 
 
 def train_pr(repo):
