@@ -8,6 +8,7 @@
     train.py eject <owner/repo> <sha>... --reason "<ссылка на упавший job>"
     train.py covered <owner/repo> <sha>
     train.py bisect <owner/repo> --os <раннер> --cmd "<команда песочницы>"
+    train.py close-train <owner/repo> <PR> [--reason "<текст>"]
 
 land  — переносит твои коммиты (origin/lunobot/staging..HEAD) на вершину staging и пушит,
         с повторами при гонке. PR не открывает никогда. Staging красный (последний
@@ -23,10 +24,14 @@ tick  — идемпотентный шаг проводника; запуска
         Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит) и, если tick
         запущен из учётного клона, сам правит в TRIAGE.md `в пути` → `проверяют` по `Touch:`
         коммитов поезда (коммит+пуш с `Lunobot-Instance:`); красный — бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
-        staging с зелёным quick. Печатает, сколько часов main не двигался; больше двух —
+        staging с зелёным quick и не режет, пока после него в staging есть коммит-починка
+        (Fixes-Staging:/Staging-Revert:) — ждёт зелёного quick вершины. Печатает, сколько часов main не двигался; больше двух —
         ИНЦИДЕНТ ПРОЦЕССА, код 1.
-bisect — вручную, когда падение платформенное/узкое и автоматический бисект (`go test ./...` на
-        ОС упавшего job'а) его не ловит: свой раннер и своя команда. Результат разбирает tick.
+bisect — вручную, когда падение платформенное/узкое и автоматический бисект (команда по ИМЕНИ
+        упавшего шага упавшего job'а, таблица STEP_CMDS; неизвестный шаг — бисекта нет, сразу
+        § 5 п. 2 с диагностикой) его не ловит: свой раннер и своя команда. Результат разбирает tick.
+close-train — закрыть поезд БЕЗ выброса коммитов (база красная, fix-forward не вошёл, безнадёжный
+        поезд): закрывает PR, удаляет ветку поезда и bisect/<N>/*, отменяет идущие прогоны.
 eject — ревертит в staging коммиты-виновники красного поезда и закрывает его PR; следующий
         tick сразу режет новый поезд без них.
 
@@ -249,6 +254,17 @@ def cut(repo, sign):
               "если staging красный, это § 5 п. 2 (см. выше)")
         return 0
     cut_sha = green["head_sha"]
+    heal_wait = [c for c in compare(repo, cut_sha, staging["commit"]["sha"])["commits"]
+                 if HEAL.search(c["commit"]["message"])]
+    if heal_wait:
+        # Зелёный quick мог пройти НА ломающем коммите (quick не проверяет всего): починка лежит
+        # после него, и резать «до зелёного» значит везти поломку без починки (28-09-2026,
+        # поезд unxed/f4#1643: 2b085791 без 2243f78f). Ждём зелёного quick вершины.
+        print("поезд не режу: после последнего зелёного quick "
+              f"({cut_sha[:9]}) в staging есть коммит-починка ({who(heal_wait[0])}"
+              f"{' и ещё ' + str(len(heal_wait) - 1) if len(heal_wait) > 1 else ''}) — жду "
+              "зелёного quick на вершине staging")
+        return 0
     cmp = compare(repo, main_sha, cut_sha)
     own = [c for c in cmp["commits"] if len(c["parents"]) == 1]
     if not own:
@@ -324,21 +340,51 @@ def sandbox_cmd(repo, ref, os_label, script):
     return "bash -c " + script.replace(" ", "${IFS}")
 
 
-def pick_target(names):
-    """ОС и команда бисекта по ВСЕМ упавшим job'ам, а не по первому в списке.
+# Команда бисекта по ИМЕНИ упавшего шага упавшего job'а (имена — из build.yml f4). Бисект обязан
+# воспроизводить именно упавший шаг: gofmt+vet «по умолчанию» не воспроизводил langfmt и давал
+# ложный вердикт (28-09-2026, поезда unxed/f4#1642 и unxed/f4#1643). Шага нет в таблице — бисект
+# вслепую не запускается (см. pick_target_steps). None вместо ОС — ОС берётся из имени job'а.
+STEP_CMDS = [
+    (r"^Check formatting$", 'test -z "$(gofmt -s -l .)"'),
+    (r"^Check language file formatting$", "go run ./tools/langfmt -check internal/i18n/lang/*.lng"),
+    (r"^Run go vet\b", "go vet ./..."),
+    (r"^Run Tests$", "go test -count=1 ./..."),
+    (r"^Run race detector$", "go test -race -count=1 ./..."),
+]
 
-    Поезд режется только из зелёного quick (linux/amd64 build+vet+test), так что падение
-    поезда почти всегда либо платформенное, либо lint/vet-специфичное. Платформенный Test/Race
-    job — бисектим на его ОС; одни только Lint/Vet/Quality — `go vet` на linux."""
-    vet_test = "go vet ./... && go test -count=1 ./..."
-    names = [n or "" for n in names]
-    tests = [n for n in names if re.search(r"\b(Test|Race|Build and test)\b", n)]
-    non_linux = [n for n in tests if not re.search(r"linux", n, re.I)]
-    if non_linux:
-        return guess_os(non_linux[0]), vet_test
-    if tests:
-        return guess_os(tests[0]), vet_test
-    return "ubuntu-latest", 'test -z "$(gofmt -l .)" && go vet ./...'
+
+def failed_steps(failed):
+    """[(имя job'а, имя упавшего шага или None)] по упавшим проверкам поезда (API job'а)."""
+    out = []
+    for c in failed:
+        step = None
+        m = re.search(r"github\.com/([^/]+/[^/]+)/actions/runs/\d+/job/(\d+)",
+                      c.get("detailsUrl") or "")
+        if m:
+            job = api(f"repos/{m.group(1)}/actions/jobs/{m.group(2)}", check=False) or {}
+            step = next((s.get("name") for s in job.get("steps", [])
+                         if s.get("conclusion") == "failure"), None)
+        out.append((c.get("name") or c.get("context") or "", step))
+    return out
+
+
+def pick_target_steps(steps):
+    """(ОС, команда) для бисекта по упавшим шагам, либо None, если хоть один шаг неизвестен:
+    бисект чужой командой даёт ложный «зелёный на всех префиксах» и перезапуски по кругу.
+    Команды одной ОС склеиваются через &&; несколько ОС — берётся первая не-linux (остальное
+    вскроет следующий поезд после выброса)."""
+    per_os = {}
+    for job, step in steps:
+        cmd = next((c for rx, c in STEP_CMDS if step and re.search(rx, step)), None)
+        if not cmd:
+            return None
+        os_label = "ubuntu-latest" if step == "Run race detector" else guess_os(job)
+        if cmd not in per_os.setdefault(os_label, []):
+            per_os[os_label].append(cmd)
+    if not per_os:
+        return None
+    os_label = next((o for o in per_os if o != "ubuntu-latest"), next(iter(per_os)))
+    return os_label, " && ".join(per_os[os_label])
 
 
 BISECT_ROUND = 12  # прогонов песочницы за раунд: пул аккаунта — 20 job'ов на всех
@@ -384,6 +430,31 @@ def drop_bisect(repo, refs):
         api(f"repos/{repo}/git/refs/heads/{ref}", "-X", "DELETE", check=False)
 
 
+def close_train(repo, pr, comment):
+    """Закрыть поезд целиком: комментарий и закрытие PR, удаление ветки поезда и bisect/<N>/*,
+    отмена идущих прогонов (поезда и бисекта) — чтобы это не делалось руками и не сжигало раннеры."""
+    n = pr["number"]
+    branches = [pr["head"]["ref"]] + bisect_refs(repo, n)
+    run("gh", "pr", "close", str(n), "--repo", repo, "--comment", comment, check=False)
+    for br in branches:
+        for st in ("in_progress", "queued"):
+            runs = api(f"repos/{repo}/actions/runs?branch={br}&status={st}&per_page=100",
+                       check=False) or {}
+            for r in runs.get("workflow_runs", []):
+                run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
+    drop_bisect(repo, branches)  # и ветка поезда: DELETE refs/heads/<ref> одинаков для всех
+
+
+def close_train_cmd(repo, number, reason):
+    pr = api(f"repos/{repo}/pulls/{number}")
+    if pr["state"] != "open" or not pr["head"]["ref"].startswith(TRAIN_PREFIX):
+        sys.exit(f"#{number}: не открытый поезд ({TRAIN_PREFIX}*) — не трогаю")
+    close_train(repo, pr, reason or "Поезд закрыт без выброса коммитов (`train.py close-train`); "
+                "следующий режется из актуального staging.")
+    print(f"поезд #{number} закрыт: PR, ветка, bisect/{number}/*, идущие прогоны")
+    return 0
+
+
 def red(repo, pr, failed):
     """Красный поезд. Виновника определяет механика, не суждение бота:
     1) один перезапуск упавших job'ов — флейк отсеивается сам;
@@ -392,8 +463,8 @@ def red(repo, pr, failed):
     4) бисект ничего не воспроизвёл — ещё один полный перезапуск; красный и после него —
        срочная задача одному боту (§ 5 п. 2), staging при этом не замораживается."""
     n = pr["number"]
-    names = [c.get("name") or c.get("context") for c in failed]
-    print(f"поезд #{n} КРАСНЫЙ: {', '.join(names)}")
+    steps = failed_steps(failed)
+    print(f"поезд #{n} КРАСНЫЙ: " + ", ".join(f"{j} / шаг «{st or '?'}»" for j, st in steps))
     refs = bisect_refs(repo, n)
     if refs:
         verdict = []
@@ -405,12 +476,10 @@ def red(repo, pr, failed):
             return 0
         base = [(ref, r) for ref, r in verdict if "/base-" in ref]
         if base and base[0][1]["conclusion"] != "success":
-            drop_bisect(repo, refs)
-            run("gh", "pr", "close", str(n), "--repo", repo, "--delete-branch", "--comment",
-                f"Контрольный прогон бисекта на БАЗЕ поезда (main) тоже красный: "
-                f"{base[0][1]['html_url']}. Виноват не поезд — сломан main; это § 5 п. 2 "
-                "(красный main). Поезд закрыт, следующий режется после починки main.",
-                check=False)
+            close_train(repo, pr,
+                        f"Контрольный прогон бисекта на БАЗЕ поезда (main) тоже красный: "
+                        f"{base[0][1]['html_url']}. Виноват не поезд — сломан main; это § 5 п. 2 "
+                        "(красный main). Поезд закрыт, следующий режется после починки main.")
             print(f"бисект: база поезда (main) сама красная — {base[0][1]['html_url']}. "
                   "Коммиты поезда НЕ выкидываются. СРОЧНО (§ 5 п. 2): красный main")
             return 1
@@ -424,7 +493,10 @@ def red(repo, pr, failed):
             if i_bad - i_good > 1:
                 drop_bisect(repo, refs)
                 print(f"бисект: падает с префикса {i_bad}, зелёный до {i_good} — сужаю окно")
-                bisect(repo, pr, *pick_target(names), good=i_good, bad=i_bad)
+                target = pick_target_steps(steps)
+                if not target:
+                    return unknown_step(repo, pr, steps)
+                bisect(repo, pr, *target, good=i_good, bad=i_bad)
                 return 0
             sha = commits[i_bad]["sha"]
             print(f"бисект: первый падающий префикс {i_bad} — виновник {sha[:9]}")
@@ -445,8 +517,25 @@ def red(repo, pr, failed):
         rerun(failed)
         print("первый перезапуск упавших job'ов — отсеиваем флейк")
         return 0
-    bisect(repo, pr, *pick_target(names))
+    target = pick_target_steps(steps)
+    if not target:
+        return unknown_step(repo, pr, steps)
+    bisect(repo, pr, *target)
     return 0
+
+
+def unknown_step(repo, pr, steps):
+    """Упавший шаг не в STEP_CMDS: воспроизвести его бисектом нечем, вслепую не гоняем."""
+    drop_bisect(repo, bisect_refs(repo, pr["number"]))
+    print("бисект НЕ запускаю: упавший шаг не в таблице STEP_CMDS, чужая команда дала бы ложный "
+          "вердикт. Упавшее: " + "; ".join(f"{j} / «{st or 'шаг неизвестен'}»" for j, st in steps))
+    print(f"коммиты поезда #{pr['number']}:")
+    for c in train_commits(repo, pr):
+        print(f"    {who(c)}")
+    print("СРОЧНО (§ 5 п. 2): «красный поезд» — прочитать лог упавшего шага, найти виновника, "
+          "`train.py eject` (выкинуть) или `train.py bisect --os --cmd` (своя команда); поезд "
+          "безнадёжен — `train.py close-train`. Шаг — добавить в STEP_CMDS.")
+    return 1
 
 
 def attempts(failed):
@@ -777,10 +866,8 @@ def eject(repo, shas, reason):
                 f"{msg.rstrip()}\n\nВыкинут из поезда: {reason}", cwd=d)
         run("git", "push", "-q", "origin", f"HEAD:{STAGING}", cwd=d)
     if pr:
-        drop_bisect(repo, bisect_refs(repo, pr["number"]))
-        run("gh", "pr", "close", str(pr["number"]), "--repo", repo, "--delete-branch",
-            "--comment", f"Красный поезд; выкинуты из staging: {', '.join(s[:9] for s in shas)} "
-            f"({reason}). Следующий поезд режется без них.")
+        close_train(repo, pr, f"Красный поезд; выкинуты из staging: "
+                    f"{', '.join(s[:9] for s in shas)} ({reason}). Следующий поезд режется без них.")
     print("выкинуто; авторам — вернуть тикет в работу с этой ссылкой (§ 7.2)")
     return 0
 
@@ -829,6 +916,8 @@ def main(argv):
             sys.exit("поезда в пути нет")
         bisect(rest[0], pr, opt("--os"), opt("--cmd"))
         return 0
+    if cmd == "close-train" and len(rest) >= 2 and rest[1].isdigit():
+        return close_train_cmd(rest[0], int(rest[1]), opt("--reason"))
     if cmd == "eject" and len(rest) >= 2 and opt("--reason"):
         shas = [a for a in rest[1:rest.index("--reason")]]
         return eject(rest[0], shas, opt("--reason"))
