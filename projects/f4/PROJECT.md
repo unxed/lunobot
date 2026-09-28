@@ -19,6 +19,10 @@
     `git fetch -q origin +refs/heads/main:refs/remotes/origin/main && go run
     github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./...`
     и `... run --config .golangci-strict.yml`
+  - `quick.yml` также гоняет job `Format checks` (параллельно с `check`): `gofmt -s -l .`,
+    `go run ./tools/langfmt -check internal/i18n/lang/*.lng` и actionlint, как в `build.yml`.
+    Формат `.lng` и gofmt красят `quick` сразу после `land`, а не поезд (#1642). Перед `land`
+    локально допустимы только `gofmt -s -l .` и `langfmt -check`.
 - Проверка в песочнице перед `land` обязана включать `go test ./cmd/f4/` — там глобальные
   аудит-тесты (`TestCommandPaletteProductionCommandSurfaceInventory` требует внести в карту
   аудита каждый новый тип с `ProcessKey`, `TestNoNewHardcodedUIStrings` и др.), которые
