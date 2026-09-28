@@ -12,14 +12,32 @@
   проверять PR всё равно нечем.
 - **До 28-09-2026 в этом форке не было CI вообще** (не было `.github/workflows`) —
   это и стало причиной unxed/f4#1607 (смерженный без единой проверки PR #1 несколько
-  раз терялся). Заведён `.github/workflows/ci.yml`: `build-vet` (матрица `go build
-  ./...` + `go vet ./...` под linux/windows/js-wasm/darwin — именно то расслоение,
-  где живут `window/window_<platform>.go`) и `e2e-smoke` (поднимает headless `weston
-  --backend=headless-backend.so` прямо в джобе `ubuntu-latest` и гоняет против него
-  `go-wayland-ci-smoke` — новый минимальный клиент на пакете `window`, без
-  cairo/xkbcommon/EGL, только чтобы получить `*xdg.Toplevel` и вызвать `SetAppID`;
-  проверка регрессии — `WAYLAND_DEBUG=1` на самом `weston` и `grep set_app_id` по его
-  логу, у clientской стороны в этом порту протокольного трейсинга нет).
+  раз терялся). Заведён `.github/workflows/ci.yml`: `build-vet` (матрица `go build`
+  + `go vet` под linux/windows/js-wasm (native ubuntu-latest, cross-compile
+  CGO_ENABLED=0) и darwin (**macos-latest**, не кросс-компиляция — у
+  `window/window_darwin.go` часть функций реально требует cgo-мост в
+  `window_cgo_darwin.go`, тег `darwin && cgo`, так что CGO_ENABLED=0 недостаточен;
+  macos-latest бесплатен для публичного репо) и `e2e-smoke` (поднимает headless
+  `weston --backend=headless-backend.so` прямо в джобе `ubuntu-latest` и гоняет
+  против него `go-wayland-ci-smoke` — новый минимальный клиент на пакете `window`,
+  без cairo/xkbcommon/EGL, только чтобы получить `*xdg.Toplevel` и вызвать
+  `SetAppID`; проверка регрессии — `WAYLAND_DEBUG=1` на самом `weston` (сервер
+  печатает входящий протокольный трафик так же, как и клиент — это свойство самого
+  libwayland, не этого Go-порта) и `grep set_app_id` по его логу, у клиентской
+  стороны в этом порту протокольного трейсинга нет).
+  Зелёный прогон, подтверждающий PR #1 (уже смержен в master):
+  https://github.com/unxed/wayland/actions/runs/36363850004
+- **`go build`/`go vet` не покрывают весь `./...` буквально** — исключён
+  `go-wayland-cube` (сломан независимо от этого тикета: пиннутая версия
+  `vulkan-go` не совпадает по API, `undefined: vulkan.CreateWaylandSurface` и
+  т.п., даже на нативном linux с cgo — отдельная, более глубокая проблема, не
+  тронута). По пути найдены и исправлены как раз таки платформенные дыры теми
+  же средствами, что чинили `window_darwin.go` в PR #1 — добавлены теги
+  `linux`/`darwin`/`!windows,!js` файлам `libdecor/*.go`, `libwayland/wayland.go`,
+  `wl/context_*_test.go`, которые раньше собирались (или должны были собраться)
+  на всех платформах без разбора; `go vet` запускается с `-unsafeptr=false`
+  (purego FFI) и `-asmdecl=false` (`external/swizzle/swizzle_amd64.s`, старое
+  именование FP-офсетов).
 - **Staging/поезда (§ 7.2) здесь не подключены** — `train.py`/`lunobot-guard.yml`
   рассчитаны на уже существующую полную матрицу (f4/vtui); в этом маленьком форке
   до появления `ci.yml` гонять было нечего. Пока здесь нет отдельного `sandbox.yml`
