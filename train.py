@@ -617,10 +617,12 @@ def triage_path(repo):
 def mark_checking(repo, nums, sign):
     """После вливания поезда: `в пути` → `проверяют` в TRIAGE.md учётного клона (§ 5.1).
     Раньше tick это только печатал, и без ручной правки тикеты висели `в пути` вечно
-    (28-09-2026: f4 #659, #1604, #1606). Нет клона/файла или клон грязный по TRIAGE.md —
-    только сообщение: правь руками. Комментарии и updatedAt не трогаются."""
+    (28-09-2026: f4 #659, #1604, #1606). Нет клона/файла, не main, любые незакоммиченные правки в клоне, нет id в
+    --sign — только сообщение: правь руками. В коммит идёт только TRIAGE.md (по имени). Комментарии и updatedAt не трогаются."""
     path = triage_path(repo)
-    if not nums or not os.path.isdir(os.path.join(ACCOUNTING, ".git")) or not os.path.exists(path):
+    if not nums:
+        return
+    if not os.path.isdir(os.path.join(ACCOUNTING, ".git")) or not os.path.exists(path):
         print("TRIAGE не правлю (нет учётного клона проекта рядом с train.py): "
               "`в пути` → `проверяют` руками")
         return
@@ -631,40 +633,49 @@ def mark_checking(repo, nums, sign):
     if git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != "main":
         print("TRIAGE не правлю: учётный клон не на main — `в пути` → `проверяют` руками")
         return
-    if git("status", "--porcelain", "--", rel).stdout.strip():
-        print(f"TRIAGE не правлю: {rel} в клоне изменён и не закоммичен — `в пути` → `проверяют` руками")
+    if git("status", "--porcelain", "--untracked-files=no").stdout.strip():
+        print("TRIAGE не правлю: в учётном клоне есть незакоммиченные правки (чужие не трогаю, "
+              "в коммит идёт только TRIAGE.md) — `в пути` → `проверяют` руками")
         return
     m = re.search(r"((?:Лунобот|Lunobot)-\d+ \(node [0-9a-f]+; \w+)", sign or "")
-    inst = (m.group(1) + ")") if m else (sign or "").strip("* ")
-    done = []
-    for attempt in range(3):
-        if git("pull", "--rebase", "--autostash", "-q", "origin", "main").returncode:
+    if not m:
+        print("TRIAGE не правлю: в --sign нет id вида `Лунобот-N (node …; ПЛАТФОРМА)` для "
+              "трейлера Lunobot-Instance — `в пути` → `проверяют` руками")
+        return
+    inst = m.group(1) + ")"
+    tags = ""
+    subject = ""
+    for attempt in range(3):  # гонка с другим ботом/менеджером: pull --rebase и повтор
+        if git("pull", "--rebase", "-q", "origin", "main").returncode:
             git("rebase", "--abort")
             break
-        text = open(path, encoding="utf-8").read()
-        done = []
+        if not subject:  # правку делаем и коммитим один раз; повторы — только rebase и push
+            text = open(path, encoding="utf-8").read()
+            done = []
 
-        def fix(mo):
-            if int(mo.group(2)) in nums:
-                done.append(int(mo.group(2)))
-                return mo.group(1) + "проверяют" + mo.group(3)
-            return mo.group(0)
-        new = IN_TRANSIT.sub(fix, text)
-        if not done:
-            print("TRIAGE: тикетов поезда в состоянии `в пути` нет — править нечего")
-            return
-        with open(path, "w", encoding="utf-8", newline="") as f:
-            f.write(new)
-        tags = ", ".join(f"#{n}" for n in sorted(done))
-        msg = (f"{repo.split('/')[1]}: поезд влит, TRIAGE в пути → проверяют ({tags})\n\n"
-               f"Lunobot-Instance: {inst}\n")
-        git("add", "--", rel)
-        git("commit", "-q", "-m", msg, "--", rel)
+            def fix(mo):
+                if int(mo.group(2)) in nums:
+                    done.append(int(mo.group(2)))
+                    return mo.group(1) + "проверяют" + mo.group(3)
+                return mo.group(0)
+            new = IN_TRANSIT.sub(fix, text)
+            if not done:
+                print("TRIAGE: тикетов поезда в состоянии `в пути` нет — править нечего")
+                return
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(new)
+            tags = ", ".join(f"#{n}" for n in sorted(done))
+            subject = f"{repo.split('/')[1]}: поезд влит, TRIAGE в пути → проверяют ({tags})"
+            git("add", "--", rel)
+            if git("commit", "-q", "-m", f"{subject}\n\nLunobot-Instance: {inst}\n", "--", rel).returncode:
+                git("checkout", "--", rel)
+                break
         if git("push", "-q", "origin", "HEAD:main").returncode == 0:
             print(f"TRIAGE: в пути → проверяют для {tags} (закоммитил и запушил)")
             return
-    print("TRIAGE: не удалось запушить правку `в пути` → `проверяют` — сделай руками "
-          "(git status в учётном клоне)")
+    if subject and git("log", "-1", "--format=%s").stdout.strip() == subject:
+        git("reset", "-q", "--hard", "HEAD~1")  # свой непушнутый коммит не оставляем в клоне
+    print("TRIAGE: не удалось запушить правку `в пути` → `проверяют` (сеть/гонка) — сделай руками")
 
 
 def transit_warn(repo):
