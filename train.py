@@ -2,6 +2,7 @@
 """Staging и поезда (§ 7.2 инструкции): единственный путь рутинной работы в main.
 
     train.py land [--fix-staging]      в рабочем клоне, на своей ветке поверх lunobot/staging
+    train.py tick-all --sign "<подпись § 9>"   tick по всем проектам INDEX.md со staging
     train.py tick  <owner/repo> --sign "<подпись § 9>"
     train.py health <owner/repo>
     train.py eject <owner/repo> <sha>... --reason "<ссылка на упавший job>"
@@ -563,6 +564,25 @@ def eject(repo, shas, reason):
     return 0
 
 
+def staged_repos():
+    """Репозитории проектов из projects/INDEX.md (в порядке приоритета), у которых есть staging.
+    Раньше tick звали по одному проекту руками — и vtui 28-09-2026 простоял 7 часов с
+    необработанным поездом, потому что координатор помнил только про f4."""
+    import os
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "projects")
+    out = []
+    for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", open(os.path.join(root, "INDEX.md"),
+                                                         encoding="utf-8").read(), re.M):
+        try:
+            text = open(os.path.join(root, name, "PROJECT.md"), encoding="utf-8").read()
+        except OSError:
+            continue
+        m = re.search(r"^- Код: https://github\.com/([^/\s]+/[^/\s]+)", text, re.M)
+        if m and api(f"repos/{m.group(1)}/branches/{STAGING}", check=False):
+            out.append(m.group(1))
+    return out
+
+
 def main(argv):
     if not argv:
         print(__doc__)
@@ -571,6 +591,12 @@ def main(argv):
     opt = lambda k: rest[rest.index(k) + 1] if k in rest else None
     if cmd == "land":
         return land(fix="--fix-staging" in rest)
+    if cmd == "tick-all" and opt("--sign"):
+        rc = 0
+        for repo in staged_repos():
+            print(f"=== {repo}")
+            rc = max(rc, tick(repo, opt("--sign")))
+        return rc
     if cmd == "health" and len(rest) == 1:
         return health(rest[0])
     if cmd == "covered" and len(rest) == 2:
