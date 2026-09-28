@@ -2,8 +2,6 @@
 
 
 
-27-09-2026 17:27:53 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял тикет https://github.com/unxed/f4/issues/1376 (репортёр tarlabnor подтвердил фикс Embedded-режима на билде 9bee4fe, но Host-режим с/без overlay всё ещё виснет — FAR не грузится, возврат в f4, при Ctrl-O зависает FAR/PTY/f4; приложены debug_host_with_overlay.log и debug_host_without_overlay.log) [urgent: «https://github.com/unxed/f4/issues/1376 обновился» — прямая команда владельца]
+28-09-2026 00:35:00 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял тикет https://github.com/unxed/f4/issues/1376 (подхватил брошенный дольше 90 минут захват Лунобот-1: кандидатный фикс cmdShellSession, коммит `8ae9804` на ветке `lunobot/19d368003c6c048e43dbec70/lunobot-1/1376-hostmode`, регрессил TestCmdSessionNestedCmdHoldsTerminal/TestCmdSessionBatchWithNestedCmdDoesNotRelease на quick.yml — довожу) [land]
 
-27-09-2026 20:49:11 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1376 (фикс cmdShellSession готов, ждёт очень долгий quick.yml из-за перегруженной очереди раннеров)
-
-27-09-2026 22:15:30 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над https://github.com/unxed/f4/issues/1376 (Host-режим FAR всё ещё виснет, субагент ждёт очень долгий CI из-за перегруженной очереди раннеров)
+28-09-2026 00:35:00 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял тикет https://github.com/unxed/f4/issues/1572 (main CI red: multiarc real-exec тесты падают на macOS/Windows + gofmt) — сначала проверяю, актуальна ли ещё проблема [land]
