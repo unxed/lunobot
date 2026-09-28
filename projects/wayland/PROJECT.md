@@ -48,3 +48,15 @@
   инфраструктуры, см. выше), без `land`/`[land]`.
 - Язык общения: английский (апстрим-стиль форка, PR/коммиты на английском — см.
   уже смерженный/открытый PR #1).
+- **Апстрим**: `neurlang/wayland` — токен здесь только `pull`, `createPullRequest`
+  падает 403 (как в unxed/f4#1593 для `godesktop/xkb-go`/`jezek/xgb`). Уже открыт
+  `neurlang/wayland#38` (xkb-go keymap, тем же путём — форк→ветка→ссылка на compare).
+  `SetAppID` тоже нужно туда отправить — ветка `upstream-set-app-id` в этом форке
+  (коммит `ace75ef`, чистый cherry-pick поверх `upstream/master`) уже готова,
+  copy-paste текст PR и compare-ссылка — в unxed/f4#1609 (не удалять эту ветку как
+  брошенную, она не в неймспейсе `lunobot/*`, см. BRANCHES.md).
+- **Найдена, но не тронута (вне рамок этой задачи)**: в форке есть ещё одна
+  висящая ветка того же вида, что и unxed/f4#1607 — `lunobot/19d368003c6c048e43dbec70/lunobot-1/vtui-160-wayland-ffi`
+  (1 коммит поверх PR #1 «window: use xkb-go for Wayland keymap parsing and key
+  translation», без PR, старый формат имени ветки до 27-09-2026). Кандидат на
+  такое же «довести до PR», отдельным шагом.
