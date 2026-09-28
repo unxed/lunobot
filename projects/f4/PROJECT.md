@@ -9,6 +9,13 @@
   изменениях. В `.github/codecov.yml` проверки помечены informational, то есть PR они
   не блокируют: держать число вверх — обязанность Лунобота, а не гейта
 - Особенности: сборка и тесты только на CI GitHub, локально ничего не собирать
+  - `quick.yml` (с cc93367a) гоняет golangci-lint отдельным job'ом параллельно с `check`:
+    `.golangci.yml` с `--new-from-rev=origin/main` и строгий `.golangci-strict.yml` по всему
+    дереву, v2.13.1, как в `build.yml`. Lint-находка теперь красит `quick` сразу после `land`,
+    а не всплывает только в поезде. Песочница перед `land` должна гонять те же два прогона:
+    `git fetch -q origin +refs/heads/main:refs/remotes/origin/main && go run
+    github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./...`
+    и `... run --config .golangci-strict.yml`
 - Проверка в песочнице перед `land` обязана включать `go test ./cmd/f4/` — там глобальные
   аудит-тесты (`TestCommandPaletteProductionCommandSurfaceInventory` требует внести в карту
   аудита каждый новый тип с `ProcessKey`, `TestNoNewHardcodedUIStrings` и др.), которые
