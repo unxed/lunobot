@@ -70,6 +70,10 @@ HEAL = re.compile(r"^(Fixes-Staging|Staging-Revert):", re.M)
 # Больше стольких коммитов между последним зелёным и первым красным quick — откатывать
 # вслепую нельзя (заденет чужую работу), нужен бот: срочная задача § 5 п. 2.
 MAX_AUTO_REVERT = 3
+# Сколько минут tick ждёт зелёного quick на вершине staging, когда после последнего зелёного
+# лежит коммит-починка (cut). Дольше — выход в § 5 п. 2: quick мог не запуститься вовсе
+# (paths-ignore `**.md`/`docs/**` в quick.yml, отмена), и ждать вечно нельзя.
+HEAL_WAIT_MIN = 45
 # main стоит дольше этого при непустом staging — процесс не работает (инцидент 28-09-2026:
 # десять поездов подряд красные, main стоял 9.5 ч, пока флот продолжал приземлять).
 STUCK_HOURS = 2
@@ -260,10 +264,20 @@ def cut(repo, sign):
         # Зелёный quick мог пройти НА ломающем коммите (quick не проверяет всего): починка лежит
         # после него, и резать «до зелёного» значит везти поломку без починки (28-09-2026,
         # поезд unxed/f4#1643: 2b085791 без 2243f78f). Ждём зелёного quick вершины.
+        tip_date = datetime.fromisoformat(
+            staging["commit"]["commit"]["committer"]["date"].replace("Z", "+00:00"))
+        wait = (datetime.now(timezone.utc) - tip_date).total_seconds() / 60
         print("поезд не режу: после последнего зелёного quick "
               f"({cut_sha[:9]}) в staging есть коммит-починка ({who(heal_wait[0])}"
               f"{' и ещё ' + str(len(heal_wait) - 1) if len(heal_wait) > 1 else ''}) — жду "
-              "зелёного quick на вершине staging")
+              f"зелёного quick на вершине staging ({wait:.0f} мин с её коммита)")
+        if wait > HEAL_WAIT_MIN:
+            print(f"ИНЦИДЕНТ: зелёного quick на вершине staging нет уже {wait:.0f} мин "
+                  f"(> {HEAL_WAIT_MIN}). СРОЧНО (§ 5 п. 2): «красный staging» — quick на вершине "
+                  "не запускался (вершина трогает только *.md/docs/**, paths-ignore) или "
+                  "отменён; приземли `land` коммит, трогающий не-doc файл, либо проверь "
+                  "вершину в песочнице и разбери вручную")
+            return 1
         return 0
     cmp = compare(repo, main_sha, cut_sha)
     own = [c for c in cmp["commits"] if len(c["parents"]) == 1]
@@ -350,7 +364,13 @@ STEP_CMDS = [
     (r"^Run go vet\b", "go vet ./..."),
     (r"^Run Tests$", "go test -count=1 ./..."),
     (r"^Run race detector$", "go test -race -count=1 ./..."),
+    # vtui (ci.yml): шаг «Test» job'а Test (<цель>), безымянный шаг job'а Race (авто-имя GitHub).
+    (r"^Test$", "go test -count=1 -timeout 4m ./..."),
+    (r"^Run go test -race\b", "go test -race -count=1 -timeout 15m ./..."),
 ]
+# Job'ы, чей упавший шаг ОДНОЙ командой на одной ОС не воспроизвести: `Vet (<цели>)` f4 гоняет
+# go vet под несколькими GOOS/GOARCH (freebsd, illumos...), песочница проверила бы не то.
+UNREPRODUCIBLE_JOBS = re.compile(r"^Vet \(")
 
 
 def failed_steps(failed):
@@ -376,6 +396,8 @@ def pick_target_steps(steps):
     per_os = {}
     for job, step in steps:
         cmd = next((c for rx, c in STEP_CMDS if step and re.search(rx, step)), None)
+        if UNREPRODUCIBLE_JOBS.search(job or ""):
+            cmd = None
         if not cmd:
             return None
         os_label = "ubuntu-latest" if step == "Run race detector" else guess_os(job)
@@ -435,7 +457,8 @@ def close_train(repo, pr, comment):
     отмена идущих прогонов (поезда и бисекта) — чтобы это не делалось руками и не сжигало раннеры."""
     n = pr["number"]
     branches = [pr["head"]["ref"]] + bisect_refs(repo, n)
-    run("gh", "pr", "close", str(n), "--repo", repo, "--comment", comment, check=False)
+    if comment:  # None — PR уже закрыт, только уборка
+        run("gh", "pr", "close", str(n), "--repo", repo, "--comment", comment, check=False)
     for br in branches:
         for st in ("in_progress", "queued"):
             runs = api(f"repos/{repo}/actions/runs?branch={br}&status={st}&per_page=100",
@@ -447,8 +470,14 @@ def close_train(repo, pr, comment):
 
 def close_train_cmd(repo, number, reason):
     pr = api(f"repos/{repo}/pulls/{number}")
-    if pr["state"] != "open" or not pr["head"]["ref"].startswith(TRAIN_PREFIX):
-        sys.exit(f"#{number}: не открытый поезд ({TRAIN_PREFIX}*) — не трогаю")
+    if not pr["head"]["ref"].startswith(TRAIN_PREFIX) or pr.get("merged"):
+        sys.exit(f"#{number}: не поезд ({TRAIN_PREFIX}*) или уже влит — не трогаю")
+    if pr["state"] != "open":
+        # Повторный вызов: PR уже закрыт (в том числе прошлым close-train, упавшим на середине) —
+        # дочищаем то, что могло остаться (ветки, идущие прогоны), без нового комментария.
+        close_train(repo, pr, None)
+        print(f"поезд #{number} уже закрыт: дочистил ветку поезда, bisect/{number}/*, прогоны")
+        return 0
     close_train(repo, pr, reason or "Поезд закрыт без выброса коммитов (`train.py close-train`); "
                 "следующий режется из актуального staging.")
     print(f"поезд #{number} закрыт: PR, ветка, bisect/{number}/*, идущие прогоны")
