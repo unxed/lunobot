@@ -51,11 +51,21 @@ def gh_all(path):
 
 
 def repos():
-    out = ["unxed/lunobot"]
-    text = open(os.path.join(ROOT, "projects", "INDEX.md"), encoding="utf-8").read()
+    remote = subprocess.run(["git", "-C", ROOT, "remote", "get-url", "origin"],
+                            capture_output=True, text=True).stdout.strip()
+    account = re.fullmatch(
+        r"(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)"
+        r"([^/\s]+/[^/\s]+?)(?:\.git)?/?", remote)
+    if not account:
+        raise ValueError("не удалось определить учётный репозиторий по origin")
+    out = [account.group(1)]
+    with open(os.path.join(ROOT, "projects", "INDEX.md"), encoding="utf-8") as source:
+        text = source.read()
     for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", text, re.M):
         try:
-            p = open(os.path.join(ROOT, "projects", name, "PROJECT.md"), encoding="utf-8").read()
+            with open(os.path.join(ROOT, "projects", name, "PROJECT.md"),
+                      encoding="utf-8") as source:
+                p = source.read()
         except OSError:
             continue
         m = re.search(r"^- Код: https://github\.com/([^/\s]+/[^/\s]+)", p, re.M)
@@ -112,9 +122,9 @@ def pr_state(repo, branch):
     return "closed" if prs else "none"
 
 
-def branches(apply, refs):
+def branches(apply, refs, repo_names):
     n = 0
-    for repo in repos():
+    for repo in repo_names:
         for b in gh_all(f"repos/{repo}/branches?per_page=100"):
             name, sha = b["name"], b["commit"]["sha"]
             reason = None
@@ -146,8 +156,8 @@ def branches(apply, refs):
     return n
 
 
-def stale_prs(refs):
-    for repo in repos():
+def stale_prs(refs, repo_names):
+    for repo in repo_names:
         for p in gh_all(f"repos/{repo}/pulls?state=open&per_page=100"):
             head = p["head"]["ref"]
             upd = datetime.fromisoformat(p["updated_at"].replace("Z", "+00:00"))
@@ -164,10 +174,15 @@ def main(argv):
         print(__doc__)
         return 2
     apply = "--apply" in argv
+    try:
+        repo_names = repos()
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
     subprocess.run(["git", "-C", ROOT, "fetch", "-q", "origin", "main"], capture_output=True)
     refs = references()
-    n = local(number, refs, apply) + branches(apply, refs)
-    stale_prs(refs)
+    n = local(number, refs, apply) + branches(apply, refs, repo_names)
+    stale_prs(refs, repo_names)
     print(f"итого: {n} {'удалено' if apply else 'к удалению (запусти с --apply)'}")
     return 0
 

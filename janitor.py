@@ -15,6 +15,7 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib.request
@@ -29,6 +30,14 @@ DRY = "--dry-run" in sys.argv
 
 
 def gh(path):
+    if shutil.which("gh"):
+        try:
+            result = subprocess.run(["gh", "api", path], capture_output=True, text=True,
+                                    timeout=30)
+            if result.returncode == 0:
+                return json.loads(result.stdout)
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            pass
     req = urllib.request.Request("https://api.github.com" + path,
                                  headers={"Accept": "application/vnd.github+json"})
     token = os.environ.get("GITHUB_TOKEN")
@@ -41,27 +50,72 @@ def gh(path):
         return None
 
 
+def gh_all(path):
+    """Все страницы списка; None означает ошибку доступа, а не пустой список."""
+    if shutil.which("gh"):
+        try:
+            result = subprocess.run(["gh", "api", "--paginate", "--slurp", path],
+                                    capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                return [item for page in json.loads(result.stdout) for item in page]
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            pass
+    items = []
+    for page in range(1, 100):
+        separator = "&" if "?" in path else "?"
+        batch = gh(f"{path}{separator}page={page}")
+        if not isinstance(batch, list):
+            return None
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
+    return None
+
+
 def last_seen():
     """Когда каждый инстанс последний раз что-либо коммитил."""
-    out = subprocess.run(["git", "log", "--since=12 hours ago", "--format=%n@%ct", "-p",
-                          "--", "projects"], cwd=ROOT, capture_output=True, text=True).stdout
-    seen, when = {}, None
-    for line in out.splitlines():
-        if line.startswith("@") and line[1:].isdigit():
-            when = int(line[1:])
+    recent = subprocess.run(
+        ["git", "log", "--since=12 hours ago",
+         "--format=@@LUNOBOT-COMMIT@@%ct%x09%(trailers:key=Lunobot-Instance,valueonly)"],
+        cwd=ROOT, capture_output=True, text=True).stdout
+    legacy = subprocess.run(
+        ["git", "log", "--since=12 hours ago",
+         "--format=@@LUNOBOT-COMMIT@@%ct%x09%(trailers:key=Lunobot-Instance,valueonly)",
+         "-p", "--", "projects"],
+        cwd=ROOT, capture_output=True, text=True).stdout
+    seen, when, explicit_actor = {}, None, False
+    for line in recent.splitlines():
+        marker = re.match(r"@@LUNOBOT-COMMIT@@(\d+)\t(.*)", line)
+        if not marker:
+            continue
+        actor = re.search(WHO, marker.group(2))
+        if actor:
+            key = (actor.group(1), actor.group(2))
+            seen[key] = max(seen.get(key, 0), int(marker.group(1)))
+    for line in legacy.splitlines():
+        marker = re.match(r"@@LUNOBOT-COMMIT@@(\d+)\t(.*)", line)
+        if marker:
+            when = int(marker.group(1))
+            actor = re.search(WHO, marker.group(2))
+            explicit_actor = actor is not None
+            if actor:
+                key = (actor.group(1), actor.group(2))
+                seen[key] = max(seen.get(key, 0), when)
+            continue
+        if not when or explicit_actor or not line.startswith("+") or line.startswith("+++"):
             continue
         m = re.search(WHO, line)
-        if m and when:
+        if m:
             key = (m.group(1), m.group(2))
             seen[key] = max(seen.get(key, 0), when)
     return seen
 
 
-def branch_activity(repo):
+def branch_activity(repo, branches):
     """Последний пуш в каждую ветку lunobot/* — второй источник живости: бот, который пишет
     код, пушит в свою ветку постоянно, даже если учёт не трогает."""
     out = {}
-    for b in gh(f"/repos/{repo}/branches?per_page=100") or []:
+    for b in branches:
         name = b["name"]
         if not name.startswith("lunobot/"):
             continue
@@ -104,14 +158,19 @@ def main():
     now = datetime.now(timezone.utc).timestamp()
     total = 0
 
-    for d in sorted((ROOT / "projects").iterdir()):
-        if not d.is_dir():
-            continue
+    index = (ROOT / "projects" / "INDEX.md").read_text(encoding="utf-8")
+    for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", index, re.M):
+        d = ROOT / "projects" / name
         repo = repo_of(d)
+        if not repo:
+            continue
+        remote_branches = gh_all(f"/repos/{repo}/branches?per_page=100")
+        if remote_branches is None:
+            print(f"{repo}: нет доступа к веткам, уборка проекта пропущена", file=sys.stderr)
+            continue
         alive = dict(seen)
-        if repo:
-            for k, ts in branch_activity(repo).items():
-                alive[k] = max(alive.get(k, 0), ts)
+        for k, ts in branch_activity(repo, remote_branches).items():
+            alive[k] = max(alive.get(k, 0), ts)
 
         # 1. захваты замолчавших инстансов
         f = d / "DISPATCH.md"
@@ -150,7 +209,7 @@ def main():
         # 3. журнал веток: ветки больше нет
         f = d / "BRANCHES.md"
         if f.exists() and repo:
-            live = {b["name"] for b in (gh(f"/repos/{repo}/branches?per_page=100") or [])}
+            live = {b["name"] for b in remote_branches}
             kept, gone = [], []
             for b in blocks(f.read_text(encoding="utf-8")):
                 m = re.search(r"`([^`]+)`", b)

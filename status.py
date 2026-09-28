@@ -51,10 +51,12 @@ def gh_json(path):
 
 
 def projects(only=None):
-    """Проекты и их репозитории — из паспортов, а не из отдельного списка."""
-    for d in sorted((ROOT / "projects").iterdir()):
-        if not d.is_dir() or (only and d.name != only):
+    """Только проекты из INDEX.md; адрес репозитория — из паспорта."""
+    index = (ROOT / "projects" / "INDEX.md").read_text(encoding="utf-8")
+    for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", index, re.M):
+        if only and name != only:
             continue
+        d = ROOT / "projects" / name
         passport = (d / "PROJECT.md")
         if not passport.exists():
             continue
@@ -161,8 +163,14 @@ def shorten(text, repo):
     return re.sub(r"\s+,", ",", text).strip()
 
 
+def brief(text, limit=120):
+    """Однострочная краткая тема для пульта."""
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[:limit - 1].rstrip() + "…"
+
+
 def instances(hours=24, silent_min=30):
-    """Кто из инстансов когда в последний раз наследил в учётном репозитории.
+    """Кто из инстансов когда и чем в последний раз наследил в учётном репозитории.
 
     Отдельного heartbeat не заводим: каждый коммит бота содержит его id, поэтому
     «последний раз отвечал» берётся из git-истории. Инстанс, замолчавший надолго,
@@ -170,26 +178,61 @@ def instances(hours=24, silent_min=30):
     промежуток между шагами, в котором он до сих пор был невидим.
     """
     try:
-        out = subprocess.run(
-            ["git", "log", f"--since={hours} hours ago", "--format=%n@%ct", "-p", "--", "projects"],
+        recent = subprocess.run(
+            ["git", "log", f"--since={hours} hours ago",
+             "--format=@@LUNOBOT-COMMIT@@%ct%x09%s%x09"
+             "%(trailers:key=Lunobot-Instance,valueonly)"],
+            cwd=ROOT, capture_output=True, text=True, timeout=60).stdout
+        legacy = subprocess.run(
+            ["git", "log", f"--since={hours} hours ago",
+             "--format=@@LUNOBOT-COMMIT@@%ct%x09%s%x09"
+             "%(trailers:key=Lunobot-Instance,valueonly)", "-p", "--", "projects"],
             cwd=ROOT, capture_output=True, text=True, timeout=60).stdout
     except Exception:
         return []
-    seen, when = {}, None
-    for line in out.splitlines():
-        if line.startswith("@") and line[1:].isdigit():
-            when = int(line[1:])
+    seen, when, summary, explicit_actor = {}, None, "", False
+
+    def record(m):
+        who = f"Лунобот-{m.group(1)} ({m.group(2)[:8]}…; {m.group(3)})"
+        prev = seen.get(who)
+        if not prev or when > prev[0]:
+            seen[who] = (when, summary)
+
+    for line in recent.splitlines():
+        marker = re.match(r"@@LUNOBOT-COMMIT@@(\d+)\t([^\t]*)\t(.*)", line)
+        if not marker:
             continue
-        m = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)", line)
-        if m and when:
-            who = f"Лунобот-{m.group(1)} ({m.group(2)[:8]}…; {m.group(3)})"
-            seen[who] = max(seen.get(who, 0), when)
+        when = int(marker.group(1))
+        summary = marker.group(2).strip()
+        actor = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)",
+                          marker.group(3))
+        if actor:
+            record(actor)
+
+    for line in legacy.splitlines():
+        marker = re.match(r"@@LUNOBOT-COMMIT@@(\d+)\t([^\t]*)\t(.*)", line)
+        if marker:
+            when = int(marker.group(1))
+            summary = marker.group(2).strip()
+            actor = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)",
+                              marker.group(3))
+            explicit_actor = actor is not None
+            if actor:
+                record(actor)
+            continue
+        # Старые коммиты без трейлера: удалённая строка могла принадлежать другому боту.
+        if when and not explicit_actor and line.startswith("+") and not line.startswith("+++"):
+            actor = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)",
+                              line)
+            if actor:
+                record(actor)
     now = datetime.now(timezone.utc).timestamp()
     out = []
-    for who, ts in sorted(seen.items(), key=lambda x: -x[1]):
+    for who, (ts, summary) in sorted(seen.items(), key=lambda x: -x[1][0]):
         node = re.search(r"\(([0-9a-f]+)…", who)
         out.append({"who": who, "node": node.group(1) if node else "",
-                    "mins": int((now - ts) // 60)})
+                    "mins": int((now - ts) // 60),
+                    "last": brief(summary) if summary else "изменение без описания"})
     return out
 
 
@@ -214,11 +257,11 @@ def instances_block(silent_min=30, forget_min=180):
         if i["mins"] >= forget_min and not has_tail:
             continue
         if i["mins"] < silent_min:
-            items.append(f"{i['who']} — последний след {i['mins']} мин назад")
+            items.append(f"{i['who']} — последний след {i['mins']} мин назад: {i['last']}")
         elif has_tail:
-            items.append(f"{i['who']} — молчит {i['mins']} мин, и за ним ещё числится работа")
+            items.append(f"{i['who']} — молчит {i['mins']} мин, и за ним ещё числится работа: {i['last']}")
         else:
-            items.append(f"{i['who']} — молчит {i['mins']} мин, хвостов не осталось")
+            items.append(f"{i['who']} — молчит {i['mins']} мин, хвостов не осталось: {i['last']}")
     return items
 
 

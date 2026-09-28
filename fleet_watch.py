@@ -57,6 +57,15 @@ def captures(node):
 
 def free_work():
     found = []
+    queue = os.path.join(ROOT, "OWNER_QUEUE.md")
+    if os.path.exists(queue):
+        with open(queue, encoding="utf-8") as source:
+            content = source.read()
+        for block in re.split(r"(?=^## )", content, flags=re.M):
+            key = re.match(r"## ([^\n]+)", block)
+            target = re.search(r"^Адресат: (.+)$", block, re.M)
+            if key and re.search(r"^Состояние: свободно$", block, re.M):
+                found.append(f"очередь {key.group(1)} ({target.group(1) if target else 'любой'})")
     for p in projects():
         tri = os.path.join(ROOT, "projects", p, "TRIAGE.md")
         dis = os.path.join(ROOT, "projects", p, "DISPATCH.md")
