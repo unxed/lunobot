@@ -55,8 +55,10 @@
   (коммит `ace75ef`, чистый cherry-pick поверх `upstream/master`) уже готова,
   copy-paste текст PR и compare-ссылка — в unxed/f4#1609 (не удалять эту ветку как
   брошенную, она не в неймспейсе `lunobot/*`, см. BRANCHES.md).
-- **Найдена, но не тронута (вне рамок этой задачи)**: в форке есть ещё одна
-  висящая ветка того же вида, что и unxed/f4#1607 — `lunobot/19d368003c6c048e43dbec70/lunobot-1/vtui-160-wayland-ffi`
-  (1 коммит поверх PR #1 «window: use xkb-go for Wayland keymap parsing and key
-  translation», без PR, старый формат имени ветки до 27-09-2026). Кандидат на
-  такое же «довести до PR», отдельным шагом.
+- Висящая ветка `lunobot/19d368003c6c048e43dbec70/lunobot-1/vtui-160-wayland-ffi`
+  («window: use xkb-go for Wayland keymap parsing and key translation», см.
+  unxed/f4#1610) ребейзнута на master, прогнана через `ci.yml` (зелено с первого
+  раза после починки отставшего `go.sum` для только что добавленной зависимости
+  `xkb-go` — исходный коммит трогал `go.mod`, но не `go mod tidy`) и смержена
+  через unxed/wayland#2: https://github.com/unxed/wayland/commit/fa6821d86beef46b2fd4240672498b00d3ba61b5.
+  Ветка удалена.
