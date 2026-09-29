@@ -10,7 +10,8 @@
     train.py bisect <owner/repo> --os <раннер> --cmd "<команда песочницы>"
     train.py close-train <owner/repo> <PR> [--reason "<текст>"]
 
-land  — переносит твои коммиты (origin/lunobot/staging..HEAD) на вершину staging и пушит,
+land  — при свежей строке «объявляю заморозку land проекта …» в DISPATCH.md учёта (≤ 25 минут,
+        § 7.2 п. 0) отказывает: коммит паркуется. Иначе переносит твои коммиты (origin/lunobot/staging..HEAD) на вершину staging и пушит,
         с повторами при гонке. PR не открывает никогда. Staging красный (последний
         завершённый quick упал и починки после него нет) — ОТКАЗЫВАЕТ: конвейер стоит, пока
         его не починят (§ 7.2 п. 0). Починка — с --fix-staging и трейлером `Fixes-Staging:`.
@@ -45,7 +46,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 STAGING = "lunobot/staging"
 # Явный refspec со знаком +: single-branch клон (gh repo clone --depth=N) не содержит staging в
@@ -166,6 +167,38 @@ def who(c):
     return f"{c['sha'][:9]} {msg.splitlines()[0][:70]} [{', '.join(keys) or 'без трейлера'}]"
 
 
+FREEZE_RE = re.compile(r"^(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}) .*объявляю заморозку land проекта (\S+)", re.M)
+FREEZE_MIN = 25
+
+
+def active_freeze(text, project, now=None):
+    """Свежая строка «объявляю заморозку land проекта <проект>» в тексте DISPATCH.md
+    (LUNOBOT.md § 7.2, п. 0): не старше FREEZE_MIN минут, время в UTC. Иначе None."""
+    now = now or datetime.now(timezone.utc)
+    for stamp, name in FREEZE_RE.findall(text):
+        if name.rstrip(".,;") != project:
+            continue
+        try:
+            ts = datetime.strptime(stamp, "%d-%m-%Y %H:%M:%S").replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue  # невозможная дата в строке — не заморозка, но и не повод ронять land
+        if timedelta(0) <= now - ts < timedelta(minutes=FREEZE_MIN):
+            return stamp
+    return None
+
+
+def freeze_stamp(repo):
+    """Метка времени свежей заморозки проекта в учёте (origin/main), либо None. Учёт
+    недоступен — заморозки нет: land не должен падать из-за сети к учёту."""
+    if not os.path.isdir(os.path.join(ACCOUNTING, ".git")):
+        return None
+    project = repo.split("/")[1]
+    run("git", "-C", ACCOUNTING, "fetch", "-q", "origin", "main", check=False)
+    p = run("git", "-C", ACCOUNTING, "show", f"origin/main:projects/{project}/DISPATCH.md",
+            check=False)
+    return active_freeze(p.stdout, project) if p.returncode == 0 else None
+
+
 def land(fix=False):
     run("git", "fetch", "-q", "origin", STAGING_REFSPEC)
     commits = run("git", "log", "--format=%H%x00%B%x01", f"origin/{STAGING}..HEAD").stdout
@@ -182,6 +215,12 @@ def land(fix=False):
                  "staging лечится, и снова смогут приземлять")
     repo = origin_repo()
     if repo and not fix:
+        frozen = freeze_stamp(repo)
+        if frozen:
+            sys.exit(f"ЗАМОРОЗКА land проекта {repo.split('/')[1]} (строка от {frozen} UTC в "
+                     "DISPATCH.md учёта, § 7.2 п. 0): поезд ждёт нарезки. Не приземляй — "
+                     "запаркуй коммит в клоне (§ 5 п. 2), работа и песочница продолжаются; "
+                     f"заморозка истекает через {FREEZE_MIN} минут после метки.")
         state, info = staging_health(repo)
         if state == "red":
             last = info["last"]
