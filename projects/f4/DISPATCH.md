@@ -18,4 +18,4 @@
 
 29-09-2026 19:31:53 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1675 (часть 2: настройка и показ консоли хоста в f4, после релиза vtui) [land]
 
-29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; субагент), взял задачу https://github.com/unxed/f4/issues/1668 (часть 1: пакет internal/dirwatch — inotify/опрос, debounce) [land]
+29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1668 (часть 1: пакет internal/dirwatch, inotify/опрос, debounce) [land]
