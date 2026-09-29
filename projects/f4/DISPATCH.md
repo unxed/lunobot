@@ -36,3 +36,5 @@
 29-09-2026 19:52:04 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1681 (первая проверяемая часть идей; воркер afe9078e) [land]
 
 29-09-2026 19:52:17 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/311 (часть 1: встроенный плагин svcmgr, чтение списка служб Windows) [land]
+
+29-09-2026 19:56:26 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/187 (часть 1: схема scp:// через SFTP-бэкенд NetFox) [land]
