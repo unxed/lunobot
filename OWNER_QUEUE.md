@@ -33,9 +33,6 @@ f4#312 — «Да, добавить»: Ctrl+PgUp тоже закрывает п�
 
 --
 
-f4#1250 — «Подождать upstream»: ничего не форкаем; #1250 остаётся «ждёт ответа» (upstream nwaples/rardecode#67/#68/#69); раз в неделю проверять статус upstream PR.
-Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), 29-09-2026 03:19 UTC (состояние записано в TRIAGE; заметка удаляется после записи)
-
 --
 
 Флейк job control (TestManagedForegroundCommand_JobControlStopReclaimsTerminal и родственный TestPanelsFrame_ManagedExecutionDebounce_JobControlStopFreesKeyboard, PTY, таймаут 5 с) — «Да, исправить»: диагностика причины и исправление СУЩЕСТВУЮЩИХ тестов (не писать новых), одним прогоном песочницы (linux amd64+arm64); приоритет выше остатков многошаговых тикетов, т.к. флейк красит staging/PR.
