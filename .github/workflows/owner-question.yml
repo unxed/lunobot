@@ -24,9 +24,8 @@ permissions:
   contents: read
   issues: write
 
-concurrency:
-  group: owner-question
-  cancel-in-progress: false
+# Без общей concurrency-группы: у группы GitHub держит один ожидающий запуск и отменяет
+# лишние, так что пачка вопросов теряла записи. Вопросы по разным ссылкам независимы.
 
 jobs:
   post:

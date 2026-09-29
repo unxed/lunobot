@@ -14,7 +14,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: owner-question
+  group: owner-question-sweep
   cancel-in-progress: false
 
 jobs:
