@@ -12,25 +12,23 @@
 
 post  — повторный вопрос по той же ссылке заменяет прежнюю запись (новый комментарий
         уведомляет снова); тикет создаётся, если его ещё нет.
-sweep — убирает записи, которые больше не нужны: тикет закрыт; после вопроса написал
-        кто-то, кроме бота (подпись «*Лунобот-N (…)*» — бот, даже под аккаунтом владельца);
-        в TRIAGE учётного репозитория состояние уже не «ждёт ответа»/«спор»; запись старше
-        MAX_AGE_DAYS. Записей не больше MAX_ENTRIES: лишние самые старые уходят, о чём
-        остаётся одна сводка. Приватные и недоступные тикеты не трогаются.
+sweep — периодическая уборка, единственный способ сократить список: убирает запись, только
+        когда вопрос реально снят — тикет закрыт; после вопроса написал кто-то, кроме бота
+        (подпись «*Лунобот-N (…)*» — бот, даже под аккаунтом владельца); в TRIAGE учётного
+        репозитория состояние уже не «ждёт ответа»/«спор». Ни срока, ни лимита числа записей
+        нет: неотвеченный вопрос не пропадает никогда. Приватные и недоступные тикеты не
+        трогаются.
 """
 import json
 import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 OWNER = "unxed"
 TITLE = "Вопросы владельцу"
-MAX_ENTRIES = 30
-MAX_AGE_DAYS = 14
 MARK = re.compile(r"<!--\s*oq:(\S+)\s*-->")
 URL = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:issues|pull)/(\d+)(?:#issuecomment-(\d+))?")
 BOT_SIGNATURE = re.compile(r"\*\s*(?:Лунобот|Lunobot)-\d+ \(")
@@ -75,8 +73,8 @@ def find_issue(create):
     body = ("Единственный тикет для вопросов владельцу: боты добавляют сюда комментарий со ссылкой на "
             "вопрос и упоминанием @" + OWNER + ", потому что GitHub не уведомляет о комментариях, оставленных "
             "от собственного аккаунта. Ответ пишите в самом тикете проекта по ссылке. Записи убирает "
-            "`owner_questions.py sweep` (тикет закрыт, ответ дан, состояние в TRIAGE сменилось, "
-            f"старше {MAX_AGE_DAYS} суток); держите тикет открытым.")
+            "`owner_questions.py sweep`, только когда вопрос снят (тикет закрыт, ответ дан, состояние в "
+            "TRIAGE сменилось); срока и лимита нет. Держите тикет открытым.")
     out = gh("api", f"repos/{repo()}/issues", "-f", f"title={TITLE}", "-f", f"body={body}")
     return json.loads(out)["number"]
 
@@ -123,11 +121,8 @@ def triage_state(target_repo, num):
     return None
 
 
-def obsolete(entry, now):
-    """Причина убрать запись или None."""
-    created = datetime.strptime(entry["created"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-    if now - created > timedelta(days=MAX_AGE_DAYS):
-        return f"старше {MAX_AGE_DAYS} суток"
+def obsolete(entry):
+    """Причина убрать запись (вопрос снят) или None. Возраст записи причиной не бывает."""
     m = URL.search(entry["url"])
     if not m:
         return "ссылка не разобрана"
@@ -155,25 +150,15 @@ def sweep():
     if number is None:
         print("тикета «Вопросы владельцу» ещё нет")
         return
-    now = datetime.now(timezone.utc)
     kept = []
     for e in entries(number):
-        reason = obsolete(e, now)
+        reason = obsolete(e)
         if reason:
             print(f"{e['url']}: {reason}")
             delete_comment(e["id"])
         else:
             kept.append(e)
-    kept.sort(key=lambda e: e["created"])
-    extra = kept[:-MAX_ENTRIES] if len(kept) > MAX_ENTRIES else []
-    for e in extra:
-        delete_comment(e["id"])
-    if extra:
-        body = f"@{OWNER} записей больше {MAX_ENTRIES}: убрано самых старых — {len(extra)}. Они остаются в своих тикетах."
-        print(body)
-        if not DRY:
-            gh("api", f"repos/{repo()}/issues/{number}/comments", "-f", f"body={body}")
-    print(f"записей осталось: {len(kept) - len(extra)}")
+    print(f"записей осталось: {len(kept)}")
 
 
 def main():
