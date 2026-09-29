@@ -49,6 +49,25 @@ class PrivateAccountingTest(unittest.TestCase):
                 self.assertEqual(fleet_watch.free_work(),
                                  ["очередь f4-1628", "очередь просто заметка владельца"])
 
+    def test_watch_counts_workers_per_session(self):
+        node = "a721a6d1487257292ae00780"
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory, "projects", "sample")
+            project.mkdir(parents=True)
+            project.joinpath("DISPATCH.md").write_text(
+                f"29-09-2026 08:00:00 Я Лунобот-1 (node {node}; LNX), взял задачу "
+                "https://github.com/example/project/issues/1 [pr]\n\n"
+                f"29-09-2026 08:01:00 Я Лунобот-2 (node {node}; LNX), взял задачу "
+                "https://github.com/example/project/issues/2 [pr]\n\n"
+                f"29-09-2026 08:02:00 Я Лунобот-1 (node {node}; LNX), взял задачу "
+                "https://github.com/example/project/issues/3 [pr]\n",
+                encoding="utf-8")
+            with patch.object(fleet_watch, "ROOT", directory), \
+                 patch.object(fleet_watch, "projects", return_value=["sample"]):
+                self.assertEqual(len(fleet_watch.captures(node)), 3)
+                self.assertEqual(len(fleet_watch.captures(node, "1")), 2)
+                self.assertEqual(len(fleet_watch.captures(node, "2")), 1)
+
     def test_janitor_uses_trailer_not_deleted_actor(self):
         log = ("@@LUNOBOT-COMMIT@@100\tЛунобот-1 (node a721a6d1487257292ae00780; LNX)\n"
                "-Лунобот-2 (node 91d86915909d88ed7991a74c; LNX)\n")

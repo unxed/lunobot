@@ -13,10 +13,10 @@
   ветки     — в репозиториях проектов из INDEX.md и в учётном: временные по имени
               (tmp/*, а также старые образцы probe/*, sandbox*, *-sandbox, tmp-*,
               lunobot/*-probe-*) старше 24 ч без открытого PR; bisect/<n>/* закрытого поезда;
-              complaint/* и lunobot/urgent/* с закрытым или влитым PR. Прочие ветки
-              (claude/*, человеческие) не трогает — только перечисляет.
-  PR        — не закрывает; перечисляет открытые lunobot/urgent/* без захвата старше 24 ч
-              (их берут по § 5 п. 3).
+              complaint/*, lunobot/urgent/* и lunobot/pr/* с закрытым или влитым PR. Прочие
+              ветки (claude/*, человеческие) не трогает — только перечисляет.
+  PR        — не закрывает; перечисляет открытые lunobot/urgent/* и lunobot/pr/* без захвата
+              старше 24 ч (их берут по § 5 п. 3).
 
 Пороги больше самого долгого шага, поэтому живую работу другого бота скрипт не заденет, а
 удаление ветки перепроверяет открытые PR и возраст прямо перед удалением.
@@ -33,6 +33,8 @@ from datetime import datetime, timedelta, timezone
 ROOT = os.path.dirname(os.path.abspath(__file__))
 LOCAL_AGE = timedelta(hours=6)
 BRANCH_AGE = timedelta(hours=24)
+# Ветки своих PR бота: срочные (режим поездов) и обычные (режим публикации PR), § 7.2.
+OWN_PR = ("lunobot/urgent/", "lunobot/pr/")
 TEMP = re.compile(r"^(tmp/|tmp-|probe/|sandbox|[^/]*-sandbox$|lunobot/[^/]*-probe-)")
 
 
@@ -137,7 +139,7 @@ def branches(apply, refs, repo_names):
                 pr = gh(f"repos/{repo}/pulls/{m.group(1)}")
                 if pr and pr.get("state") == "closed":
                     reason = f"бисект закрытого поезда #{m.group(1)}"
-            elif name.startswith(("complaint/", "lunobot/urgent/")):
+            elif name.startswith(("complaint/",) + OWN_PR):
                 if pr_state(repo, name) == "closed":
                     reason = "PR закрыт или влит"
             elif TEMP.match(name):
@@ -161,7 +163,7 @@ def stale_prs(refs, repo_names):
         for p in gh_all(f"repos/{repo}/pulls?state=open&per_page=100"):
             head = p["head"]["ref"]
             upd = datetime.fromisoformat(p["updated_at"].replace("Z", "+00:00"))
-            if (head.startswith("lunobot/urgent/") and head not in refs
+            if (head.startswith(OWN_PR) and head not in refs
                     and datetime.now(timezone.utc) - upd > BRANCH_AGE):
                 print(f"pr     {repo}#{p['number']} {head}: без захвата и активности >24 ч — "
                       "это § 5 п. 3, возьми")

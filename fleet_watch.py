@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Наблюдатель менеджера флота (§ 4, «Роли»): следит, что флот узла не простаивает.
 
-    fleet_watch.py --node <24 hex> [--min 4] [--interval 60] [--once]
+    fleet_watch.py --node <24 hex> [--number <N>] [--min 4] [--interval 60] [--once]
 
 Раз в --interval секунд обновляет учётный клон и печатает строку ТОЛЬКО когда есть повод
 разбудить менеджера:
 
-  ПРОСТОЙ   — живых захватов этого узла в projects/*/DISPATCH.md меньше --min, а работа есть
+  ПРОСТОЙ   — живых захватов сессии в projects/*/DISPATCH.md меньше --min, а работа есть
   КРАСНОЕ   — train.py health по проекту со staging вернул 1 (красный staging/main, застой)
-  ПРОТУХ    — захват этого узла держится дольше 45 минут без отметки
+  ПРОТУХ    — захват сессии держится дольше 45 минут без отметки
+
+Сессия — захваты с id `Лунобот-<N> (node <узел>; …)`: потолок воркеров считается на сессию
+(LUNOBOT.md § 4, «(б)»), а на одном узле могут работать сессии разных номеров. Без --number
+считаются захваты всего узла, как раньше.
 
 Одинаковый повод повторяется не чаще раза в 5 минут. Только чтение: ничего не пушит, ничего
 не захватывает. Менеджер гоняет его с --once в процесс-часах под Monitor и сам реагирует
@@ -40,14 +44,17 @@ def projects():
     return re.findall(r"^\d+\.\s*\[([^\]]+)\]", text, re.M)
 
 
-def captures(node):
+def captures(node, number=None):
+    own = re.compile(rf"Лунобот-{re.escape(number)} \((?:node|instance) {re.escape(node)}\b") \
+        if number else None
     out = []
     for p in projects():
         path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
         if not os.path.exists(path):
             continue
         for line in open(path, encoding="utf-8"):
-            if node in line and ("взял" in line or "работаю" in line):
+            if node in line and ("взял" in line or "работаю" in line) \
+                    and (own is None or own.search(line)):
                 m = TS.match(line)
                 ts = (datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S")
                       .replace(tzinfo=timezone.utc) if m else None)
@@ -97,14 +104,15 @@ def staged_repos():
     return [r for r in out.split() if "/" in r] if rc == 0 else []
 
 
-def check(node, minimum, last):
+def check(node, minimum, last, number=None):
     sh("git", "pull", "-q", "--rebase")
     now = datetime.now(timezone.utc)
     events = []
-    live = captures(node)
+    live = captures(node, number)
     if len(live) < minimum:
         work = free_work()
-        events.append(("ПРОСТОЙ", f"захватов узла {len(live)} < {minimum}; свободная работа: "
+        who = f"сессии Лунобот-{number}" if number else "узла"
+        events.append(("ПРОСТОЙ", f"захватов {who} {len(live)} < {minimum}; свободная работа: "
                        f"{', '.join(work[:12]) or 'по § 5 п. 6 (покрытие) или следующий проект'}"))
     for p, ts, line in live:
         if ts and now - ts > STALE:
@@ -131,9 +139,10 @@ def main(argv):
     if not node:
         print(__doc__)
         return 2
+    number = opt("--number")
     minimum, interval, last = int(opt("--min", "4")), int(opt("--interval", "60")), {}
     while True:
-        check(node, minimum, last)
+        check(node, minimum, last, number)
         if "--once" in argv:
             return 0
         time.sleep(interval)
