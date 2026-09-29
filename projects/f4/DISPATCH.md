@@ -8,8 +8,6 @@
 
 29-09-2026 02:56:58 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/659 (следующая часть по status/659.md: остаток — amend при пустом индексе, push/pull/fetch/merge/stash, построчный выбор) [land]
 
-29-09-2026 03:02:44 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1290 (выставить vtui.AppID = org.unxed.f4 и сверить .desktop) [land]
-
 29-09-2026 03:03:06 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1404 (редактирование времён создания/доступа/изменения, как в far2l/Far3) [land]
 
 29-09-2026 03:04:33 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1606 (следующая часть по status/1606.md: экран ревью патча, снимок отката на диске, Enter/F3) [land]
