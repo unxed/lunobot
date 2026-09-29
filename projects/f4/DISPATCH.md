@@ -9,7 +9,7 @@
 
 29-09-2026 03:28:01 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1625 (шаг 5: превью рядом с редактором с обновлением на лету) [land]
 
-29-09-2026 03:31:17 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «красный staging f4: gosec G306 в internal/vtvibe/ap/undo_disk.go:69 + флейк job control, прогон 36517110753» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
-
 29-09-2026 03:31:25 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1606 (часть: экран ревью патча уровня 0 вместо модального окна) [land]
 
+
+29-09-2026 03:41:52 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1404 (macOS: время создания через setattrlist; Created в Unix-диалоге где ФС позволяет) [land]
