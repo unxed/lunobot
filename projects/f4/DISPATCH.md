@@ -18,6 +18,6 @@
 
 29-09-2026 19:34:49 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1671 (часть 1: замер размеров lite-сборки по целям OpenWrt и матрица GOOS/GOARCH) [land]
 
-29-09-2026 19:38:28 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1604 (часть: DragOutModifier, п. 2 запроса Zeroes1) [land]
+29-09-2026 19:38:28 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер afe9078e), взял задачу https://github.com/unxed/f4/issues/1604 (часть: DragOutModifier, п. 2 запроса Zeroes1) [land]
 
 29-09-2026 19:39:08 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1669 (часть 1 из M: hotlist — сериализация адреса VFS/плагина и переход) [land]
