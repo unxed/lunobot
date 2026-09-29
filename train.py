@@ -178,7 +178,10 @@ def active_freeze(text, project, now=None):
     for stamp, name in FREEZE_RE.findall(text):
         if name.rstrip(".,;") != project:
             continue
-        ts = datetime.strptime(stamp, "%d-%m-%Y %H:%M:%S").replace(tzinfo=timezone.utc)
+        try:
+            ts = datetime.strptime(stamp, "%d-%m-%Y %H:%M:%S").replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue  # невозможная дата в строке — не заморозка, но и не повод ронять land
         if timedelta(0) <= now - ts < timedelta(minutes=FREEZE_MIN):
             return stamp
     return None

@@ -50,6 +50,10 @@ class FreezeTest(unittest.TestCase):
     def test_other_project_is_ignored(self):
         self.assertIsNone(train.active_freeze(self.LINE, "vtui", self.now(20, 30)))
 
+    def test_impossible_date_is_ignored(self):
+        line = self.LINE.replace("30-09-2026", "31-02-2026")
+        self.assertIsNone(train.active_freeze(line, "f4", self.now(20, 30)))
+
     def test_future_stamp_is_ignored(self):
         self.assertIsNone(train.active_freeze(self.LINE, "f4", self.now(20, 10)))
 
