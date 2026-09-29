@@ -13,3 +13,5 @@
 29-09-2026 03:12:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1606 (снимок отката на диске .vtvibe/undo/<метка>/ по status/1606.md) [land]
 
 29-09-2026 03:14:19 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1625 (шаг 4: поиск в md-просмотре / превью рядом с редактором с обновлением на лету) [land]
+
+29-09-2026 03:16:23 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «красный staging f4: TestCommandPaletteProductionCommandSurfaceInventory (новый vtui.NewVMenu без аудита палитры), прогон 36515843836» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
