@@ -41,6 +41,13 @@
   чтобы выбрать между старой эвристикой (только 2 группы, два разных
   магических раскладки индексов) и равномерной раскладкой блоков
   `width = symsPerKeycode/numGroups` для 3-4 групп.
+- Встроенный xkeyboard-config (keytrans#1, PR #10, 29-09-2026): `xkbdata/xkeyboard-config.tar.xz`
+  (полное дерево, xz через `github.com/unxed/xz`, ~343 КБ; собирается вручную
+  `scripts/build-xkb-archive.sh` из готовых данных дистрибутива `xkb-data` — upstream-тарбол
+  отдаёт `rules/` только кусками `*.part`), распаковка в `os.UserCacheDir()/keytrans/xkb-<хеш>/`
+  (`xkb_embedded.go`), запасной вариант после системных данных; RMLVO без X11 — `XKB_DEFAULT_*`,
+  иначе `evdev/pc105/us`. Тесты CI (`coverage.yml`, `arm64`) собирают код вместе с архивом. Не
+  сделано: бэкенд без X-соединения (следующий срез #1).
 - CI: единственный workflow — `.github/workflows/coverage.yml`
   (`go test -covermode=atomic ./...` на push в main/master и на каждый PR).
   Нет `lunobot/staging`/`quick.yml`/`train.yml` — `Режим публикации: PR`.
