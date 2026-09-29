@@ -7,3 +7,5 @@
 
 29-09-2026 02:51:39 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1625 (шаг 3: F4 — live-превью при редактировании .md) [land]
 
+
+29-09-2026 02:56:58 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/659 (следующая часть по status/659.md: остаток — amend при пустом индексе, push/pull/fetch/merge/stash, построчный выбор) [land]
