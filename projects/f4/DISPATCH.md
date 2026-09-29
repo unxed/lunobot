@@ -22,7 +22,6 @@
 
 29-09-2026 19:46:37 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/1665 (часть 1 из 3: текст PDF постранично в Markdown-просмотре, чистый Go) [land]
 
-29-09-2026 19:52:17 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/311 (часть 1: встроенный плагин svcmgr, чтение списка служб Windows) [land]
 
 29-09-2026 19:56:26 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/187 (часть 1: схема scp:// через SFTP-бэкенд NetFox) [land]
 
