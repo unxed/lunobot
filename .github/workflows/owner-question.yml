@@ -1,0 +1,43 @@
+name: owner-question
+
+# Вопрос владельцу доходит до уведомлений GitHub: боты пишут в тикеты от аккаунта владельца,
+# а о собственных комментариях GitHub не уведомляет. Этот workflow (github-actions[bot],
+# GITHUB_TOKEN) добавляет в единственный тикет «Вопросы владельцу» этого репозитория
+# комментарий с @unxed и ссылкой на вопрос. Запуск: `python3 notify_owner.py <ссылка>`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Ссылка на комментарий-вопрос'
+        required: true
+      ticket:
+        description: 'Проект и тикет, например unxed/f4#410'
+        required: false
+        default: ''
+      text:
+        description: 'Кратко, о чём вопрос'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: owner-question
+  cancel-in-progress: false
+
+jobs:
+  post:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Записать вопрос
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IN_URL: ${{ inputs.url }}
+          IN_TICKET: ${{ inputs.ticket }}
+          IN_TEXT: ${{ inputs.text }}
+        run: python3 owner_questions.py post --url "$IN_URL" --ticket "$IN_TICKET" --text "$IN_TEXT"
