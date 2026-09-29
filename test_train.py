@@ -21,5 +21,18 @@ class ExistingRefTest(unittest.TestCase):
             self.assertEqual(train.existing_ref("repos/o/r/git/ref/heads/x"), ref)
 
 
+class RefCreatedTest(unittest.TestCase):
+    def test_422_json_is_not_success(self):
+        body = {"message": "Reference already exists", "status": "422"}
+        self.assertFalse(train.ref_created(body))
+
+    def test_none_and_empty_are_not_success(self):
+        self.assertFalse(train.ref_created(None))
+        self.assertFalse(train.ref_created({}))
+
+    def test_created_ref_is_success(self):
+        self.assertTrue(train.ref_created({"ref": "refs/heads/x", "object": {"sha": "abc"}}))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -107,6 +107,11 @@ def existing_ref(path):
     return None
 
 
+def ref_created(resp):
+    """Ответ POST git/refs — успех, только если в нём есть созданная ссылка."""
+    return isinstance(resp, dict) and bool(resp.get("ref") or resp.get("object"))
+
+
 def origin_repo():
     url = run("git", "remote", "get-url", "origin", check=False).stdout.strip()
     m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", url)
@@ -318,10 +323,13 @@ def cut(repo, sign):
     if not existing:
         created = api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
                       "-f", f"sha={cut_sha}", check=False)
-        if created is None:
+        if not ref_created(created):
+            # Ошибка (422 и т. п.) приходит JSON-ом с `message`, а не None: успехом
+            # считается только ответ с ref/object. Ветку мог создать параллельный tick.
             existing = existing_ref(ref_path)
             if not existing:
-                sys.exit(f"не удалось создать ветку поезда {branch}")
+                why = created.get("message") if isinstance(created, dict) else None
+                sys.exit(f"не удалось создать ветку поезда {branch}" + (f": {why}" if why else ""))
     tk = tickets(repo, own)
     short = [k.replace(f"{repo}#", "#") for k in tk]
     title = f"Поезд {project} {stamp}: " + (", ".join(short) if short else f"{len(own)} коммитов")
