@@ -1,5 +1,0 @@
-# Lunobot-Task: fix-gosec-undo-disk — красный staging (quick 36517110753 на cdffe27)
-
-Причины: (а) gosec G306 в `internal/vtvibe/ap/undo_disk.go:69` (.gitignore 0644) — теперь 0600, каталоги 0750; (б) staticcheck QF1001 в `internal/dialog/help_search.go:141` (поиск в md-просмотре) — форма де Моргана; (в) флейк JobControlStopFreesKeyboard остался ПОСЛЕ flake-jc (26bae67 в cdffe27 был): моя правка ждала «был занят» только после стартового окна 300 мс, а команда стартовала и была остановлена внутри него — теперь «был занят» отмечается до возврата по окну.
-ПРИПАРКОВАНО: ветка `tmp/91d8/fix-staging-lint` (unxed/f4, от staging cdffe27), клон `/tmp/lunobot-3/work/i1290-2032363/f4`; песочница (vet + `-count=10` JobControlStop + golangci-lint обоими конфигами): https://github.com/unxed/f4/actions/runs/36517564731 (результат не проверен).
-Дальше: success -> fetch staging, rebase, `train.py land --fix-staging` (трейлеры Fixes-Staging и Lunobot-Task в коммите), ветку убрать через gh api, файл убрать.
