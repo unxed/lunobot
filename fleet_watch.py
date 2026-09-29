@@ -61,11 +61,20 @@ def free_work():
     if os.path.exists(queue):
         with open(queue, encoding="utf-8") as source:
             content = source.read()
-        for block in re.split(r"(?=^## )", content, flags=re.M):
-            key = re.match(r"## ([^\n]+)", block)
-            target = re.search(r"^Адресат: (.+)$", block, re.M)
-            if key and re.search(r"^Состояние: свободно$", block, re.M):
-                found.append(f"очередь {key.group(1)} ({target.group(1) if target else 'любой'})")
+        # шапка (до первой заметки) — не поручение; заметки разделены строкой `--`,
+        # формальные блоки начинаются с `## id`; поле «Адресат» больше не используется
+        notes = re.split(r"^--\s*$", content, flags=re.M)[1:] or []
+        for note in notes:
+            for block in re.split(r"(?=^## )", note, flags=re.M):
+                text = block.strip()
+                if not text:
+                    continue
+                key = re.match(r"## ([^\n]+)", text)
+                state = re.search(r"^Состояние: (.+)$", text, re.M)
+                if state and state.group(1).strip() != "свободно":
+                    continue
+                label = key.group(1) if key else text.splitlines()[0][:40]
+                found.append(f"очередь {label}")
     for p in projects():
         tri = os.path.join(ROOT, "projects", p, "TRIAGE.md")
         dis = os.path.join(ROOT, "projects", p, "DISPATCH.md")

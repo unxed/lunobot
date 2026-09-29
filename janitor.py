@@ -181,7 +181,10 @@ def main():
                 if not m or not re.match(TS, b.strip()):
                     kept.append(b)
                     continue
-                ts = alive.get((m.group(1), m.group(2)))
+                # живость — по узлу, а не по номеру: при смене номера (= смене модели, § 4)
+                # захваты узла переписываются под новый id, и старый номер не значит «мёртв»
+                ts = max((t for (num_, node_), t in alive.items() if node_ == m.group(2)),
+                         default=None)
                 silent = (now - ts) / 60 if ts else SILENT_MIN + 1
                 (gone if silent > SILENT_MIN else kept).append(b)
             total += save(f, kept, gone, f"владелец молчит дольше {SILENT_MIN} мин")

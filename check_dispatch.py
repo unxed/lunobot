@@ -118,7 +118,8 @@ def parse(path):
         # часть не указана — значит единственная
         part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
         entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
-                        "who": who.group(0), "verb": verb, "key": f"{key}#{part_key}"})
+                        "who": who.group(0), "node": who.group("node"), "verb": verb,
+                        "key": f"{key}#{part_key}"})
         if verb == "взял":
             if err := route_error(line):
                 route.append((n, line[:160], err))
@@ -162,7 +163,9 @@ def check(path, timeout_min, since=None):
                              f"строки по закрытому шагу удаляются: {e['key']}"))
             continue
         prev = holders.get(e["key"])
-        if e["verb"] == "взял" and prev and prev["who"] != e["who"]:
+        # владелец захвата — узел, а не номер: при смене номера (= смены модели, § 4) менеджер
+        # переписывает захваты узла под новый id, и это не чужой захват и не гонка
+        if e["verb"] == "взял" and prev and prev["node"] != e["node"]:
             problems.append(("гонка", e["line"],
                              f"{e['key']} уже захвачен другим (строка {prev['line']})"))
         if e["verb"] == "работаю" and not prev:

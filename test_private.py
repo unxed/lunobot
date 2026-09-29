@@ -42,12 +42,12 @@ class PrivateAccountingTest(unittest.TestCase):
     def test_owner_queue_is_visible_to_watch(self):
         with tempfile.TemporaryDirectory() as directory:
             Path(directory, "OWNER_QUEUE.md").write_text(
-                "## f4-1628\nАдресат: Лунобот-1\nСостояние: свободно\n",
+                "шапка\n--\n## f4-1628\nСостояние: свободно\n--\nпросто заметка владельца\n",
                 encoding="utf-8")
             with patch.object(fleet_watch, "ROOT", directory), \
                  patch.object(fleet_watch, "projects", return_value=[]):
                 self.assertEqual(fleet_watch.free_work(),
-                                 ["очередь f4-1628 (Лунобот-1)"])
+                                 ["очередь f4-1628", "очередь просто заметка владельца"])
 
     def test_janitor_uses_trailer_not_deleted_actor(self):
         log = ("@@LUNOBOT-COMMIT@@100\tЛунобот-1 (node a721a6d1487257292ae00780; LNX)\n"
