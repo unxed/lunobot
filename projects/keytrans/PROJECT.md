@@ -46,8 +46,9 @@
   `scripts/build-xkb-archive.sh` из готовых данных дистрибутива `xkb-data` — upstream-тарбол
   отдаёт `rules/` только кусками `*.part`), распаковка в `os.UserCacheDir()/keytrans/xkb-<хеш>/`
   (`xkb_embedded.go`), запасной вариант после системных данных; RMLVO без X11 — `XKB_DEFAULT_*`,
-  иначе `evdev/pc105/us`. Тесты CI (`coverage.yml`, `arm64`) собирают код вместе с архивом. Не
-  сделано: бэкенд без X-соединения (следующий срез #1).
+  иначе `evdev/pc105/us`. Тесты CI (`coverage.yml`, `arm64`) собирают код вместе с архивом. Бэкенд без
+  X-соединения (PR #11, 29-09-2026): `NewPureXKBTranslator(RMLVO)` — раскладка из RMLVO, состояние из
+  событий; `NewX11Translator` при `XgbConn == nil` возвращает его перед Core X11.
 - CI: единственный workflow — `.github/workflows/coverage.yml`
   (`go test -covermode=atomic ./...` на push в main/master и на каждый PR).
   Нет `lunobot/staging`/`quick.yml`/`train.yml` — `Режим публикации: PR`.
