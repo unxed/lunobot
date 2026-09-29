@@ -294,7 +294,23 @@ def cut(repo, sign):
     stamp = datetime.now(timezone.utc).strftime("%y%m%d-%H%M")
     project = repo.split("/")[1]
     branch = f"{TRAIN_PREFIX}{project}/{stamp}"
-    api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}", "-f", f"sha={cut_sha}")
+    # Several tick processes can pass train_pr() before the first one creates
+    # the branch.  A duplicate ref is the expected result of that race, not a
+    # process failure: reuse it when it points at the same cut, and use the
+    # cut SHA to disambiguate an unlikely same-minute second cut.
+    ref_path = f"repos/{repo}/git/ref/heads/{branch}"
+    existing = api(ref_path, check=False)
+    if existing and existing.get("object", {}).get("sha") != cut_sha:
+        branch = f"{branch}-{cut_sha[:9]}"
+        ref_path = f"repos/{repo}/git/ref/heads/{branch}"
+        existing = api(ref_path, check=False)
+    if not existing:
+        created = api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
+                      "-f", f"sha={cut_sha}", check=False)
+        if created is None:
+            existing = api(ref_path, check=False)
+            if not existing:
+                sys.exit(f"не удалось создать ветку поезда {branch}")
     tk = tickets(repo, own)
     short = [k.replace(f"{repo}#", "#") for k in tk]
     title = f"Поезд {project} {stamp}: " + (", ".join(short) if short else f"{len(own)} коммитов")
@@ -313,8 +329,24 @@ def cut(repo, sign):
     body.append("\n🤖 Generated with [Claude Code](https://claude.com/claude-code)")
     with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
         f.write("\n".join(body)[:65000])
-    url = run("gh", "pr", "create", "--repo", repo, "--base", "main", "--head", branch,
-              "--title", title[:250], "--body-file", f.name).stdout.strip()
+    open_pr = next((p for p in api(f"repos/{repo}/pulls?state=open&per_page=100")
+                    if p["head"]["ref"] == branch), None)
+    if open_pr:
+        print(f"поезд уже отправлен: {open_pr['html_url']} ({len(own)} коммитов, {len(tk)} тикетов/задач)")
+        return 0
+    created_pr = run("gh", "pr", "create", "--repo", repo, "--base", "main", "--head", branch,
+                     "--title", title[:250], "--body-file", f.name, check=False)
+    if created_pr.returncode:
+        # The other tick may have created the PR between the check above and
+        # this command.  Treat that race exactly like the duplicate ref.
+        open_pr = next((p for p in api(f"repos/{repo}/pulls?state=open&per_page=100")
+                        if p["head"]["ref"] == branch), None)
+        if open_pr:
+            print(f"поезд уже отправлен: {open_pr['html_url']} ({len(own)} коммитов, {len(tk)} тикетов/задач)")
+            return 0
+        sys.exit(f"не удалось открыть PR поезда {branch}: "
+                 f"{created_pr.stderr.strip() or created_pr.stdout.strip()}")
+    url = created_pr.stdout.strip()
     print(f"поезд отправлен: {url} ({len(own)} коммитов, {len(tk)} тикетов/задач)")
     return 0
 
