@@ -28,26 +28,28 @@ class InstancesTest(unittest.TestCase):
             with patch.object(status, "ROOT", root):
                 self.assertEqual([name for name, _, _ in status.projects()], ["own"])
 
-    def test_trailer_attributes_commit_to_actor_not_deleted_claim(self):
+    def test_activity_comes_from_work_repos_with_trailer(self):
         stamp = int(datetime.now(timezone.utc).timestamp())
-        log = (f"@@LUNOBOT-COMMIT@@{stamp}\tf4 #926: исправил проверку\t"
-               f"Лунобот-1 (node {NODE_1}; LNX)\n"
-               f"-взял Лунобот-2 (node {NODE_2}; LNX)\n")
-        with patch.object(status.subprocess, "run", return_value=SimpleNamespace(stdout=log)):
+        commits = [(stamp, "f4 #926: исправил проверку\n\nLunobot-Instance: "
+                    f"Лунобот-1 (node {NODE_1}; LNX)\n"),
+                   (stamp, "коммит человека без трейлера")]
+        with patch.object(status, "work_commits", return_value=commits):
             items = status.instances()
         self.assertEqual(len(items), 1)
         self.assertIn("Лунобот-1", items[0]["who"])
         self.assertEqual(items[0]["last"], "f4 #926: исправил проверку")
 
-    def test_legacy_commit_uses_only_added_lines(self):
-        stamp = int(datetime.now(timezone.utc).timestamp())
-        log = (f"@@LUNOBOT-COMMIT@@{stamp}\tf4 #926: взял шаг\t\n"
-               f"-Лунобот-2 (node {NODE_2}; LNX)\n"
-               f"+Лунобот-1 (node {NODE_1}; LNX)\n")
-        with patch.object(status.subprocess, "run", return_value=SimpleNamespace(stdout=log)):
-            items = status.instances()
-        self.assertEqual(len(items), 1)
-        self.assertIn("Лунобот-1", items[0]["who"])
+    def test_accounting_repo_is_not_activity(self):
+        with patch.object(status, "projects", return_value=[]):
+            self.assertEqual(status.work_commits(), [])
+            self.assertEqual(status.instances(), [])
+
+    def test_times_are_localized_in_browser(self):
+        with patch.object(status, "instances_block", return_value=[]), \
+             patch.object(status, "fleet_line", return_value=""):
+            page = status.render_html([])
+        self.assertIn("getHours()", page)
+        self.assertIn("часовом поясе вашего браузера", page)
 
     def test_description_is_visible_on_dashboard(self):
         item = {"who": "Лунобот-1", "node": NODE_1[:8], "mins": 3,

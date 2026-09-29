@@ -169,63 +169,59 @@ def brief(text, limit=120):
     return text if len(text) <= limit else text[:limit - 1].rstrip() + "…"
 
 
-def instances(hours=24, silent_min=30):
-    """Кто из инстансов когда и чем в последний раз наследил в учётном репозитории.
+ACTOR = re.compile(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)")
 
-    Отдельного heartbeat не заводим: каждый коммит бота содержит его id, поэтому
-    «последний раз отвечал» берётся из git-истории. Инстанс, замолчавший надолго,
-    виден, даже когда за ним не числится ни одного захвата, — а это как раз тот
-    промежуток между шагами, в котором он до сих пор был невидим.
+
+def work_commits(hours=24):
+    """Коммиты РАБОЧИХ репозиториев проектов (main и lunobot/staging) за последние часы.
+
+    Возвращает [(unix-время, сообщение)]. Учётный репозиторий сюда не входит: пульт показывает
+    последнюю рабочую активность (land, поезда, мержи), а не правки учёта.
+    """
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    out, seen = [], set()
+    for _name, repo, _d in projects():
+        if not repo:
+            continue
+        for branch in ("lunobot/staging", "main"):
+            data = gh_json(f"/repos/{repo}/commits?sha={branch.replace('/', '%2F')}"
+                           f"&since={since}&per_page=100")
+            for c in data or []:
+                if c["sha"] in seen:
+                    continue
+                seen.add(c["sha"])
+                commit = c.get("commit") or {}
+                date = (commit.get("committer") or {}).get("date")
+                if not date:
+                    continue
+                ts = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=timezone.utc).timestamp()
+                out.append((int(ts), commit.get("message") or ""))
+    return out
+
+
+def instances(hours=24, silent_min=30):
+    """Кто из инстансов когда и чем в последний раз работал в рабочих репозиториях.
+
+    Отдельного heartbeat не заводим: каждый коммит бота содержит трейлер
+    `Lunobot-Instance`. Правки учётного репозитория не считаются активностью — пульт
+    показывает последнюю рабочую активность. Замолчавший надолго инстанс виден, даже когда
+    за ним не числится ни одного захвата.
     """
     try:
-        recent = subprocess.run(
-            ["git", "log", f"--since={hours} hours ago",
-             "--format=@@LUNOBOT-COMMIT@@%ct%x09%s%x09"
-             "%(trailers:key=Lunobot-Instance,valueonly)"],
-            cwd=ROOT, capture_output=True, text=True, timeout=60).stdout
-        legacy = subprocess.run(
-            ["git", "log", f"--since={hours} hours ago",
-             "--format=@@LUNOBOT-COMMIT@@%ct%x09%s%x09"
-             "%(trailers:key=Lunobot-Instance,valueonly)", "-p", "--", "projects"],
-            cwd=ROOT, capture_output=True, text=True, timeout=60).stdout
+        commits = work_commits(hours)
     except Exception:
         return []
-    seen, when, summary, explicit_actor = {}, None, "", False
-
-    def record(m):
-        who = f"Лунобот-{m.group(1)} ({m.group(2)[:8]}…; {m.group(3)})"
+    seen = {}
+    for when, message in commits:
+        actor = ACTOR.search(message)
+        if not actor:
+            continue
+        who = f"Лунобот-{actor.group(1)} ({actor.group(2)[:8]}…; {actor.group(3)})"
+        summary = message.strip().splitlines()[0] if message.strip() else ""
         prev = seen.get(who)
         if not prev or when > prev[0]:
             seen[who] = (when, summary)
-
-    for line in recent.splitlines():
-        marker = re.match(r"@@LUNOBOT-COMMIT@@(\d+)\t([^\t]*)\t(.*)", line)
-        if not marker:
-            continue
-        when = int(marker.group(1))
-        summary = marker.group(2).strip()
-        actor = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)",
-                          marker.group(3))
-        if actor:
-            record(actor)
-
-    for line in legacy.splitlines():
-        marker = re.match(r"@@LUNOBOT-COMMIT@@(\d+)\t([^\t]*)\t(.*)", line)
-        if marker:
-            when = int(marker.group(1))
-            summary = marker.group(2).strip()
-            actor = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)",
-                              marker.group(3))
-            explicit_actor = actor is not None
-            if actor:
-                record(actor)
-            continue
-        # Старые коммиты без трейлера: удалённая строка могла принадлежать другому боту.
-        if when and not explicit_actor and line.startswith("+") and not line.startswith("+++"):
-            actor = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)",
-                              line)
-            if actor:
-                record(actor)
     now = datetime.now(timezone.utc).timestamp()
     out = []
     for who, (ts, summary) in sorted(seen.items(), key=lambda x: -x[1][0]):
@@ -460,6 +456,29 @@ def render_text(report_blocks):
             print()
 
 
+# Метки времени в учёте — UTC (§ 8): страница остаётся в UTC, а браузер переводит их в свой пояс.
+TZ_SCRIPT = """<script>
+(function(){
+  var re=/(\\d{2})-(\\d{2})-(\\d{4}) (\\d{2}):(\\d{2})(?::(\\d{2}))?( UTC)?/g;
+  function p(n){return (n<10?'0':'')+n}
+  function conv(t){return t.replace(re,function(m,d,mo,y,h,mi,s){
+    var dt=new Date(Date.UTC(+y,+mo-1,+d,+h,+mi,s?+s:0));
+    if(isNaN(dt))return m;
+    return p(dt.getDate())+'-'+p(dt.getMonth()+1)+'-'+dt.getFullYear()+' '+
+      p(dt.getHours())+':'+p(dt.getMinutes())+(s?':'+p(dt.getSeconds()):'');
+  })}
+  try{
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n,list=[];
+    while((n=w.nextNode()))list.push(n);
+    list.forEach(function(x){
+      if(x.parentNode&&/^(SCRIPT|STYLE)$/.test(x.parentNode.nodeName))return;
+      var v=conv(x.nodeValue);if(v!==x.nodeValue)x.nodeValue=v;
+    });
+  }catch(e){}
+})();
+</script>"""
+
+
 def render_html(report_blocks):
     def esc(t):
         return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -493,7 +512,8 @@ def render_html(report_blocks):
            "code{background:#161b22;padding:.1rem .35rem;border-radius:4px;font-size:.85em}",
            ".stale{color:#f85149}.upd{color:#8b949e;font-size:.85rem}</style></head><body>",
            "<h1>Пульт Луноботов</h1>",
-           f'<p class="upd">Обновлено {datetime.now(timezone.utc):%d-%m-%Y %H:%M} UTC. '
+           f'<p class="upd">Обновлено {datetime.now(timezone.utc):%d-%m-%Y %H:%M} UTC '
+           "(время на странице — в часовом поясе вашего браузера). "
            "Страница перезагружается сама раз в две минуты.</p>",
            f'<p>{line(fleet_line())}</p>']
     inst = instances_block()
@@ -509,6 +529,7 @@ def render_html(report_blocks):
                 out.append(f'<p class="upd">{line(hint)}</p>')
             if items:
                 out.append("<ul>" + "".join(f"<li>{line(i)}</li>" for i in items) + "</ul>")
+    out.append(TZ_SCRIPT)
     out.append("</body></html>")
     return "\n".join(out)
 
