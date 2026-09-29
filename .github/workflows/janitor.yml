@@ -42,7 +42,7 @@ jobs:
             exit 0
           fi
           git config user.name  'lunobot-janitor'
-          git config user.email 'janitor@users.noreply.github.com'
-          git commit -am 'janitor: подмёл учёт'
+          git config user.email 'lunobot-janitor@users.noreply.github.com'
+          git commit -am 'lunobot-janitor: подмёл учёт'
           git pull --rebase -q
           git push
