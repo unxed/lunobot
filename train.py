@@ -96,6 +96,17 @@ def api(path, *args, check=True):
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
+def existing_ref(path):
+    """Ответ git/ref, если ветка есть, иначе None. `gh api` при 404 печатает в stdout JSON
+    `{"message": "Not Found", ...}`, и api() его разбирает: такой словарь не ссылка на ветку.
+    Ссылкой считается только ответ с object.sha (иначе поезд никогда не создавался,
+    а `gh pr create` падал «Head sha can't be blank»)."""
+    r = api(path, check=False)
+    if isinstance(r, dict) and isinstance(r.get("object"), dict) and r["object"].get("sha"):
+        return r
+    return None
+
+
 def origin_repo():
     url = run("git", "remote", "get-url", "origin", check=False).stdout.strip()
     m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", url)
@@ -299,16 +310,16 @@ def cut(repo, sign):
     # process failure: reuse it when it points at the same cut, and use the
     # cut SHA to disambiguate an unlikely same-minute second cut.
     ref_path = f"repos/{repo}/git/ref/heads/{branch}"
-    existing = api(ref_path, check=False)
-    if existing and existing.get("object", {}).get("sha") != cut_sha:
+    existing = existing_ref(ref_path)
+    if existing and existing["object"]["sha"] != cut_sha:
         branch = f"{branch}-{cut_sha[:9]}"
         ref_path = f"repos/{repo}/git/ref/heads/{branch}"
-        existing = api(ref_path, check=False)
+        existing = existing_ref(ref_path)
     if not existing:
         created = api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
                       "-f", f"sha={cut_sha}", check=False)
         if created is None:
-            existing = api(ref_path, check=False)
+            existing = existing_ref(ref_path)
             if not existing:
                 sys.exit(f"не удалось создать ветку поезда {branch}")
     tk = tickets(repo, own)
