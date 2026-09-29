@@ -10,8 +10,6 @@
 
 29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), воркер a0595db9, взял задачу https://github.com/unxed/f4/issues/1668 (части 1-3 запаркованы; часть 4: kqueue/Windows) [land]
 
-29-09-2026 19:34:04 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1411 (часть: убрать бесполезный индикатор прогресса в диалоге «Opening...» при F3/F4 через sudo) [land]
-
 29-09-2026 19:34:49 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1671 (часть 1: замер размеров lite-сборки по целям OpenWrt и матрица GOOS/GOARCH) [land]
 
 29-09-2026 19:40:03 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1663 (часть 1: Docker, только чтение — контейнеры как каталоги, файловая система через API archive; ветка tmp/91d8/i1663); воркер ae406a3f [land]
