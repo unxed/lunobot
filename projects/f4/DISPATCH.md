@@ -20,3 +20,5 @@
 
 29-09-2026 19:38:28 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1604 (часть: DragOutModifier, п. 2 запроса Zeroes1; воркер afe9078e) [land]
 
+
+29-09-2026 19:40:03 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1663 (часть 1: Docker, только чтение — контейнеры как каталоги, файловая система через API archive; ветка tmp/91d8/i1663); воркер ae406a3f [land]
