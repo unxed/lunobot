@@ -4,13 +4,13 @@
 
 29-09-2026 19:16:02 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1625 (остаток: точная синхронизация прокрутки превью, клик по превью, подсказки) [land]
 
-29-09-2026 19:16:02 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1628 (шаг 5в: vtui-тег vX.Y.Z на коммите мержа, bump в go.mod f4, привязка RealDNDClient().Bind после vtui.Far2lNegotiated()) [land]
+29-09-2026 19:48:39 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315), взял задачу https://github.com/unxed/f4/issues/1628 (шаг 5в: vtui-тег vX.Y.Z на коммите мержа, bump в go.mod f4, привязка RealDNDClient().Bind после vtui.Far2lNegotiated()) [land]
 
 29-09-2026 19:31:53 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1675 (часть 2: настройка и показ консоли хоста в f4, после релиза vtui) [land]
 
 29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/1668 (части 1-3 запаркованы; часть 4: kqueue/Windows) [land]
 
-29-09-2026 19:34:49 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1671 (часть 1: замер размеров lite-сборки по целям OpenWrt и матрица GOOS/GOARCH) [land]
+29-09-2026 19:48:39 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315), взял задачу https://github.com/unxed/f4/issues/1671 (часть 1: замер размеров lite-сборки по целям OpenWrt и матрица GOOS/GOARCH) [land]
 
 29-09-2026 19:47:55 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1663 (части 1-3: Docker чтение и запись, Kubernetes; ветки tmp/91d8/i1663, tmp/91d8/i1663b, tmp/91d8/i1663k); воркер ae406a3f [land]
 
