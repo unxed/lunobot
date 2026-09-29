@@ -8,7 +8,6 @@
 
 29-09-2026 19:31:53 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1675 (часть 2: настройка и показ консоли хоста в f4, после релиза vtui) [land]
 
-29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/1668 (части 1-3 запаркованы; часть 4: kqueue/Windows) [land]
 
 29-09-2026 19:48:39 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315), взял задачу https://github.com/unxed/f4/issues/1671 (часть 1: замер размеров lite-сборки по целям OpenWrt и матрица GOOS/GOARCH) [land]
 
