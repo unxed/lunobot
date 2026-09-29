@@ -36,3 +36,5 @@
 
 29-09-2026 20:01:56 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/272 (часть 5 из 5: F1-справка менеджера окружения) [land]
 
+
+29-09-2026 20:06:34 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1680 (часть 2: команды info, linfo, rdlink, enum в сервере FISH+; воркер afe9078e) [land]
