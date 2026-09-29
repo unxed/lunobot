@@ -1,6 +1,6 @@
 # DISPATCH — f4
 
-29-09-2026 19:16:02 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/659 (часть 24; ветка tmp/9191/new659) [land]
+29-09-2026 19:16:02 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), воркер a0595db9, взял задачу https://github.com/unxed/f4/issues/659 (часть 26, 27; ветки tmp/9191/add659, tmp/9191/dir659; intent-to-add) [land]
 
 29-09-2026 19:16:02 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1606 (остатки: пересборка раскладки экрана ревью при ресайзе, клавиши, Tab, git stash) [land]
 
@@ -10,7 +10,7 @@
 
 29-09-2026 19:31:53 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1675 (часть 2: настройка и показ консоли хоста в f4, после релиза vtui) [land]
 
-29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1668 (часть 1: пакет internal/dirwatch, inotify/опрос, debounce) [land]
+29-09-2026 19:33:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), воркер a0595db9, взял задачу https://github.com/unxed/f4/issues/1668 (части 1-3 запаркованы; часть 4: kqueue/Windows) [land]
 
 29-09-2026 19:34:04 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1411 (часть: убрать бесполезный индикатор прогресса в диалоге «Opening...» при F3/F4 через sudo) [land]
 
