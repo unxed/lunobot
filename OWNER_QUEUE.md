@@ -66,3 +66,11 @@ https://github.com/blue-panels/mcommander/issues
 
 если для этой задачи нужны отдельные тикеты у нас - заводи
 
+--
+
+Из readme f4:
+
+> 🧪 Experimental: Redox, GNU Hurd, Haiku
+
+Ссылку на это надо дать в конце таблицы сборок, а то многие же не долистают даже
+
