@@ -16,6 +16,4 @@
 
 30-09-2026 00:39:06 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1685 (часть 4: таблица kitty-терминалов из f4 graphics_compat.go в vtui; воркер a94ae638) [land]
 
-30-09-2026 00:39:40 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1669 (часть 4: адреса docker:///, k8s:///, mongo:/// для панелей плагинов; ветка tmp/91d8/i1669u); воркер ae406a3f [land]
-
 30-09-2026 00:43:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/311 (часть 5: изменение типа запуска службы) [land]
