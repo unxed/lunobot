@@ -24,4 +24,3 @@
 
 30-09-2026 05:20:25 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял кастомную задачу «красный staging f4: lint errcheck в internal/app/fish_server.go (a73d2f1, #1680) и QF1001 в plugin_hotkey_dialog.go» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
 
-30-09-2026 05:21:14 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял кастомную задачу «red-staging-5c40105c: errcheck fish_server.go и аудит палитры menuItemsWithKeyLabelsAndHint» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
