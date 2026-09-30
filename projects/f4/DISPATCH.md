@@ -35,7 +35,7 @@
 
 30-09-2026 15:24:56 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер ab7e3e403e3bd66df), взял задачу https://github.com/blue-panels/mcommander/issues/347 (far2l-часть: far2l keyboard extensions; ветка far2l-keys-347 в unxed/mcommander; Win32 input mode делает воркер a2b25315) [pr]
 
-30-09-2026 15:25:01 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер ea281d41), взял кастомную задачу «mcommander-owner-tickets-20260930: тикет blue-panels/mcommander#357 — DnD как в f4 поверх far2l, ветка dnd-357 в unxed/mcommander» по § 8 [urgent: по § 4 п. 1 — поручение владельца]
+30-09-2026 15:25:01 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aa9e2bd98b29284d7), взял кастомную задачу «mcommander-owner-tickets-20260930: тикет blue-panels/mcommander#357 — DnD как в f4 поверх far2l, ветка dnd-357 в unxed/mcommander» по § 8 [urgent: по § 4 п. 1 — поручение владельца]
 
 30-09-2026 15:25:07 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер ae4288cf5c20b261f), взял задачу https://github.com/blue-panels/mcommander/issues/349 (поручение владельца mcommander-owner-tickets-20260930: opt-in режим Far; ветка far-mode-349 в unxed/mcommander) [pr]
 
