@@ -22,7 +22,8 @@ covered — быстрый ответ автору после land: зелёны
 tick  — идемпотентный шаг проводника; запускай в начале каждого круга. Сначала лечит staging:
         красный quick — один перезапуск, снова красный — откатывает виновника (коммиты между
         последним зелёным и первым красным quick, не больше трёх; больше — срочная задача).
-        Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит) и, если tick
+        Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит; прогон main после
+        fast-forward отменяет, кроме PRESERVE_MAIN и f4 при устаревшем nightly) и, если tick
         запущен из учётного клона, сам правит в TRIAGE.md `в пути` → `проверяют` по `Touch:`
         коммитов поезда (коммит+пуш с `Lunobot-Instance:`); красный — бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
         staging с зелёным quick и не режет, пока после него в staging есть коммит-починка
@@ -955,11 +956,10 @@ def train_step(repo, sign):
              "-f", f"sha={head}", "-F", "force=false", check=False)
     if ff.returncode == 0:
         how = "fast-forward"
-        if repo not in PRESERVE_MAIN:
+        if should_cancel_main_run(repo):
             time.sleep(5)
-            for r in api(f"repos/{repo}/actions/runs?branch=main&head_sha={head}")["workflow_runs"]:
-                if r["event"] == "push" and r["status"] != "completed":
-                    run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
+            for r in main_push_runs_in_progress(repo, head):
+                run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
         api(f"repos/{repo}/git/refs/heads/{pr['head']['ref']}", "-X", "DELETE", check=False)
     else:
         run("gh", "pr", "merge", str(n), "--repo", repo, "--merge", "--delete-branch")
@@ -975,6 +975,54 @@ def train_step(repo, sign):
             print(t)
     mark_checking(repo, own_numbers(repo, commits), sign)
     return 0
+
+
+# Проекты с плавающим nightly-релизом, который публикует ТОЛЬКО прогон main (job Nightly в
+# build.yml на push в main): отмена этого прогона после fast-forward поезда оставляет nightly
+# без обновления, пока поезда идут fast-forward. Поэтому пока nightly старше NIGHTLY_MAX_AGE_H,
+# прогон main не отменяют. Оговорки: (1) если main красный, job Nightly не выполняется (он за
+# needs сборки и тестов) и nightly остаётся старым, значит, отмена отключена, и каждый
+# fast-forward оставляет свой прогон main, пока main не починят; (2) workflow-level
+# concurrency f4 всё равно отменяет прогон main следующим push'ем, так что обновление nightly
+# не гарантировано, а лишь становится возможным.
+NIGHTLY_MAX_AGE_H = 3
+NIGHTLY_REPOS = {"unxed/f4"}
+
+
+def nightly_is_stale(repo):
+    """True, если у проекта есть плавающий nightly и его нельзя считать свежим: релиз старше
+    NIGHTLY_MAX_AGE_H, отсутствует или ответ API не разобрать. Ошибка gh не роняет tick:
+    api(check=False) не вызывает sys.exit, а на всякий случай ловится и SystemExit (tick уже
+    влил поезд и не должен упасть до удаления ветки, tag_next и печати «Пробуйте!»).
+    True значит «не отменять прогон main» (цена только лишний прогон)."""
+    if repo not in NIGHTLY_REPOS:
+        return False
+    try:
+        rel = api(f"repos/{repo}/releases/tags/nightly", check=False)
+        published = datetime.fromisoformat(rel["published_at"].replace("Z", "+00:00"))
+        if published.tzinfo is None:  # без пояса — UTC, иначе вычитание ниже падает TypeError
+            published = published.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) - published > timedelta(hours=NIGHTLY_MAX_AGE_H)
+    except (Exception, SystemExit):  # noqa: BLE001 -- нет релиза, 404, 5xx, лимит: не отменять
+        return True
+
+
+def main_push_runs_in_progress(repo, head):
+    """Незавершённые прогоны main на push для коммита head. Сбой gh не роняет tick: поезд уже
+    влит, и ему ещё удалять ветку, ставить тег и печатать «Пробуйте!» — пустой список значит
+    «ничего не отменять»."""
+    try:
+        resp = api(f"repos/{repo}/actions/runs?branch=main&head_sha={head}", check=False)
+        runs = resp["workflow_runs"]
+        return [r for r in runs if r["event"] == "push" and r["status"] != "completed"]
+    except (Exception, SystemExit):  # noqa: BLE001
+        return []
+
+
+def should_cancel_main_run(repo):
+    """Отменять ли прогон main после fast-forward поезда: не для PRESERVE_MAIN и не пока у
+    проекта устарел плавающий nightly."""
+    return repo not in PRESERVE_MAIN and not nightly_is_stale(repo)
 
 
 def tag_next(repo):
