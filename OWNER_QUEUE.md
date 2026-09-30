@@ -45,4 +45,10 @@ https://github.com/blue-panels/mcommander
 
 --
 
+реализовать в
+https://github.com/blue-panels/mcommander
+всё что я прошу тикетами
+и отправить как PRы
+форк сделал, доступ к нему дал.
+
 --
