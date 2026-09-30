@@ -28,6 +28,34 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 OWNER = "unxed"
+
+
+MAX_TEXT = 400
+REPORT_START = re.compile(
+    r"^\W*(готов[оаы]?|сделан[оаы]?|обновлен[оаы]?|обновил[аи]?|исправлен[оаы]?|добавлен[оаы]?|"
+    r"выполнен[оаы]?|закончен[оаы]?|завершен[оаы]?|залит[оаы]?|влит[оаы]?|итог|отчёт|отчет|"
+    r"done|fixed|updated|added|finished|completed|ready)\s*([:.,!;\u2014\u2013-]|$)", re.IGNORECASE)
+GATE_MESSAGE = (
+    "в уведомления пишутся только вопросы к владельцу; отчёт оставь в учёте/тикете-источнике. "
+    "Правило: --text непустой, не длиннее %d символов, один вопрос (ровно один «?», он последний "
+    "символ), не начинается с отчёта («Готово:», «Сделано.», «Обновлено —», …)." % MAX_TEXT)
+
+
+def check_question(text):
+    """None, если text — вопрос, пригодный для уведомления владельца; иначе причина отказа."""
+    text = " ".join((text or "").split())
+    if not text:
+        return "пустой текст"
+    if len(text) > MAX_TEXT:
+        return f"текст длиннее {MAX_TEXT} символов ({len(text)})"
+    if REPORT_START.match(text):
+        return "текст начинается как отчёт"
+    bare = re.sub(r"https?://\S+", "", text).rstrip(" \t\"'»)]}*_")
+    if not bare.endswith("?"):
+        return "текст не заканчивается знаком «?»"
+    if bare.count("?") != 1:
+        return "в тексте не один вопрос (один вопрос — одно уведомление)"
+    return None
 TITLE = "Вопросы владельцу"
 MARK = re.compile(r"<!--\s*oq:(\S+)\s*-->")
 URL = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:issues|pull)/(\d+)(?:#issuecomment-(\d+))?")
@@ -99,7 +127,7 @@ def post(url, ticket, text):
     for e in entries(number):
         if e["url"] == url:
             delete_comment(e["id"])
-    text = " ".join(text.split())[:300]
+    text = " ".join(text.split())
     body = f"<!-- oq:{url} -->\n@{OWNER} вопрос владельцу — {ticket}: {text}\n\n{url}"
     print(f"тикет #{number}: новая запись по {url}")
     if not DRY:
@@ -170,6 +198,10 @@ def main():
     if args and args[0] == "post":
         if not URL.search(opts.get("url", "")):
             print("нужна ссылка на вопрос: --url https://github.com/<владелец>/<репозиторий>/issues/N[#issuecomment-ID]")
+            return 2
+        reason = check_question(opts.get("text", ""))
+        if reason:
+            print(f"отклонено: {reason}. {GATE_MESSAGE}")
             return 2
         post(opts["url"], opts.get("ticket", ""), opts.get("text", ""))
         return 0

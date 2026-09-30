@@ -5,15 +5,18 @@
 запускает workflow `owner-question` учётного репозитория (github-actions[bot] оставляет в
 тикете «Вопросы владельцу» комментарий с @unxed и ссылкой на вопрос).
 
-    python3 notify_owner.py <ссылка на комментарий-вопрос> [--ticket unxed/f4#410] [--text "кратко"] [--repo unxed/lunobot]
+    python3 notify_owner.py <ссылка на комментарий-вопрос> [--ticket unxed/f4#410] --text "<один вопрос, до 400 символов, заканчивается «?»>" [--repo unxed/lunobot]
 
 Ссылка — на сам комментарий с вопросом (`https://github.com/unxed/f4/issues/410#issuecomment-…`).
-Повторный вызов с той же ссылкой заменяет запись. Записи убирает scheduled-проход
+Гейт: в уведомления пишутся только вопросы (`owner_questions.check_question`); иначе код 2 и
+ничего не отправляется. Повторный вызов с той же ссылкой заменяет запись. Записи убирает scheduled-проход
 `owner-question-sweep` (ответ, закрытие тикета, снятие `ждёт ответа`, срок).
 """
 import re
 import subprocess
 import sys
+
+from owner_questions import GATE_MESSAGE, check_question
 
 
 def main():
@@ -25,6 +28,10 @@ def main():
     for i, a in enumerate(args[1:], 1):
         if a.startswith("--") and i + 1 < len(args):
             opts[a[2:]] = args[i + 1]
+    reason = check_question(opts.get("text", ""))
+    if reason:
+        print(f"отклонено: {reason}. {GATE_MESSAGE}", file=sys.stderr)
+        return 2
     ticket = opts.get("ticket") or "/".join(url.split("/")[3:5]) + "#" + url.split("/")[6].split("#")[0]
     cmd = ["gh", "workflow", "run", "owner-question.yml", "-R", opts.get("repo", "unxed/lunobot"),
            "-f", f"url={url}", "-f", f"ticket={ticket}", "-f", f"text={opts.get('text', '')}"]
