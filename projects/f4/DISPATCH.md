@@ -12,3 +12,5 @@
 30-09-2026 05:37:52 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1666 (часть 9: атрибуты типов, полей и методов в панели .NET; ветка tmp/91d8/i1666a); воркер ae406a3f [land]
 
 30-09-2026 05:40:04 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял кастомную задачу «тесты на IL, сигнатуры и чтение ReadyToRun (internal/dotnet) под codecov/patch» по § 7.4 [land]
+
+30-09-2026 05:44:41 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял кастомную задачу «покрыть тестами ветки отказа представлений tar.zst/tar.xz/tar.bz2 (plugins/archive/gzip_view.go) и iTerm2-приёма (internal/terminal/iterm2.go); воркер a94ae638» по § 7.4 [land]
