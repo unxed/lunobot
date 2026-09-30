@@ -44,5 +44,10 @@ https://github.com/blue-panels/mcommander
 
 --
 
+> Decided independently, without asking the owner: the extra-lite profile does not try to match mc's size, which a Go binary with an editor, a viewer, plugins and 25 languages
+
+из плагинов оставь только нужное для паритета с mc. из языков только английский и русский. в OPENWRT.md нужна табличка, что сейчас ест место больше всего, даже если ты решил оставить это.
+
+--
 
 
