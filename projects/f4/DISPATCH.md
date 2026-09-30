@@ -16,3 +16,4 @@
 30-09-2026 10:02:04 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял кастомную задачу «red-staging-extralite-runevents: сборка extralite не знает RunEvents (мой коммит 1cc964c7)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
 
 30-09-2026 10:02:15 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял кастомную задачу «red-staging-c558d322: RunEvents в extralite и слой internal/hostwidth» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
+30-09-2026 10:03:13 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1689 (ответ автора: f4-gui на macOS, перо Wacom не кликает; воркер afe9078e) [land]
