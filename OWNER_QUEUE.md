@@ -45,7 +45,7 @@ https://github.com/blue-panels/mcommander
 Проект: учёт (работа в чужом репозитории blue-panels/mcommander через форк unxed/mcommander)
 Поручение: реализовать в blue-panels/mcommander всё, что владелец просит своими тикетами (#347 клавиатурные протоколы kitty/Win32 input/far2l extensions, #348 буфер обмена и вставка: OSC52, bracketed paste, far2l extensions, #349 предложение opt-in режима Far, #357 Drag and Drop как в f4), и отправить как PR из форка unxed/mcommander.
 Критерий: по каждому тикету есть ветка в unxed/mcommander с реализацией (сборка и тесты проекта проходят в CI форка) и подготовлен PR в blue-panels/mcommander (ссылка на сравнение, если бот не может открыть PR); ссылки оставлены в тикетах.
-Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315420f87c49), 30-09-2026 15:03:14
+Состояние: свободно — флот остановлен по слову владельца, 30-09-2026 20:14:52; работа не завершена: ветки в unxed/mcommander: win32-input-mode, far2l-keys-347, far2l-mouse-347, far2l-mcterm-347, dnd-357*, osc52-clipboard, mcterm-osc52, bracketed-paste-block, far2l-clipboard-348, far-mode-349/-2; compare-ссылки в unxed/f4#1628; чтение OSC 52 не делать
 Разграничение (Лунобот-1, воркер a2b25315420f87c49): #348 — этот воркер (ветка osc52-clipboard готова; чтение OSC 52 ОТОЗВАНО по слову владельца — мейнтейнер против по безопасности, не делать нигде; далее #351/#352 bracketed paste, far2l-буфер с низким приоритетом). #347 Win32 input mode уже реализован в ветке win32-input-mode (unxed/mcommander, один коммит, проверка идёт) — новому воркеру по #347 остаётся far2l-расширения ввода и сверка с этой веткой, без повторной реализации Win32 input.
 Ограничение владельца (30-09-2026): OSC 52 на ЧТЕНИЕ в mcommander не делать — мейнтейнер против по соображениям безопасности; ветку osc52-read не предлагать, PR не открывать. Перед работой перечитывать все тикеты unxed в blue-panels/mcommander до конца (#347, #348, #349, #357 и подтикеты мейнтейнера #351, #352 «Part of #348»).
 
@@ -70,7 +70,7 @@ https://github.com/blue-panels/mcommander
 Проект: учёт (работа в unxed/far2l; PR в elfmz/far2l бот открыть не может)
 Поручение: довести документацию far2l terminal extensions (доделать висящий PR elfmz/far2l#3082, ветка в форке unxed/far2l) по заметке; тикет в chafa с упоминанием far2l — дописать ссылку на спеку, если токен позволяет, иначе готовый текст владельцу.
 Критерий: ветка в unxed/far2l с полной документацией, сверенной по исходникам far2l; ссылка на сравнение передана владельцу (notify_owner).
-Состояние: не завершено — остановлено по слову владельца, захват снят; в unxed/far2l ничего не запушено (extsdocs = f884f448d без изменений, старый VTExts.md; ветка terminal-dnd-spec не тронута). Сделано только чтение: исходники far2l (FarTTY.h, VTFar2lExtensios.cpp, TTYBackend/TTYOutput/TTYCaps/TTYFar2lClipboardBackend/parser, WX/SDL images), chafa#311 прочитан целиком (open, не locked, unxed комментировать может, ничего не постили), обзор f4 получен. Находки для спеки: на проводе ответы и события идут БЕЗ двоеточия (ESC _ far2l<b64>, ESC _ f2l<b64>), запросы с двоеточием (FarTTY.h и старый VTExts.md врут); порядок pop у IMAGE_CAPS (высота, ширина, caps) и у события S (высота, ширина) обратен FarTTY.h; F-клавиши идут F1..F12; WP_IMGCAP_JPG=0x3 пересекается с RGBA|PNG; ATTACH_*=0x10000..0x40000, SCROLL=0x80000, PIXEL_OFFSET=0x100000; компакт-кнопки мыши кодируются (b&0xff)|((b>>8)&0xff00); safe-read клипборда = авторизация + недавний Ctrl+V/Shift+Ins/средняя кнопка (5 с, 3 продления); custom-форматы 0xC000..0xFFFF; README перечисляет реализации Putty-Zeroes-Mod, putty4far2l, KiTTY, putty-nd, tvision, turbo. Обзор turbo/revision/putty4far2l/KiTTY (агент a8ec5489fd702e416) не дошёл. Проверки запланированы: сверка констант скриптом, байтовые примеры через CI unxed/sandbox, независимый ревьюер. Тикет chafa не тронут. Воркер 4de3ddac, 30-09-2026
+Состояние: свободно — флот остановлен по слову владельца, 30-09-2026 20:14:52; работа не завершена: работа в ветке extsdocs форка unxed/far2l (PR elfmz/far2l#3082), ветка terminal-dnd-spec; не завершено
 --
 
 ## mcommander-358-20260930
@@ -78,7 +78,7 @@ https://github.com/blue-panels/mcommander
 Проект: учёт (работа в blue-panels/mcommander через форк unxed/mcommander)
 Поручение: прочесть тикет blue-panels/mcommander#358 целиком, реализовать в ветке форка unxed/mcommander, подготовить compare-ссылку.
 Критерий: ветка в unxed/mcommander, сборка и тесты в CI форка зелёные; ссылка оставлена в тикете и в unxed/f4#1628, владельцу один notify_owner.
-Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), 30-09-2026 20:05:53
+Состояние: свободно — флот остановлен по слову владельца, 30-09-2026 20:14:52; работа не завершена: ветка в unxed/mcommander по #358 (resurrect) у воркера a5acb84b; не завершено
 --
 
 Сделай в M-commander pr, добавляющий сборку под Termux. Референс f4.
