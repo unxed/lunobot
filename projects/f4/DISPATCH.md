@@ -25,3 +25,5 @@
 30-09-2026 15:21:19 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер afe9078e), взял задачу https://github.com/unxed/f4/issues/1148 (идея автора 12:58: переставлять ссылки Drive Menu Ctrl+Up/Ctrl+Down с запоминанием порядка) [land]
 
 30-09-2026 15:21:22 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял задачу https://github.com/unxed/f4/issues/1686 (Step 7, корпус, часть 2: panel.GetPanelInfo/GetPanelDirectory/SetPanelDirectory, Panel.Item/SetPosIdx в Lua-макросах) [land]
+
+30-09-2026 15:23:50 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял задачу https://github.com/unxed/f4/issues/1705 (просмотрщик: разбор escape-последовательностей терминала, Ctrl+F8; по образцу far2l) [land]
