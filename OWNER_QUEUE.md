@@ -64,3 +64,14 @@ https://github.com/blue-panels/mcommander
 
 --
 
+Преимущества, на мой взгляд:
+
+1. Safe (comparing to osc52 in read mode) clipboard read
+2. Desktop notifications
+3. Initiates ad-hoc copy-to-clipboard
+4. Gets maximum possible size of window
+5. titles of F-keys board if host supports this (invented for Mac touchbar)
+6. Картинки, не так примитивные как sixel и не с таким оверинженирингом как в kitty
+7. Multiple clipboard formats including custom
+
+Но ты имеешь право уточнить этот список при наличии фактических основной.
