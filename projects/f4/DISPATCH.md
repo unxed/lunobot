@@ -7,5 +7,3 @@
 30-09-2026 10:03:13 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1689 (ответ автора: f4-gui на macOS, перо Wacom не кликает; воркер afe9078e) [land]
 
 30-09-2026 10:04:54 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял задачу https://github.com/unxed/f4/issues/1686 (Step 7, часть 1: far.InputBox и far.Menu в Lua-макросах) [land]
-
-30-09-2026 10:27:24 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял кастомную задачу «red-staging-newvmenu: аудит cmd/f4 NewVMenu после переименования menuCore (мой 033c00dc)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
