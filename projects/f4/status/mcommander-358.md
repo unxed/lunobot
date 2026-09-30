@@ -26,3 +26,7 @@
 
 ## Не сделано
 Пункт поручения про #347/#348 (ветки far2l-keys-347, far2l-mouse-347, far2l-mcterm-347, osc52-clipboard, mcterm-osc52, bracketed-paste-block, far2l-clipboard-348 и compare-ссылки в unxed/f4#1628) не проверялся: в комментариях unxed/f4#1628 уже есть compare-ссылки и тексты PR для far2l-mouse-347, far2l-mcterm-347 и far2l-clipboard-348 (по прочтённому хвосту), остальное сверить. Ветки на origin есть: far2l-keys-347, far2l-mouse-347, far2l-mcterm-347, osc52-clipboard, mcterm-osc52, bracketed-paste-block, far2l-clipboard-348.
+
+
+## Решение владельца (30-09-2026)
+Resurrect включён по умолчанию, как в far2l (не `--immortal`, а выключатель `--mortal`/ключ конфига).
