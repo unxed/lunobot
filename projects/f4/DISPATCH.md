@@ -19,8 +19,6 @@
 
 30-09-2026 15:13:11 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял задачу https://github.com/unxed/f4/issues/891 (Copy/Rename: без растягивания диалога, история по ширине поля, длинные пути с «>») [land]
 
-30-09-2026 15:20:00 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a94ae638), взял задачу https://github.com/unxed/f4/issues/1673 (паразитный путь при старте: пропуск первой синхронизации каталога, если оболочка уже в каталоге панели; журнал docs/TERMINAL_JUNK_LOG.md § 4) [land]
-
 30-09-2026 15:21:19 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер afe9078e), взял задачу https://github.com/unxed/f4/issues/1148 (идея автора 12:58: переставлять ссылки Drive Menu Ctrl+Up/Ctrl+Down с запоминанием порядка) [land]
 
 30-09-2026 15:21:22 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял задачу https://github.com/unxed/f4/issues/1686 (Step 7, корпус, часть 2: panel.GetPanelInfo/GetPanelDirectory/SetPanelDirectory, Panel.Item/SetPosIdx в Lua-макросах) [land]
