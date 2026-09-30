@@ -7,9 +7,8 @@
 
 Порядок PR: #359 (osc52) → #360 (far2l keys, включает Win32 input) → #365 (mouse) → #366 (mcterm)
 → #361 (DnD) → #363 (DnD mcterm) → #364 (progress); #362 (режим Far, части 1–2) независим.
-Ветки пересобирались после открытия PR; сверяй sha с веткой. Не созданы: `win32-input-mode`
-(#347, отдельным PR), `bracketed-paste-block` (#351/#352), `far2l-clipboard-348` (#348),
-`far-mode-349-3` (часть 3 режима Far, прогон красный).
+Ветки пересобирались после открытия PR; сверяй sha с веткой. Не создан: `win32-input-mode`
+(#347, отдельным PR). Открыты: #367 (`bracketed-paste-block`), #368 (`far2l-clipboard-348`), #369 (`far-mode-349-3`).
 
 ## #359 (mcterm-osc52)
 
@@ -247,6 +246,81 @@ the listing modes and the command line keys are next.
 
 ---
 
+
+## #367 (bracketed-paste-block)
+
+TITLE:
+tty: take a bracketed paste as one block
+
+BODY:
+The text between ESC[200~ and ESC[201~ was fed through the key loop byte by
+byte: every byte was looked up in the keymap, the editor pushed an Undo step
+for each, and a long paste was slow. Now the dialog loop asks for the whole
+paste (MCKEY_PASTE) and sends it to the focused widget as one MSG_PASTE; a
+paste that no widget takes goes to the owner as MSG_UNHANDLED_PASTE, which the
+file manager passes to the command line.
+
+The text is cleaned when it is read: a line break is LF, a tab stays, every
+other control byte and ESC are dropped, so nothing in it runs as a command or
+ends the paste early. At most 16 MiB are kept, and a paste that has been silent
+for 2 seconds without ESC[201~ is given up.
+
+- mcedit inserts the text as typed but as one step for Undo, without auto
+  indent, and draws the screen once (edit_paste_text).
+- an input line inserts the text on one line: a line break or a tab becomes a
+  space, so a paste of several lines does not submit the input.
+- mcterm tracks DECSET 2004 (mcview_vterm_bracketed_paste). A program that has
+  asked for it gets the paste as one block in ESC[200~ ... ESC[201~, with no
+  ESC in the text; otherwise the lines are joined into one and no line runs by
+  itself. It works in the terminal view and at the panels' command line over the
+  shell (mcterm_overlay_handle_paste).
+
+Loops that do not go through the dialog (progress, find) keep the old
+behaviour. Tests: tty_paste (reading, cleaning, limit, timeout), mcterm_paste,
+the mode in vterm_terminal, and the editor paste in edit_undo_history.
+
+---
+
+## #368 (far2l-clipboard-348)
+
+TITLE:
+clipboard: use the clipboard of a far2l terminal
+
+BODY:
+With the far2l extensions on and no clipboard_store / clipboard_paste command,
+a copy is put on the clipboard of the terminal and a paste takes the text from
+it, through the clipboard requests of the far2l protocol (open, set or get of
+text, close). The terminal asks its user first; a refusal, no text or no answer
+in 15 seconds changes nothing. A configured command is used as before, and
+nothing is sent when the extensions are off.
+
+Keys typed while the terminal answers are put back. At most 4 MiB go either
+way. Tests in tty_far2l_clipboard play the terminal.
+
+---
+
+## #369 (far-mode-349-3)
+
+TITLE:
+Far mode: listing modes and the keys of the command line
+
+BODY:
+Ctrl-1 to Ctrl-0 switch a panel to the ten listing modes of Far, Ctrl-A
+opens the attributes of a file, Ctrl-F puts its full name into the command
+line, and Ctrl-E, Ctrl-X and Ctrl-Y walk the history of the command line and
+delete the line, in the command line and in the edit lines of the dialogs.
+The prefix of the extended commands moves to Alt-X while the mode is on.
+
+A terminal that speaks the kitty keyboard protocol sends Ctrl with a digit;
+it was turned into the control character of the same code (Ctrl-1 became
+Ctrl-Q), and is now the digit with the modifier, as the key names of the
+keymap say it.
+
+---
+
+Сверка 2026-09-30 (Лунобот-1, субагент): у #359–#369 название совпадает с заголовком последнего коммита ветки, описание — с телом коммита (без Co-Authored-By); у #367–#369 абзацы в описании без переносов строк, смысл тот же. Замена вручную не требуется.
+
+---
 
 ## Перебазирование под master 221319645 (PR #356) и порядок мержа
 
