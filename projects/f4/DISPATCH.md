@@ -41,6 +41,6 @@
 
 30-09-2026 15:26:05 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), объявляю заморозку land проекта f4 до нарезки поезда
 
-30-09-2026 15:29:50 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315420f87c49), взял задачу https://github.com/blue-panels/mcommander/issues/347 (Win32 input mode; ветка win32-input-mode в unxed/mcommander; far2l-часть у воркера 6d01cb92) [urgent: по § 4 п. 1 — поручение владельца]
+30-09-2026 15:29:50 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315420f87c49), взял кастомную задачу «mcommander#347-win32: Win32 input mode, ветка win32-input-mode в unxed/mcommander (far2l-часть тикета у воркера 6d01cb92)» по § 8 [urgent: по § 4 п. 1 — поручение владельца]
 
 30-09-2026 15:29:50 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315420f87c49), взял задачу https://github.com/blue-panels/mcommander/issues/348 (буфер обмена и вставка: OSC 52, sub-issues 351 и 352; ветки osc52-clipboard, mcterm-osc52 в unxed/mcommander) [urgent: по § 4 п. 1 — поручение владельца]
