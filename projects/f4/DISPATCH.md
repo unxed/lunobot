@@ -11,3 +11,5 @@
 30-09-2026 10:56:31 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял задачу https://github.com/unxed/f4/issues/1686 (Step 7, часть 4: Event{EditorEvent} — чтение, сохранение и закрытие редактора) [land]
 
 30-09-2026 11:12:00 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a94ae638), взял задачу https://github.com/unxed/f4/issues/1702 (часть 3, п. 1: ввод \\host, \\host\шара и //host/шара как smb:// на не-Windows; согласовано с воркером a0595db9) [land]
+
+30-09-2026 11:00:39 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1232 (метка переноса строки «»» в редакторе выпадает из темы: Editor.WrapMark наследует фон Editor.Text; ветка tmp/91d8/i1232); воркер ae406a3f [land]
