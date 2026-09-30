@@ -37,6 +37,6 @@
 
 30-09-2026 15:25:01 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер ea281d41), взял кастомную задачу «mcommander-owner-tickets-20260930: тикет blue-panels/mcommander#357 — DnD как в f4 поверх far2l, ветка dnd-357 в unxed/mcommander» по § 8 [urgent: по § 4 п. 1 — поручение владельца]
 
-30-09-2026 15:25:07 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер 7cf4b692), взял задачу https://github.com/blue-panels/mcommander/issues/349 (поручение владельца mcommander-owner-tickets-20260930: opt-in режим Far; ветка far-mode-349 в unxed/mcommander) [pr]
+30-09-2026 15:25:07 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер ae4288cf5c20b261f), взял задачу https://github.com/blue-panels/mcommander/issues/349 (поручение владельца mcommander-owner-tickets-20260930: opt-in режим Far; ветка far-mode-349 в unxed/mcommander) [pr]
 
 30-09-2026 15:26:05 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), объявляю заморозку land проекта f4 до нарезки поезда
