@@ -49,10 +49,14 @@ https://github.com/blue-panels/mcommander
 
 --
 
-> Decided independently, without asking the owner: the extra-lite profile does not try to match mc's size, which a Go binary with an editor, a viewer, plugins and 25 languages
+## f4-extralite-mc-parity-20260930
+Заметка владельца: > Decided independently, without asking the owner: the extra-lite profile does not try to match mc's size, which a Go binary with an editor, a viewer, plugins and 25 languages
 
 из плагинов оставь только нужное для паритета с mc. из языков только английский и русский. в OPENWRT.md нужна табличка, что сейчас ест место больше всего, даже если ты решил оставить это.
-
+Проект: f4
+Поручение: профиль extra-lite: (1) из встроенных плагинов оставить только нужное для паритета возможностей с mc, обосновав список в docs/OPENWRT.md, остальное убрать из сборки тегами; (2) из языков оставить в сборке только английский и русский; (3) в docs/OPENWRT.md таблица «что сейчас ест место больше всего» (включая то, что решено оставить) с колонкой «оставлено/убрано и почему»; затем повторный workflow openwrt и цифры в docs.
+Критерий: в docs/OPENWRT.md есть список плагинов для паритета с mc и таблица потребителей размера; extralite содержит только en и ru и только нужные плагины; повторный прогон openwrt зелёный, цифры в docs; тикет unxed/f4#1671 обновлён комментарием.
+Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315), 30-09-2026 10:51:12
 --
 
 при прочих равных отдавай приоритет задачам, как можно быстрее дающие максимальную пользу максимальному числу пользователей. редкие и сильно сложные задачи - в хвост. и в инструкцию это правило.
