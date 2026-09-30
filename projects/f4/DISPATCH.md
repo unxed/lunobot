@@ -16,6 +16,4 @@
 
 30-09-2026 01:05:59 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял задачу https://github.com/unxed/f4/issues/1666 (часть 5 ч.IL: сигнатуры методов и дизассемблер IL) [land]
 
-30-09-2026 05:13:06 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/1664 (часть 6 из 6: pie/gantt/state/ER диаграммы Mermaid) [land]
-
 30-09-2026 05:14:14 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315), взял задачу https://github.com/unxed/f4/issues/1693 (триаж и разбор: Ctrl+C во встроенном терминале шлёт ^[[3;5u) [land]
