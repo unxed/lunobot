@@ -83,5 +83,34 @@ class VendorHashTest(unittest.TestCase):
         self.assertEqual(train.extend_over_vendorhash("green", after), "green")
 
 
+class StagingHealthTest(unittest.TestCase):
+    """После красного quick только бот-коммит vendorHash — не «healing» (land не разрешён)."""
+
+    @staticmethod
+    def commit(sha, msg):
+        return {"sha": sha, "commit": {"message": msg}, "parents": [{}]}
+
+    def health(self, after):
+        red = {"conclusion": "failure", "head_sha": "red", "created_at": "2026-01-01T00:00:00Z"}
+        with mock.patch.object(train, "api", return_value={"commit": {"sha": "tip"}}), \
+                mock.patch.object(train, "quick_runs", return_value=[red]), \
+                mock.patch.object(train, "compare", return_value={"commits": after}):
+            return train.staging_health("o/r")[0]
+
+    def test_only_a_vendorhash_commit_after_a_red_quick_stays_red(self):
+        self.assertEqual(self.health([self.commit("v", VendorHashTest.VENDOR)]), "red")
+
+    def test_a_real_fix_after_a_red_quick_is_healing(self):
+        fix = self.commit("f", "fix\n\nFixes-Staging: https://x\n")
+        self.assertEqual(self.health([fix]), "healing")
+
+    def test_a_real_fix_next_to_a_vendorhash_commit_is_healing(self):
+        after = [self.commit("v", VendorHashTest.VENDOR), self.commit("f", "revert\n\nStaging-Revert: abc\n")]
+        self.assertEqual(self.health(after), "healing")
+
+    def test_plain_work_after_a_red_quick_stays_red(self):
+        self.assertEqual(self.health([self.commit("w", "work\n\nTouch: #1\n")]), "red")
+
+
 if __name__ == "__main__":
     unittest.main()

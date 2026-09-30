@@ -147,7 +147,10 @@ def staging_health(repo):
         return ("green" if last["head_sha"] == tip else "pending"), info
     if last["head_sha"] != tip:
         after = compare(repo, last["head_sha"], tip)["commits"]
-        if any(HEAL.search(c["commit"]["message"]) for c in after):
+        # blocks_cut, не голый HEAL: автокоммит vendorHash несёт Fixes-Staging, но ничего не
+        # чинит (правит один flake.nix). Иначе после красного quick один такой коммит давал
+        # «healing» и land поверх красного, хотя красное осталось.
+        if any(blocks_cut(c) for c in after):
             return "healing", info
     return "red", info
 
