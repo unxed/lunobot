@@ -247,3 +247,29 @@ the listing modes and the command line keys are next.
 
 ---
 
+
+## Перебазирование под master 221319645 (PR #356) и порядок мержа
+
+Порядок мержа: #359, #362, #369, #360, #365, #366, #361, #363, #364, #367, #368. Моделирование `git merge --no-ff` этой цепочки на свежем upstream/master (221319645) проходит без конфликтов; итоговое дерево сверено с ожидаемым (s368 плюс правки #359, #362, #369), дублей нет. CI mcommander-full на каждом новом коммите зелёный. mergeable у всех 11 PR: MERGEABLE (UNSTABLE у GitHub - это статус проверок самого PR).
+
+| PR | ветка | прежний sha | новый sha | mergeable / CI |
+| --- | --- | --- | --- | --- |
+| #359 | mcterm-osc52 | ce710a90f | без изменений | MERGEABLE |
+| #362 | far-mode-349-2 | d394f9567 | без изменений | MERGEABLE |
+| #369 | far-mode-349-3 | 2c9c1dc81 | b25b3ead9 | MERGEABLE, CI зелёный |
+| #360 | far2l-keys-347 | 9e50dd916 | 1e86f27f8 | MERGEABLE, CI зелёный |
+| #365 | far2l-mouse-347 | 1c33d0655 | 6f774677c | MERGEABLE, CI зелёный |
+| #366 | far2l-mcterm-347 | aa840dd17 | 1e7e18578 | MERGEABLE, CI зелёный |
+| #361 | dnd-357 | 6ef2b49df | 96914b163 | MERGEABLE, CI зелёный |
+| #363 | dnd-357-mcterm | 9cd1f0cb9 | f3493cb69 | MERGEABLE, CI зелёный |
+| #364 | dnd-357-progress | 7b614d7d1 | 48c540b93 | MERGEABLE, CI зелёный |
+| #367 | bracketed-paste-block | 00e02140e | 98e920e26 | MERGEABLE, CI зелёный |
+| #368 | far2l-clipboard-348 | 23de932d5 | defb1b5f4 | MERGEABLE, CI зелёный |
+
+Конфликты и решения:
+- #369 против #362 (CHANGELOG, doc/man, src/keymap.c, tests/src/keymap_reload.c): коммит перенесён на вершину #362, обе стороны слиты дословно.
+- #360 против master (lib/tty/tty.c, новый порядок опросов): запросы идут kitty `?u`, DECRQM 9001, APC far2l1, `16t`, OSC 11 с ST, DA1 последним; ответы на наши запросы приходят до DA1, поздние ответы в клавиатуру не попадают (как сделал мейнтейнер).
+- #360, #366, #363 против #359 (tty.c/h, vterm.c, mcterm.c, vterm.h): свои вставки сдвинуты в соседние места; без сдвига git сливал тихо, но с дублем (take_apc в vterm.h).
+- #363: убран неиспользуемый `answer` в tests/src/mcterm_far2l.c (-Werror).
+- #367 и #368 как один коммит: свои хунки сдвинуты от хунков цепочки и #359 (key.c, key.h, Makefile.am, vterm_terminal.c); доку far2l-буфера вынес в новый doc/FAR2L_CLIPBOARD.md (FAR2L_INPUT.md создаётся цепочкой, правка даёт add/add).
+- По смыслу: в clipboard_file_to_ext_clip при пустом clipboard_store сначала far2l-буфер (если терминал его дал), иначе OSC 52 из #359.
