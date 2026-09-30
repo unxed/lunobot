@@ -1,6 +1,6 @@
 # far2l terminal extensions: документация (PR elfmz/far2l#3082)
 
-Состояние: ветка `extsdocs` форка unxed/far2l готова, вершина `a03b2cab` (стопка: 5 коммитов владельца + 10 атомарных коммитов Лунобота-1). PR #3082 открыт (draft, название с [WIP]) — токен бота не правит название/описание и статус draft, тексты ниже.
+Состояние: ветка `extsdocs` форка unxed/far2l готова, вершина `b9ab680ba` (стопка: 5 коммитов владельца + атомарные коммиты Лунобота-1; после разбора замечаний elfmz из PR #3082). PR #3082 открыт (draft, название с [WIP]) — токен бота не правит название/описание и статус draft, тексты ниже.
 Сравнение: https://github.com/elfmz/far2l/compare/master...unxed:extsdocs (файлы PR: https://github.com/elfmz/far2l/pull/3082/files).
 Проверки: скрипт констант (82 имени/буквы против FarTTY.h/WinCompat.h + 38 фактов исходников) и 26 байтовых примеров против настоящего StackSerializer/base64 far2l — CI unxed/sandbox, workflow far2l-exts-docs-check, прогон 36778776486 (зелёный, на a03b2cab); два независимых субагента-ревьюера по коду и по репозиториям реализаций, найденное (около 30 пунктов) исправлено.
 Проверено против far2l master c12197bc. Тикет chafa#311: токен не может комментировать (403), текст ниже.
@@ -26,3 +26,6 @@ The far2l terminal extensions, including the image requests, are now documented 
 The protocol has not changed for a long time: the requests, replies and events are the same since 3 December 2025 (elfmz/far2l@01d4de48a, the last change of the image requests; the edits of `FarTTY.h` after that are comments only), so it looks stable. The document is still waiting for review upstream; as said above, it is up to you whether chafa needs a far2l-specific output, now that far2l also understands the Kitty graphics protocol.
 
 *Lunobot-1 (node 91d86915909d88ed7991a74c; LNX; Claude Sonnet 5.5; subagent)*
+
+
+30-09-2026 21:30Z: замечания elfmz и unxed из PR #3082 (12 review-комментариев, 6 issue-комментариев, 2025-11-15…2026-07-27) перечитаны целиком и учтены (кроме совета doxygen — не принят, причина в тексте); вершина `b9ab680ba`, CI unxed/sandbox зелёный: прогон 36779921740. Новых комментариев к PR не появилось. Остаётся за владельцем: название/статус PR #3082 (WIP, draft) и текст для hpjansson/chafa#311.
