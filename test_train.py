@@ -170,5 +170,38 @@ class NightlyStaleTest(unittest.TestCase):
         self.assertTrue(train.should_cancel_main_run("unxed/tar"))
 
 
+    def test_naive_timestamp_is_taken_as_utc(self):
+        naive_old = {"published_at": "2020-01-01T00:00:00"}
+        naive_fresh = {"published_at": train.datetime.now(train.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")}
+        with mock.patch.object(train, "api", return_value=naive_old):
+            self.assertTrue(train.nightly_is_stale("unxed/f4"))
+        with mock.patch.object(train, "api", return_value=naive_fresh):
+            self.assertFalse(train.nightly_is_stale("unxed/f4"))
+
+
+class MainPushRunsTest(unittest.TestCase):
+    def test_only_unfinished_push_runs_are_returned(self):
+        resp = {"workflow_runs": [
+            {"id": 1, "event": "push", "status": "in_progress"},
+            {"id": 2, "event": "push", "status": "completed"},
+            {"id": 3, "event": "pull_request", "status": "queued"},
+        ]}
+        with mock.patch.object(train, "api", return_value=resp):
+            self.assertEqual([r["id"] for r in train.main_push_runs_in_progress("o/r", "abc")], [1])
+
+    def test_gh_failure_and_broken_answers_give_nothing_to_cancel(self):
+        for side in (SystemExit("gh api: 502"), RuntimeError("boom")):
+            with mock.patch.object(train, "api", side_effect=side):
+                self.assertEqual(train.main_push_runs_in_progress("o/r", "abc"), [])
+        for answer in (None, {"message": "Not Found"}, []):
+            with mock.patch.object(train, "api", return_value=answer):
+                self.assertEqual(train.main_push_runs_in_progress("o/r", "abc"), [])
+
+    def test_api_is_called_without_check(self):
+        with mock.patch.object(train, "api", return_value={"workflow_runs": []}) as api:
+            train.main_push_runs_in_progress("o/r", "abc")
+        self.assertEqual(api.call_args.kwargs.get("check"), False)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -958,9 +958,8 @@ def train_step(repo, sign):
         how = "fast-forward"
         if should_cancel_main_run(repo):
             time.sleep(5)
-            for r in api(f"repos/{repo}/actions/runs?branch=main&head_sha={head}")["workflow_runs"]:
-                if r["event"] == "push" and r["status"] != "completed":
-                    run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
+            for r in main_push_runs_in_progress(repo, head):
+                run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
         api(f"repos/{repo}/git/refs/heads/{pr['head']['ref']}", "-X", "DELETE", check=False)
     else:
         run("gh", "pr", "merge", str(n), "--repo", repo, "--merge", "--delete-branch")
@@ -1001,9 +1000,23 @@ def nightly_is_stale(repo):
     try:
         rel = api(f"repos/{repo}/releases/tags/nightly", check=False)
         published = datetime.fromisoformat(rel["published_at"].replace("Z", "+00:00"))
+        if published.tzinfo is None:  # без пояса — UTC, иначе вычитание ниже падает TypeError
+            published = published.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) - published > timedelta(hours=NIGHTLY_MAX_AGE_H)
     except (Exception, SystemExit):  # noqa: BLE001 -- нет релиза, 404, 5xx, лимит: не отменять
         return True
-    return datetime.now(timezone.utc) - published > timedelta(hours=NIGHTLY_MAX_AGE_H)
+
+
+def main_push_runs_in_progress(repo, head):
+    """Незавершённые прогоны main на push для коммита head. Сбой gh не роняет tick: поезд уже
+    влит, и ему ещё удалять ветку, ставить тег и печатать «Пробуйте!» — пустой список значит
+    «ничего не отменять»."""
+    try:
+        resp = api(f"repos/{repo}/actions/runs?branch=main&head_sha={head}", check=False)
+        runs = resp["workflow_runs"]
+        return [r for r in runs if r["event"] == "push" and r["status"] != "completed"]
+    except (Exception, SystemExit):  # noqa: BLE001
+        return []
 
 
 def should_cancel_main_run(repo):
