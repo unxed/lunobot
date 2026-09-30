@@ -955,7 +955,7 @@ def train_step(repo, sign):
              "-f", f"sha={head}", "-F", "force=false", check=False)
     if ff.returncode == 0:
         how = "fast-forward"
-        if repo not in PRESERVE_MAIN:
+        if repo not in PRESERVE_MAIN and not nightly_is_stale(repo):
             time.sleep(5)
             for r in api(f"repos/{repo}/actions/runs?branch=main&head_sha={head}")["workflow_runs"]:
                 if r["event"] == "push" and r["status"] != "completed":
@@ -975,6 +975,29 @@ def train_step(repo, sign):
             print(t)
     mark_checking(repo, own_numbers(repo, commits), sign)
     return 0
+
+
+# Проекты с плавающим nightly-релизом, который публикует ТОЛЬКО прогон main (job Nightly в
+# build.yml на push в main): отмена этого прогона после fast-forward поезда оставляет nightly
+# без обновления (30-09-2026 unxed/f4: nightly стоял на 643c1920 с 00:16Z, а main за 10 часов ушёл
+# на пять поездов вперёд, потому что каждый поезд шёл fast-forward и его прогон main отменялся).
+NIGHTLY_MAX_AGE_H = 3
+NIGHTLY_REPOS = {"unxed/f4"}
+
+
+def nightly_is_stale(repo):
+    """True, если у проекта есть плавающий nightly и он не обновлялся дольше NIGHTLY_MAX_AGE_H:
+    тогда прогон main после fast-forward НЕ отменяют — иначе nightly не обновится никогда, пока
+    поезда идут fast-forward. Цена — одна лишняя полная матрица не чаще раза в NIGHTLY_MAX_AGE_H."""
+    if repo not in NIGHTLY_REPOS:
+        return False
+    try:
+        rel = api(f"repos/{repo}/releases/tags/nightly")
+        published = datetime.fromisoformat(rel["published_at"].replace("Z", "+00:00"))
+    except Exception:  # noqa: BLE001 -- нет релиза или сеть: не отменять, безопаснее
+        return True
+    age = datetime.now(timezone.utc) - published
+    return age > timedelta(hours=NIGHTLY_MAX_AGE_H)
 
 
 def tag_next(repo):
