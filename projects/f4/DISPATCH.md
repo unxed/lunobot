@@ -17,4 +17,3 @@
 
 29-09-2026 20:01:56 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/272 (часть 5 из 5: F1-справка менеджера окружения) [land]
 
-30-09-2026 00:04:09 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял кастомную задачу «красный staging f4: lint G306 в plugins/netfox/fishplus/server_test.go» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
