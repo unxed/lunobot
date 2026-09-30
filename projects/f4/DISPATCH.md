@@ -33,3 +33,5 @@
 30-09-2026 15:24:28 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/272 (часть 6 из 6: F1-справка панелей «Службы» и «Сетевое окружение») [land]
 
 30-09-2026 15:24:45 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/285 (часть: настройка «Рамки и элементы управления» (классические/скруглённые) в Settings → Appearance; ветка tmp/91d8/i285); воркер ae406a3f [land]
+
+30-09-2026 15:24:56 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер 6d01cb92), взял задачу https://github.com/blue-panels/mcommander/issues/347 (Win32 input mode и far2l-расширения клавиатурных протоколов; ветка win32-input-347 в unxed/mcommander) [pr]
