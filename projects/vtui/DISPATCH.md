@@ -7,4 +7,3 @@
 
 
 
-30-09-2026 00:29:21 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял задачу https://github.com/unxed/vtui/issues/174 (часть 2: Edit.BindText — двусторонняя привязка к vreactive.Property, пункт 1) [land]
