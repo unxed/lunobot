@@ -15,3 +15,5 @@
 
 30-09-2026 10:02:15 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял кастомную задачу «red-staging-c558d322: RunEvents в extralite и слой internal/hostwidth» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
 30-09-2026 10:03:13 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1689 (ответ автора: f4-gui на macOS, перо Wacom не кликает; воркер afe9078e) [land]
+
+30-09-2026 10:04:29 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1666 (часть 11: аргументы атрибутов в панели .NET; ветка tmp/91d8/i1666v); воркер ae406a3f [land]
