@@ -21,3 +21,5 @@
 30-09-2026 15:10:03 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1411 (часть: полоса прогресса снова видна из-за Show, Отмена не прерывает запрос sudo; ветка tmp/91d8/i1411b); воркер ae406a3f [land]
 
 30-09-2026 15:11:28 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1356 (часть: недоступны при курсоре на «..» — F3/F4/View hex, Rename, Create Link, контрольные суммы, Base64; ветка tmp/91d8/i1356); воркер ae406a3f [land]
+
+30-09-2026 15:12:42 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял кастомную задачу «red-main-plugins-gomodtidy: go mod tidy подмодулей plugins/cloudfox, plugins/ios в красных main eb17c3a0a и поезде 1707» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
