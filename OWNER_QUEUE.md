@@ -81,4 +81,6 @@ https://github.com/blue-panels/mcommander
 Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), 30-09-2026 20:05:53
 --
 
+Сделай в M-commander pr, добавляющий сборку под Termux. Референс f4.
+
 
