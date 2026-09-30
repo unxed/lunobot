@@ -37,7 +37,6 @@
 30-09-2026 15:30:07 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), работаю над кастомной задачей «f4-windows-network-browser-20260930: панель «Сетевое окружение» Windows на WNet, часть 1 — перечисление»
 30-09-2026 15:54:06 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1567 (часть 1: лаунчер f4-gui.exe вместо второй копии f4.exe в Windows-пакетах; cmd/f4-gui-launcher, build.yml; ветка tmp/91d8/i1567); воркер ae406a3f [land]
 
-30-09-2026 15:56:52 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер ae4288cf5c20b261f), взял задачу https://github.com/blue-panels/mcommander/issues/349 (часть 2 из N: редактор и вьювер в режиме Far; ветка far-mode-349-2 в unxed/mcommander поверх far-mode-349) [pr]
 
 30-09-2026 16:01:50 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), работаю над кастомной задачей «f4-windows-network-browser-20260930: панель «Сетевое окружение» Windows на WNet, часть 1 — перечисление»
 
