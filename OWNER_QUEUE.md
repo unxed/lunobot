@@ -78,7 +78,7 @@ https://github.com/blue-panels/mcommander
 Проект: учёт (работа в blue-panels/mcommander через форк unxed/mcommander)
 Поручение: прочесть тикет blue-panels/mcommander#358 целиком, реализовать в ветке форка unxed/mcommander, подготовить compare-ссылку.
 Критерий: ветка в unxed/mcommander, сборка и тесты в CI форка зелёные; ссылка оставлена в тикете и в unxed/f4#1628, владельцу один notify_owner.
-Состояние: свободно — флот остановлен по слову владельца, 30-09-2026 20:14:52; работа не завершена: ветка в unxed/mcommander по #358 (resurrect) у воркера a5acb84b; не завершено
+Состояние: свободно — не завершено (работа остановлена словом владельца), разбор в projects/f4/status/mcommander-358.md
 --
 
 Сделай в M-commander pr, добавляющий сборку под Termux. Референс f4.
