@@ -7,7 +7,7 @@
 29-09-2026 19:46:37 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/1665 (часть 1 из 3: текст PDF постранично в Markdown-просмотре, чистый Go) [land]
 
 
-30-09-2026 00:52:22 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), работаю над задачей https://github.com/unxed/f4/issues/272
+30-09-2026 00:52:31 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер aaf77405), взял задачу https://github.com/unxed/f4/issues/272 (часть 5 из 5: F1-справка менеджера окружения) [land]
 30-09-2026 00:35:57 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял задачу https://github.com/unxed/f4/issues/1685 (часть: видео по VIDEO.md и разделу «What is left»; изображения ведёт a94ae638) [land]
 
 
