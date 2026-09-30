@@ -43,6 +43,3 @@
 30-09-2026 15:29:50 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315420f87c49), взял задачу https://github.com/blue-panels/mcommander/issues/348 (буфер обмена и вставка: OSC 52, sub-issues 351 и 352; ветки osc52-clipboard, mcterm-osc52 в unxed/mcommander) [urgent: по § 4 п. 1 — поручение владельца]
 
 30-09-2026 15:30:07 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), работаю над кастомной задачей «f4-windows-network-browser-20260930: панель «Сетевое окружение» Windows на WNet, часть 1 — перечисление»
-
-30-09-2026 15:30:07 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), работаю над задачей https://github.com/unxed/f4/issues/1706
-30-09-2026 15:41:51 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344ed8f55519), взял кастомную задачу «red-staging-file-resize-g115: G115 в internal/dialog/file_resize_test.go (int->int16)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
