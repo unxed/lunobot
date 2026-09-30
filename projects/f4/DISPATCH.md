@@ -16,3 +16,5 @@
 30-09-2026 00:39:06 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/1685 (часть 4: таблица kitty-терминалов из f4 graphics_compat.go в vtui; воркер a94ae638) [land]
 
 30-09-2026 00:43:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0595db9), взял задачу https://github.com/unxed/f4/issues/311 (часть 5: изменение типа запуска службы) [land]
+
+30-09-2026 00:51:43 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер af871e37), взял задачу https://github.com/unxed/f4/issues/1681 (часть 2: режим -command-timing утилиты conptyreconcile, замер dir /s /b через хост при разных высотах, идеи 1.1-1.2) [land]
