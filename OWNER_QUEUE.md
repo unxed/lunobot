@@ -45,10 +45,15 @@ https://github.com/blue-panels/mcommander
 
 --
 
-реализовать в
+## mcommander-owner-tickets-20260930
+Заметка владельца: реализовать в
 https://github.com/blue-panels/mcommander
 всё что я прошу тикетами
 и отправить как PRы
 форк сделал, доступ к нему дал.
+Проект: учёт (работа в чужом репозитории blue-panels/mcommander через форк unxed/mcommander)
+Поручение: реализовать в blue-panels/mcommander всё, что владелец просит своими тикетами (#347 клавиатурные протоколы kitty/Win32 input/far2l extensions, #348 буфер обмена и вставка: OSC52, bracketed paste, far2l extensions, #349 предложение opt-in режима Far, #357 Drag and Drop как в f4), и отправить как PR из форка unxed/mcommander.
+Критерий: по каждому тикету есть ветка в unxed/mcommander с реализацией (сборка и тесты проекта проходят в CI форка) и подготовлен PR в blue-panels/mcommander (ссылка на сравнение, если бот не может открыть PR); ссылки оставлены в тикетах.
+Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a2b25315), 30-09-2026 15:03:14
 
 --
