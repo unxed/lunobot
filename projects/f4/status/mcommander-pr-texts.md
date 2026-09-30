@@ -347,3 +347,85 @@ keymap say it.
 - #363: убран неиспользуемый `answer` в tests/src/mcterm_far2l.c (-Werror).
 - #367 и #368 как один коммит: свои хунки сдвинуты от хунков цепочки и #359 (key.c, key.h, Makefile.am, vterm_terminal.c); доку far2l-буфера вынес в новый doc/FAR2L_CLIPBOARD.md (FAR2L_INPUT.md создаётся цепочкой, правка даёт add/add).
 - По смыслу: в clipboard_file_to_ext_clip при пустом clipboard_store сначала far2l-буфер (если терминал его дал), иначе OSC 52 из #359.
+
+## Новые ветки (30-09-2026, Лунобот-1, воркер mcfar349)
+
+12. **Режим Far, часть 4 (диалоги, Ctrl-\\ в корень, быстрый поиск, сортировки, Ctrl-G)** — после #362 и #369, от них зависит (ветка их продолжает): https://github.com/blue-panels/mcommander/compare/master...unxed:far-mode-349-4?expand=1
+13. **Документация терминального ввода, буфера обмена, вставки и DnD (#347, #348, #357)** — после #359–#368 (несёт их код, как #368): https://github.com/blue-panels/mcommander/compare/master...unxed:docs-terminal-349?expand=1
+
+Мерж по порядку стопки (1–11, затем 12 и 13) на свежем master `221319645` проходит без конфликтов; CI mcommander-full зелёный на каждой ветке и на слитой цепочке целиком. Ветка п. 12 продолжает `far-mode-349-3` (в сравнении 4 коммита, название и описание не подставятся сами: вставьте ниже); п. 13 — один коммит на master, подставится само.
+
+<details><summary><b>п. 12</b> (far-mode-349-4) — Far mode: dialogs, the root directory, fast find and more sort keys</summary>
+
+**Название:**
+```
+Far mode: dialogs, the root directory, fast find and more sort keys
+```
+**Описание:**
+```
+> Builds on the commits below it (the Far mode parts of #362 and #369). Review the last commit.
+
+The next part of the opt-in Far mode (far_mode, off by default): the dialogs
+and the workflows that Far users reach for.
+
+Dialogs. Ctrl-Enter does the default action of a dialog, and the numeric plus
+and minus (and those of the main keyboard) switch the check box that has the
+focus on and off; the other keys of the dialogs are the same in Far and in
+M-Commander, and the parts of Far that M-Commander has no counterpart for
+(moving a dialog, a file name into an edit line) are listed in the manual.
+
+Panels. Ctrl-\ goes to the root directory of the file system, the archive or
+the remote host the panel shows, and the directory hotlist moves to Alt-\.
+Alt, or Alt-Shift, with a character is the fast find of Far, with Ctrl-Enter
+and Ctrl-Shift-Enter for the next and the previous match; an Alt key that has
+an action keeps it, so nothing of M-Commander is lost. Ctrl-F7, Ctrl-F8,
+Ctrl-F9 and Ctrl-F11 sort by nothing, by the time of change, by the time of
+access and by the owner. Ctrl-G applies a command to the tagged files (the
+file under the cursor when none is tagged) with %f, %n and %x for the name,
+the name without the extension and the extension (new action ApplyCommand).
+Alt-F6, Alt-F10, Shift-F9 and Shift-F10 create a hard link, show the tree of
+directories, save the setup and choose the last menu item.
+
+Ctrl-H, Ctrl-M and Ctrl-Z stay unbound on purpose, since a terminal sends
+Backspace and Enter as the first two and M-Commander cannot tell them apart;
+the manual says so, with the rest of the differences from Far. The mode is a
+layer over the keymap, so keymap.ini of the user still has the last word, and
+with the mode off nothing changes: tests in tests/src/keymap_reload.c check
+the keys with the mode on, with it off and across a switch.
+```
+</details>
+
+<details><summary><b>п. 13</b> (docs-terminal-349) — doc: terminal input, clipboard, paste and dropped files</summary>
+
+**Название:**
+```
+doc: terminal input, clipboard, paste and dropped files
+```
+**Описание:**
+```
+> This commit carries the code of #359 to #368 that it documents (the far2l input, the clipboard, the bracketed paste and the drop changes). Review doc/man/mcommander.md.
+
+The manual said nothing about what M-Commander asks of the terminal it runs in,
+so a report about a key, a copy or a paste could not name the path it took. A
+new chapter, "Terminal input, clipboard and dropped files", says it, for
+users and for plugin authors:
+
+- Keyboard input: the far2l extensions, the kitty keyboard protocol and Win32
+  input mode, what is asked at start and when it is not (screen and tmux, the
+  MC_FAR2L, MC_KITTY_KEYBOARD and MC_WIN32_INPUT variables), how it is switched
+  off around a child program, what the built-in terminal keeps apart, the
+  "Keyboard input:" line of the About box, that the key codes of plugins and
+  keymaps do not change, and a short manual check for each terminal path.
+- Clipboard: the order of the copy (clipboard_store, the far2l terminal, OSC 52),
+  the size limits, MC_OSC52=0, the OSC 52 of a program in the built-in terminal,
+  tmux and remote terminals, the clipboard_store example that prints OSC 52,
+  and why OSC 52 is written but never read.
+- Paste: bracketed paste as one block, one Undo step, what happens to line
+  breaks and control bytes, and the built-in terminal.
+- Dropped files: what a drop does, the limits, and what is not there yet.
+
+The About command, the clipboard_store setting and the environment section
+point to it. No code is changed.
+```
+</details>
+
