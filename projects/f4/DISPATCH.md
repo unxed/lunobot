@@ -16,3 +16,5 @@
 
 
 30-09-2026 00:29:09 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a9d9c344), взял задачу https://github.com/unxed/f4/issues/1686 (часть 3: Host.InputBox/Host.Menu из VFS-запроса — дедлок) [land]
+
+30-09-2026 00:29:34 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), взял задачу https://github.com/unxed/f4/issues/12 (часть: winget — PR в microsoft/winget-pkgs; воркер a94ae638) [pr]
