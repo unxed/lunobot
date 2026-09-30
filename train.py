@@ -68,6 +68,9 @@ TRAILER = re.compile(r"^(Touch|Lunobot-Task):\s*(.+)$", re.M)
 CHECK = re.compile(r"^Проверить:\s*\n(.*?)(?:\n\s*\n[A-Z][\w-]+:|\Z)", re.M | re.S)
 # Коммит, чинящий красный staging: ручная починка (land --fix-staging) или автооткат tick'а.
 HEAL = re.compile(r"^(Fixes-Staging|Staging-Revert):", re.M)
+# Автокоммит бота с новым vendorHash в flake.nix (workflow nix-vendor-hash): несёт Fixes-Staging,
+# но правит один flake.nix, а quick его не проверяет.
+VENDOR_SYNC = re.compile(r"^Lunobot-Task: vendorhash-autosync\s*$", re.M)
 # Больше стольких коммитов между последним зелёным и первым красным quick — откатывать
 # вслепую нельзя (заденет чужую работу), нужен бот: срочная задача § 5 п. 2.
 MAX_AUTO_REVERT = 3
@@ -159,6 +162,27 @@ def red_range(repo, info):
     commits = compare(repo, base, first_red["head_sha"])["commits"]
     return first_red, [c for c in commits if len(c["parents"]) == 1
                        and not HEAL.search(c["commit"]["message"])]
+
+
+def blocks_cut(c):
+    """Коммит-починка, из-за которого поезд ждёт зелёного quick на вершине staging.
+    Автокоммит vendorHash (VENDOR_SYNC) не в счёт: он правит только flake.nix, а quick
+    не проверяет ни его, ни Nix; ждать нового зелёного quick после него нечего, и каждый
+    такой коммит после очередного land сдвигал вершину и не давал поезду нарезаться."""
+    msg = c["commit"]["message"]
+    return bool(HEAL.search(msg)) and not VENDOR_SYNC.search(msg)
+
+
+def extend_over_vendorhash(cut_sha, after):
+    """Поезд режется по коммиту с зелёным quick; сразу за ним подряд лежащие автокоммиты
+    vendorHash (after — коммиты staging после него, старые первыми) едут в поезде тоже:
+    иначе main получит go.mod без своего хэша до следующего поезда."""
+    for c in after:
+        if len(c["parents"]) == 1 and VENDOR_SYNC.search(c["commit"]["message"]):
+            cut_sha = c["sha"]
+        else:
+            break
+    return cut_sha
 
 
 def who(c):
@@ -313,8 +337,8 @@ def cut(repo, sign):
               "если staging красный, это § 5 п. 2 (см. выше)")
         return 0
     cut_sha = green["head_sha"]
-    heal_wait = [c for c in compare(repo, cut_sha, staging["commit"]["sha"])["commits"]
-                 if HEAL.search(c["commit"]["message"])]
+    after_green = compare(repo, cut_sha, staging["commit"]["sha"])["commits"]
+    heal_wait = [c for c in after_green if blocks_cut(c)]
     if heal_wait:
         # Зелёный quick мог пройти НА ломающем коммите (quick не проверяет всего): починка лежит
         # после него, и резать «до зелёного» значит везти поломку без починки (28-09-2026,
@@ -334,6 +358,7 @@ def cut(repo, sign):
                   "вершину в песочнице и разбери вручную")
             return 1
         return 0
+    cut_sha = extend_over_vendorhash(cut_sha, after_green)
     cmp = compare(repo, main_sha, cut_sha)
     own = [c for c in cmp["commits"] if len(c["parents"]) == 1]
     if not own:

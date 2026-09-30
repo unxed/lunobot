@@ -58,5 +58,30 @@ class FreezeTest(unittest.TestCase):
         self.assertIsNone(train.active_freeze(self.LINE, "f4", self.now(20, 10)))
 
 
+class VendorHashTest(unittest.TestCase):
+    @staticmethod
+    def commit(sha, msg, parents=1):
+        return {"sha": sha, "commit": {"message": msg}, "parents": [{}] * parents}
+
+    VENDOR = ("build(nix): update vendorHash [ci]\n\nLunobot-Task: vendorhash-autosync\n"
+              "Fixes-Staging: https://github.com/o/r/actions/runs/1\n")
+
+    def test_vendorhash_commit_does_not_block_the_cut(self):
+        self.assertFalse(train.blocks_cut(self.commit("a", self.VENDOR)))
+
+    def test_real_fix_still_blocks_the_cut(self):
+        self.assertTrue(train.blocks_cut(self.commit("a", "fix\n\nFixes-Staging: https://x\n")))
+        self.assertTrue(train.blocks_cut(self.commit("a", "revert\n\nStaging-Revert: abc\n")))
+
+    def test_cut_extends_over_directly_following_vendorhash_commits(self):
+        after = [self.commit("v1", self.VENDOR), self.commit("v2", self.VENDOR),
+                 self.commit("w", "work\n\nTouch: #1\n"), self.commit("v3", self.VENDOR)]
+        self.assertEqual(train.extend_over_vendorhash("green", after), "v2")
+
+    def test_cut_stays_when_next_commit_is_not_vendorhash(self):
+        after = [self.commit("w", "work\n\nTouch: #1\n"), self.commit("v", self.VENDOR)]
+        self.assertEqual(train.extend_over_vendorhash("green", after), "green")
+
+
 if __name__ == "__main__":
     unittest.main()
