@@ -119,6 +119,11 @@ def find_issue(create):
     return json.loads(out)["number"]
 
 
+def api_obj(path):
+    out = gh("api", path, check=False)
+    return json.loads(out) if out else None
+
+
 def entries(number):
     found = []
     for c in api_json(f"repos/{repo()}/issues/{number}/comments?per_page=100") or []:
@@ -167,7 +172,7 @@ def obsolete(entry):
     if not m:
         return "ссылка не разобрана"
     target, num, cid = m.group(1), m.group(2), m.group(3)
-    issue = api_json(f"repos/{target}/issues/{num}", check=False)
+    issue = api_obj(f"repos/{target}/issues/{num}")
     if not isinstance(issue, dict):
         return None  # закрытый или недоступный репозиторий — не трогаем
     if issue.get("state") == "closed":
