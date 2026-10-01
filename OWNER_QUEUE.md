@@ -51,24 +51,6 @@ https://github.com/blue-panels/mcommander
 
 --
 
-## mcommander-358-20260930
-Заметка владельца: Добавь https://github.com/blue-panels/mcommander/issues/358 в список того, что надо реализовать PRом и отправить в M-commander.
-Проект: учёт (работа в blue-panels/mcommander через форк unxed/mcommander)
-Поручение: прочесть тикет blue-panels/mcommander#358 целиком, реализовать в ветке форка unxed/mcommander, подготовить compare-ссылку.
-Критерий: ветка в unxed/mcommander, сборка и тесты в CI форка зелёные; ссылка оставлена в тикете и в unxed/f4#1628, владельцу один notify_owner.
-Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), 30-09-2026 22:39:32; разбор в projects/f4/status/mcommander-358.md
-Решение владельца (30-09-2026): resurrect включён по умолчанию, как в far2l (выключатель — ключ `--mortal`/настройка); ранее предлагалось выключенным.
---
-
-## mcommander-termux-20260930
-Заметка владельца: Сделай в M-commander pr, добавляющий сборку под Termux. Референс f4.
-Проект: учёт (работа в blue-panels/mcommander через форк unxed/mcommander)
-Поручение: PR в blue-panels/mcommander со сборкой M-Commander под Termux по образцу unxed/f4 (packaging/termux/build.sh — рецепт для termux-packages; job build-termux в .github/workflows/build.yml — .deb релиза; патч для termux-packages — комментарий unxed/f4#12).
-Критерий: ветка в unxed/mcommander (один коммит поверх master upstream, после #368 в стопке), CI mcommander-full зелёный, сборка под Termux проверена в CI; compare-ссылка в комментарии unxed/lunobot#29 «Ссылки создания новых PR».
-Состояние: взял в работу — Лунобот-1 (node 91d86915909d88ed7991a74c; LNX), 30-09-2026 22:39:32
-
---
-
 ## localecp-1671-chain-paused-20260930
 Заметка владельца: «цепочку по localecp зафиксируй в учётном репозитории, чтобы продолжить только когда я скажу «продолжай по инструкции Лунобота»».
 Проект: f4 / localecp
