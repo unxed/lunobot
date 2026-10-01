@@ -11,8 +11,17 @@ URL = "https://github.com/unxed/f4/issues/1#issuecomment-1"
 
 class GateTest(unittest.TestCase):
     def test_question_passes(self):
-        self.assertIsNone(oq.check_question("Открыть ли PR в upstream elfmz/far2l из ветки terminal-dnd-spec?"))
-        self.assertIsNone(oq.check_question("Готов ли бюджет на lite-сборку?"))
+        self.assertIsNone(oq.check_question("Блокирует PR #12: открыть ли его в upstream elfmz/far2l из ветки terminal-dnd-spec?"))
+        self.assertIsNone(oq.check_question("Не могу выбрать между двумя схемами ключей: берём общий или раздельные?"))
+
+    def test_self_answerable_rejected(self):
+        self.assertIsNotNone(oq.check_question("Блокирует T-05: какая лицензия у HX?"))
+        self.assertIsNotNone(oq.check_question("Не могу продолжить: какую версию NC скачать?"))
+        self.assertIsNotNone(oq.check_question("Блокирует тест: нужно ли делать очевидное?"))
+
+    def test_no_blocker_rejected(self):
+        self.assertIsNotNone(oq.check_question("Открыть ли PR в upstream?"))
+        self.assertIsNotNone(oq.check_question("Готов ли бюджет на lite-сборку?"))
 
     def test_report_rejected(self):
         self.assertIsNotNone(oq.check_question("Готово: ссылки на документацию обновлены."))
@@ -20,14 +29,14 @@ class GateTest(unittest.TestCase):
         self.assertIsNotNone(oq.check_question("Спека обновлена по замечаниям."))
 
     def test_long_rejected(self):
-        self.assertIsNotNone(oq.check_question("Открыть ли " + "очень " * 100 + "PR?"))
+        self.assertIsNotNone(oq.check_question("Блокирует: открыть ли " + "очень " * 100 + "PR?"))
 
     def test_empty_rejected(self):
         self.assertIsNotNone(oq.check_question(""))
         self.assertIsNotNone(oq.check_question("   \n"))
 
     def test_two_questions_rejected(self):
-        self.assertIsNotNone(oq.check_question("Открыть ли PR? Или подождать?"))
+        self.assertIsNotNone(oq.check_question("Блокирует PR: открыть ли его? Или подождать?"))
 
 
 class NotifyTest(unittest.TestCase):
@@ -45,7 +54,7 @@ class NotifyTest(unittest.TestCase):
         self.assertEqual(self.run_notify(""), (2, False))
 
     def test_question_sent(self):
-        self.assertEqual(self.run_notify("Открыть ли PR?"), (0, True))
+        self.assertEqual(self.run_notify("Блокирует PR #5: открыть ли его в upstream?"), (0, True))
 
 
 if __name__ == "__main__":
