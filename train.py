@@ -314,6 +314,21 @@ def tickets(repo, commits):
     return out
 
 
+def pick_green(repo, main_sha, staging_sha, runs):
+    """Последний коммит staging с зелёным quick, до которого можно резать поезд: впереди main,
+    предок вершины staging и СОДЕРЖИТ текущий main (behind_by == 0). Коммит до слияния main в
+    staging конфликтует с main, поезд не получает прогона (01-10-2026 поезда unxed/f4#1717 и
+    #1718 были порезаны от такого коммита и закрыты)."""
+    for r in runs:
+        if r["conclusion"] != "success":
+            continue
+        c = compare(repo, main_sha, r["head_sha"])
+        if c.get("ahead_by", 0) > 0 and c.get("behind_by", 0) == 0 \
+                and compare(repo, r["head_sha"], staging_sha)["status"] in ("ahead", "identical"):
+            return r
+    return None
+
+
 def cut(repo, sign):
     main_sha = api(f"repos/{repo}/branches/main")["commit"]["sha"]
     staging = api(f"repos/{repo}/branches/{STAGING}", check=False)
@@ -332,10 +347,7 @@ def cut(repo, sign):
     # Поезд режется только до последнего коммита staging с зелёным quick: красный кусок
     # staging в поезд не едет никогда. Иначе поезд заведомо красный, а бисект по нему ищет
     # виновника в «базе, которая сама красная» (инцидент 28-09-2026, #1611–#1620).
-    green = next((r for r in quick_runs(repo) if r["conclusion"] == "success"
-                  and compare(repo, main_sha, r["head_sha"]).get("ahead_by", 0) > 0
-                  and compare(repo, r["head_sha"], staging["commit"]["sha"])["status"]
-                  in ("ahead", "identical")), None)
+    green = pick_green(repo, main_sha, staging["commit"]["sha"], quick_runs(repo))
     if not green:
         print("в staging нет ни одного коммита впереди main с зелёным quick — поезд не режется; "
               "если staging красный, это § 5 п. 2 (см. выше)")
