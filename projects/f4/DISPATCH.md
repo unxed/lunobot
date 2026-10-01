@@ -4,8 +4,6 @@
 
 01-10-2026 07:41:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a1715001), взял задачу https://github.com/unxed/f4/issues/1715 [land]
 
-01-10-2026 07:41:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a1709002), взял задачу https://github.com/unxed/f4/issues/1709 [land]
-
 01-10-2026 07:41:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0891003), взял задачу https://github.com/unxed/f4/issues/891 (новые пункты автора от 01-10, диалог Copy/Rename) [land]
 
 01-10-2026 07:41:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0285004), взял задачу https://github.com/unxed/f4/issues/285 (кнопки pushbutton, ответ на сообщение от 30-09 22:04) [land]
