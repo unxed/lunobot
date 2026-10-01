@@ -83,6 +83,32 @@ class VendorHashTest(unittest.TestCase):
         self.assertEqual(train.extend_over_vendorhash("green", after), "green")
 
 
+class PickGreenTest(unittest.TestCase):
+    """Поезд режется только от зелёного коммита, который уже содержит main."""
+
+    def pick(self, runs, behind):
+        def compare(repo, base, head):
+            if base == "main":
+                return {"ahead_by": 3, "behind_by": behind[head]}
+            return {"status": "ahead"}
+        with mock.patch.object(train, "compare", side_effect=compare):
+            return train.pick_green("o/r", "main", "tip", runs)
+
+    def test_green_commit_behind_main_is_skipped(self):
+        runs = [{"conclusion": "success", "head_sha": "old"}]
+        self.assertIsNone(self.pick(runs, {"old": 5}))
+
+    def test_green_commit_with_main_is_taken(self):
+        runs = [{"conclusion": "failure", "head_sha": "red"},
+                {"conclusion": "success", "head_sha": "new"},
+                {"conclusion": "success", "head_sha": "old"}]
+        self.assertEqual(self.pick(runs, {"red": 0, "new": 0, "old": 5})["head_sha"], "new")
+
+    def test_newer_green_behind_main_does_not_hide_older_one_with_main(self):
+        runs = [{"conclusion": "success", "head_sha": "a"}, {"conclusion": "success", "head_sha": "b"}]
+        self.assertEqual(self.pick(runs, {"a": 2, "b": 0})["head_sha"], "b")
+
+
 class StagingHealthTest(unittest.TestCase):
     """После красного quick только бот-коммит vendorHash — не «healing» (land не разрешён)."""
 
