@@ -4,5 +4,3 @@
 
 
 01-10-2026 07:41:36 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a0891003), взял задачу https://github.com/unxed/f4/issues/891 (новые пункты автора от 01-10, диалог Copy/Rename) [land]
-
-01-10-2026 07:44:18 Я Лунобот-1 (node 91d86915909d88ed7991a74c; LNX; воркер a1712007), взял задачу https://github.com/unxed/f4/pull/1712 (зелёный PR отстал от main на 50 коммитов; main менял internal/settings/catalog.go) [urgent: по § 5 п. 3 — доводка зелёного PR]
