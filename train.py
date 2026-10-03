@@ -280,6 +280,24 @@ def train_pr(repo):
     return trains[0] if trains else None
 
 
+def green_train_covering(repo, staging_sha):
+    """Return an open train whose green checks already cover the staging tip.
+
+    A train in this state is the normal last step before main: its staging
+    commits are not missing from main because the merge is still pending.  It
+    must not make ``stuck`` report an incident based on the age of the oldest
+    commit.  Pending, failed, cancelled, or empty rollups deliberately do not
+    suppress the incident.
+    """
+    pr = train_pr(repo)
+    if not pr or pr["head"]["sha"] != staging_sha:
+        return None
+    checks, pending, failed, cancelled = rollup(repo, pr["number"])
+    if checks and not pending and not failed and not cancelled:
+        return pr
+    return None
+
+
 def rollup(repo, number):
     out = run("gh", "pr", "view", str(number), "--repo", repo,
               "--json", "statusCheckRollup").stdout
@@ -792,6 +810,10 @@ def stuck(repo):
     свежий коммит в staging поднимал бы ложный инцидент."""
     main = api(f"repos/{repo}/branches/main")["commit"]["sha"]
     staging = api(f"repos/{repo}/branches/{STAGING}")["commit"]["sha"]
+    green_train = green_train_covering(repo, staging)
+    if green_train:
+        print(f"staging tip уже покрыт зелёным поездом #{green_train['number']} — ждёт merge в main")
+        return 0
     own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
     if not own:
         print("staging не впереди main — приземлённая работа вся в main")
