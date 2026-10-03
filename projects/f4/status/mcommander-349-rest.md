@@ -18,10 +18,12 @@
 - Для существующей ветки `unxed/mcommander:win32-input-mode` открыт недостающий
   upstream PR #385: https://github.com/blue-panels/mcommander/pull/385. Ссылки на
   реализацию добавлены комментариями в #347, #348, #349, #357, #351 и #352.
-- CI #385: `merge-checks` pass; полная матрица
-  https://github.com/blue-panels/mcommander/actions/runs/37148334345 ещё идёт.
-  Отдельный `summarize` job `37148334092` завершился failure на попытке workflow
-  изменить body PR из fork read-only токеном; это не ошибка сборки, но итог полной
-  матрицы ещё не установлен.
+- CI #385: полная матрица
+  https://github.com/blue-panels/mcommander/actions/runs/37148334345 завершилась
+  успешно: Ubuntu, Solaris, Alpine, Fedora, FreeBSD, macOS и оба Termux, а также
+  `check-glib-api`, man и `merge-checks` — pass.
+- Отдельный `summarize` job `37148334092` завершился failure на попытке workflow
+  изменить body PR из fork read-only токеном; это инфраструктурный сбой workflow,
+  не ошибка сборки или тестов.
 - Ограничение владельца сохранено: OSC 52 на чтение не реализовывать и PR для него
   не предлагать.
