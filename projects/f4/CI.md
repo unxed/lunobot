@@ -9,3 +9,5 @@
 03-10-2026 14:47:45 после `land` в `lunobot/staging` опубликован SHA `41d32d5a18ed6ba830b0f334a9a79b25b4ee57a6`; для него запущен обязательный quick ниже.
 
 03-10-2026 14:47:45 `quick` после `land` для `lunobot/staging`: https://github.com/unxed/f4/actions/runs/37130664907, SHA `41d32d5a18ed6ba830b0f334a9a79b25b4ee57a6`, результат не проверен.
+
+03-10-2026 полная матрица после продвижения восстановления в `main`: https://github.com/unxed/f4/actions/runs/37130853519, SHA `83208e3e2b9d782289ca52e6e1f4b0e815027643`, результат не проверен.
