@@ -6,6 +6,6 @@
 
 03-10-2026 14:37:54 полный sandbox #1710 после добавления трейлера `Touch: #1710`: https://github.com/unxed/f4/actions/runs/37130244077, SHA `cacbcc235d5c03d56a201484190113a0d74df456`, success.
 
-03-10-2026 после `land` в `lunobot/staging` опубликован SHA `41d32d5a18ed6ba830b0f334a9a79b25b4ee57a6`; для него запущен обязательный quick ниже.
+03-10-2026 14:47:45 после `land` в `lunobot/staging` опубликован SHA `41d32d5a18ed6ba830b0f334a9a79b25b4ee57a6`; для него запущен обязательный quick ниже.
 
-03-10-2026 `quick` после `land` для `lunobot/staging`: https://github.com/unxed/f4/actions/runs/37130664907, SHA `41d32d5a18ed6ba830b0f334a9a79b25b4ee57a6`, результат не проверен.
+03-10-2026 14:47:45 `quick` после `land` для `lunobot/staging`: https://github.com/unxed/f4/actions/runs/37130664907, SHA `41d32d5a18ed6ba830b0f334a9a79b25b4ee57a6`, результат не проверен.
