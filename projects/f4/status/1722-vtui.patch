@@ -1,0 +1,38 @@
+diff --git a/symbols.go b/symbols.go
+index 0a63ae3..8ca7813 100644
+--- a/symbols.go
++++ b/symbols.go
+@@ -22,7 +22,7 @@ var boxSymbols = []rune{
+ var SubMenuMarker = "►"
+ 
+ func init() {
+-\tif IsFreeBSDConsole {
++\tif IsFreeBSDConsole || legacyConsoleBoxDrawing() {
+\t\tSubMenuMarker = ">"
+\t\tboxSymbols = []rune{
+\t\t\t// Single Box (0-10)
+diff --git a/legacy_console_box_stub.go b/legacy_console_box_stub.go
+new file mode 100644
+--- /dev/null
++++ b/legacy_console_box_stub.go
+@@
++//go:build !windows
++
++package vtui
++
++func legacyConsoleBoxDrawing() bool { return false }
+diff --git a/legacy_console_box_windows.go b/legacy_console_box_windows.go
+new file mode 100644
+--- /dev/null
++++ b/legacy_console_box_windows.go
+@@
++//go:build windows
++
++package vtui
++
++// legacyConsoleBoxDrawing reports whether classic Windows conhost is being
++// used without virtual-terminal support. Windows 7/8/8.1 can render the
++// Unicode box-drawing glyphs used by f4 as triangles in this mode.
++func legacyConsoleBoxDrawing() bool {
++\treturn !isWineOS() && hasConsoleBufferOS() && !hasVTConsoleSupportOS()
++}
