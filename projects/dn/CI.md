@@ -38,9 +38,9 @@
 
 05-10-2026 19:36:47 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `5a3cc6d`, прогон [#37364534688](https://github.com/unxed/dn/actions/runs/37364534688) (dn-accept, queued)
 
-05-10-2026 19:36:47 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `5a3cc6d`, прогон [#37364534661](https://github.com/unxed/dn/actions/runs/37364534661) (dn, queued)
+05-10-2026 19:36:47 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `5a3cc6d`, прогон [#37364534661](https://github.com/unxed/dn/actions/runs/37364534661) (dn, success)
 
-05-10-2026 19:36:47 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `5a3cc6d`, прогон [#37364534651](https://github.com/unxed/dn/actions/runs/37364534651) (class-migration, queued)
+05-10-2026 19:36:47 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `5a3cc6d`, прогон [#37364534651](https://github.com/unxed/dn/actions/runs/37364534651) (class-migration, success)
 
 05-10-2026 19:36:44 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `5a3cc6d`, прогон [#37364529774](https://github.com/unxed/dn/actions/runs/37364529774) (dn-linux, queued)
 
