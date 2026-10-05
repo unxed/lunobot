@@ -10,3 +10,5 @@
 05-10-2026 19:22:03 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над https://github.com/unxed/dn/issues/17 «DN_UTF8=0: non-ASCII FS names show as ? in UTF-8 Linux PTY»
 
 05-10-2026 19:36:51 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над https://github.com/unxed/dn/issues/17 «DN_UTF8=0: non-ASCII FS names show as ? in UTF-8 Linux PTY»
+
+05-10-2026 20:19:22 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над https://github.com/unxed/dn/issues/17 «DN_UTF8=0: non-ASCII FS names show as ? in UTF-8 Linux PTY»
