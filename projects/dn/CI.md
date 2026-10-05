@@ -14,4 +14,4 @@
 
 05-10-2026 16:24:22 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), тикет https://github.com/unxed/dn/issues/1 (часть 2 из 2), PR [#13](https://github.com/unxed/dn/pull/13), коммит `f6f52a5`, прогон [#368](https://github.com/unxed/dn/actions/runs/37340593320)
 
-05-10-2026 16:26:43 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «zip F4 hang» (rebase на #11), PR [#12](https://github.com/unxed/dn/pull/12), коммит , прогон [#37340914960](https://github.com/unxed/dn/actions/runs/37340914960)
+05-10-2026 16:26:43 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «zip F4 hang» (rebase на #11), PR [#12](https://github.com/unxed/dn/pull/12), коммит `12337e2`, прогон [#322](https://github.com/unxed/dn/actions/runs/37340914960)
