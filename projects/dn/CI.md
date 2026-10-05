@@ -21,4 +21,4 @@
 
 05-10-2026 16:37:09 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «красный main dn-linux locale» (LC_ALL), PR [#11](https://github.com/unxed/dn/pull/11), коммит `dcdd9d1`, прогон [#375](https://github.com/unxed/dn/actions/runs/37342240139)
 
-05-10-2026 16:37:09 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «zip F4 hang» (rebase), PR [#12](https://github.com/unxed/dn/pull/12), коммит `12337e2`, прогон [#376](https://github.com/unxed/dn/actions/runs/37342245498)
+05-10-2026 16:37:53 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «zip F4 hang» (восстановлен), PR [#12](https://github.com/unxed/dn/pull/12), коммит `d6a4596`, прогон [#377](https://github.com/unxed/dn/actions/runs/37342254288)
