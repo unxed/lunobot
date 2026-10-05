@@ -46,3 +46,16 @@ https://github.com/blue-panels/mcommander
 --
 
 --
+
+ok  	github.com/unxed/f4/cmd/f4	26.251s	coverage: 0.7% of statements in ./...
+-test.shuffle 1791196971558124200
+--- FAIL: TestLauncherStartsF4WithoutAConsole (4.96s)
+    main_windows_test.go:120: remove C:\Users\RUNNER~1\AppData\Local\Temp\TestLauncherStartsF4WithoutAConsole4170172796\001\f4.exe: Access is denied.
+FAIL
+coverage: 0.0% of statements in ./...
+FAIL	github.com/unxed/f4/cmd/f4-gui-launcher	6.000s
+
+У main'а CI лежит
+
+--
+
