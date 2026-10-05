@@ -4,7 +4,6 @@
 
 
 
-05-10-2026 16:09:59 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «dn-windows rcp packages», PR [#9](https://github.com/unxed/dn/pull/9), коммит `d731f25`, прогон [#280](https://github.com/unxed/dn/actions/runs/37338743790)
 
 05-10-2026 16:11:44 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), тикет https://github.com/unxed/dn/issues/1 (часть 1 из 2), PR [#10](https://github.com/unxed/dn/pull/10), коммит `395e850`, прогон [#366](https://github.com/unxed/dn/actions/runs/37338955102)
 
