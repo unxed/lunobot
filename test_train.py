@@ -138,6 +138,20 @@ class StagingHealthTest(unittest.TestCase):
         self.assertEqual(self.health([self.commit("w", "work\n\nTouch: #1\n")]), "red")
 
 
+class TrainStepCancellationTest(unittest.TestCase):
+    def test_cancelled_checks_are_restarted_while_other_checks_are_queued(self):
+        pr = {"number": 197, "head": {"sha": "head"}}
+        cancelled = [{"conclusion": "CANCELLED",
+                      "detailsUrl": "https://github.com/o/r/actions/runs/42"}]
+        pending = [{"status": "QUEUED"}]
+        with mock.patch.object(train, "train_pr", return_value=pr), \
+                mock.patch.object(train, "rollup", return_value=(pending + cancelled,
+                                                                    pending, [], cancelled)), \
+                mock.patch.object(train, "rerun") as rerun:
+            self.assertEqual(train.train_step("o/r", "sign"), 0)
+        rerun.assert_called_once_with(cancelled)
+
+
 class NightlyStaleTest(unittest.TestCase):
     """nightly_is_stale / should_cancel_main_run: the main run after a fast-forward is kept
     only while the floating nightly of a project that has one is old (or unknown)."""

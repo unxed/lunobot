@@ -972,14 +972,19 @@ def train_step(repo, sign):
     checks, pending, failed, cancelled = rollup(repo, n)
     if failed:
         return red(repo, pr, failed)
+    # A queued matrix can coexist with cancelled jobs. Restart cancellations first;
+    # otherwise the pending branch hides them until the matrix drains, which can
+    # leave staging parked for hours behind an already lost job.
+    if cancelled:
+        rerun(cancelled)
+        if pending:
+            print(f"поезд #{n}: {len(cancelled)} проверок отменены — перезапустил; "
+                  f"ещё {len(pending)} проверок идут")
+        else:
+            print(f"поезд #{n}: {len(cancelled)} проверок отменены (не упали) — перезапустил")
+        return 0
     if pending:
         print(f"поезд #{n} в пути: {len(pending)} из {len(checks)} проверок ещё идут")
-        return 0
-    if cancelled:
-        runs = {re.search(r"/runs/(\d+)", c.get("detailsUrl", "") or "") for c in cancelled}
-        for m in runs - {None}:
-            run("gh", "run", "rerun", m.group(1), "--failed", "--repo", repo, check=False)
-        print(f"поезд #{n}: {len(cancelled)} проверок отменены (не упали) — перезапустил")
         return 0
     ff = run("gh", "api", "-X", "PATCH", f"repos/{repo}/git/refs/heads/main",
              "-f", f"sha={head}", "-F", "force=false", check=False)
