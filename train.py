@@ -48,6 +48,7 @@ import sys
 import tempfile
 import time
 from datetime import datetime, timedelta, timezone
+from urllib.parse import parse_qsl, urlsplit
 
 STAGING = "lunobot/staging"
 # Явный refspec со знаком +: single-branch клон (gh repo clone --depth=N) не содержит staging в
@@ -97,7 +98,19 @@ def run(*cmd, check=True, cwd=None):
 
 
 def api(path, *args, check=True):
-    p = run("gh", "api", path, *args, check=check)
+    # gh api on Windows does not reliably interpret a slash-containing query value
+    # when it is embedded in the endpoint string (for example
+    # `?branch=lunobot/staging`).  Pass query parameters as explicit GET fields so
+    # staging health and train selection inspect the actual branch instead of an
+    # unrelated page of workflow runs.
+    parsed = urlsplit(path)
+    cmd = list(args)
+    if parsed.query:
+        if not any(arg in ("-X", "--method") for arg in cmd):
+            cmd[:0] = ["-X", "GET"]
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True):
+            cmd.extend(["-f", f"{key}={value}"])
+    p = run("gh", "api", parsed.path, *cmd, check=check)
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
