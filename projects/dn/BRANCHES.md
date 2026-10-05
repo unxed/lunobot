@@ -10,3 +10,4 @@
 
 05-10-2026 16:29:56 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), ветка `lunobot/pr/4-1of2` для https://github.com/unxed/dn/issues/4
 05-10-2026 16:43:59 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), ветка `lunobot/urgent/provenance-fix` для кастомной задачи PROVENANCE
+05-10-2026 17:52:20 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), ветка `lunobot/a721/dn-17-utf8-boot` для https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18)
