@@ -47,7 +47,7 @@ def projects():
 def captures(node, number=None):
     own = re.compile(rf"Лунобот-{re.escape(number)} \((?:node|instance) {re.escape(node)}\b") \
         if number else None
-    out = []
+    latest = {}
     for p in projects():
         path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
         if not os.path.exists(path):
@@ -58,8 +58,17 @@ def captures(node, number=None):
                 m = TS.match(line)
                 ts = (datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S")
                       .replace(tzinfo=timezone.utc) if m else None)
-                out.append((p, ts, line.strip()))
-    return out
+                url = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", line)
+                custom = re.search(r"кастомн\w+ задач\w+\s*«([^»]+)»", line)
+                key = url.group(0) if url else (custom.group(1) if custom else line.strip())
+                part = re.search(r"\(часть \d+ из \d+\)", line)
+                if part:
+                    key += " " + part.group(0)
+                capture_key = (p, key)
+                previous = latest.get(capture_key)
+                if previous is None or (ts and (previous[1] is None or ts >= previous[1])):
+                    latest[capture_key] = (p, ts, line.strip())
+    return list(latest.values())
 
 
 def free_work():
