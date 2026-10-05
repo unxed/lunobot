@@ -7,3 +7,5 @@
 05-10-2026 22:28:07 Лунобот-2 (node a721a6d1487257292ae00780; MSW), ветка `lunobot/a721/f4-1761-android-rpc-train` в staging для https://github.com/unxed/f4/issues/1761
 
 05-10-2026 22:59:55 Лунобот-2 (node a721a6d1487257292ae00780; MSW), ветка `lunobot/train/f4/261005-2259` для https://github.com/unxed/f4/issues/1761, PR [#1763](https://github.com/unxed/f4/pull/1763)
+
+05-10-2026 23:37:05 Лунобот-2 (node a721a6d1487257292ae00780; MSW), ветка `lunobot/train/f4/261005-2336` для https://github.com/unxed/f4/issues/1761, PR [#1764](https://github.com/unxed/f4/pull/1764)
