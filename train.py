@@ -297,11 +297,15 @@ def rollup(repo, number):
     out = run("gh", "pr", "view", str(number), "--repo", repo,
               "--json", "statusCheckRollup").stdout
     checks = json.loads(out)["statusCheckRollup"]
-    pending = [c for c in checks if c.get("status", "COMPLETED") != "COMPLETED"
+    # codecov/* — informational (f4/vtui PROJECT.md): ждут вечно и блокируют tick
+    # (05-10-2026 поезд unxed/f4#1756: staging 12 ч, main стоял на codecov/project).
+    material = [c for c in checks
+                if not (c.get("name") or "").lower().startswith("codecov/")]
+    pending = [c for c in material if c.get("status", "COMPLETED") != "COMPLETED"
                or c.get("state") == "PENDING"]
-    failed = [c for c in checks if (c.get("conclusion") or c.get("state"))
+    failed = [c for c in material if (c.get("conclusion") or c.get("state"))
               in ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")]
-    cancelled = [c for c in checks if c.get("conclusion") == "CANCELLED"]
+    cancelled = [c for c in material if c.get("conclusion") == "CANCELLED"]
     return checks, pending, failed, cancelled
 
 
