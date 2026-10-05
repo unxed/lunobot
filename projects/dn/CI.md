@@ -8,8 +8,6 @@
 
 05-10-2026 17:01:11 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), тикет https://github.com/unxed/dn/issues/1 (часть 1 из 2), PR [#10](https://github.com/unxed/dn/pull/10), коммит `2195a16`, прогон [#?](https://github.com/unxed/dn/pull/10)
 
-05-10-2026 17:01:11 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), тикет https://github.com/unxed/dn/issues/1 (часть 2 из 2), PR [#13](https://github.com/unxed/dn/pull/13), коммит `cc6dbbc`, прогон [#?](https://github.com/unxed/dn/pull/13)
-
 05-10-2026 17:01:11 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), тикет https://github.com/unxed/dn/issues/4 (часть 1 из 2), PR [#15](https://github.com/unxed/dn/pull/15), коммит `12aba8d`, прогон [#?](https://github.com/unxed/dn/pull/15)
 
 05-10-2026 17:01:11 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), кастомная задача «PROVENANCE.md после fmtxz», PR [#16](https://github.com/unxed/dn/pull/16), коммит `7e1fd9c`, прогон [#?](https://github.com/unxed/dn/pull/16)
@@ -33,3 +31,4 @@
 05-10-2026 17:52:36 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `f5718f9`, прогон [#37351705613](https://github.com/unxed/dn/actions/runs/37351705613) (dn, queued)
 
 05-10-2026 17:52:36 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), тикет https://github.com/unxed/dn/issues/17, PR [#18](https://github.com/unxed/dn/pull/18), коммит `f5718f9`, прогон [#37351705594](https://github.com/unxed/dn/actions/runs/37351705594) (dn-accept, queued)
+
