@@ -19,3 +19,7 @@
 05-10-2026 22:28:07 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), staging после land f4#1761, коммит `57e602c`, прогон [#37382658505](https://github.com/unxed/f4/actions/runs/37382658505) (success)
 
 05-10-2026 22:59:55 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), train PR #1763, коммит `57e602c`, прогон [#37385874975](https://github.com/unxed/f4/actions/runs/37385874975) (in progress; rerun после сбоя Test (windows/amd64 rest))
+
+05-10-2026 23:23:42 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), bisect f4#1763, база main `35a8071`, sandbox [#37388230220](https://github.com/unxed/f4/actions/runs/37388230220) (in progress)
+
+05-10-2026 23:23:45 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), bisect f4#1763, коммит `57e602c`, sandbox [#37388235474](https://github.com/unxed/f4/actions/runs/37388235474) (in progress)
