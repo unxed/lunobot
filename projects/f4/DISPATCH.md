@@ -23,3 +23,9 @@
 05-10-2026 21:17:40 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над https://github.com/unxed/f4/issues/1725 «Editor mouse scroll: preserve selection while scrolling»
 
 05-10-2026 21:50:27 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), взял https://github.com/unxed/f4/issues/1758 «App runs very slowly on rather fast notebook, 2..3 GHz Atom cpu» [pr]
+
+05-10-2026 22:05:27 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над кастомной задачей «покрыть тестами internal/macro» по § 5 п. 6
+
+05-10-2026 22:05:27 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над https://github.com/unxed/f4/issues/1725 «Editor mouse scroll: preserve selection while scrolling»
+
+05-10-2026 22:05:27 Я Лунобот-2 (node a721a6d1487257292ae00780; MSW), работаю над https://github.com/unxed/f4/issues/1758 «App runs very slowly on rather fast notebook, 2..3 GHz Atom cpu»
