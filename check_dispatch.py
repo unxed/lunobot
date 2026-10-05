@@ -220,14 +220,14 @@ def wrong_place(path):
     поэтому инстанса не было видно пять часов. Ни одна проверка формата такого не
     ловит: содержимое файла было безупречным, неверным было его место.
     """
-    real = os.path.abspath(path)
+    real = os.path.normpath(os.path.abspath(path))
     if os.sep + "projects" + os.sep not in real:
         return (f"файл учёта должен лежать в projects/<проект>/, а лежит здесь: {real}. "
                 "Похоже, это клон проекта, а не учётного репозитория")
     try:
-        root = subprocess.run(
+        root = os.path.normpath(subprocess.run(
             ["git", "-C", os.path.dirname(real) or ".", "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, timeout=10).stdout.strip()
+            capture_output=True, text=True, timeout=10).stdout.strip())
     except Exception:
         return None  # не в git — не наше дело, формат проверим как обычно
     if root:
