@@ -45,17 +45,11 @@ https://github.com/blue-panels/mcommander
 
 --
 
---
-
-ok  	github.com/unxed/f4/cmd/f4	26.251s	coverage: 0.7% of statements in ./...
--test.shuffle 1791196971558124200
---- FAIL: TestLauncherStartsF4WithoutAConsole (4.96s)
-    main_windows_test.go:120: remove C:\Users\RUNNER~1\AppData\Local\Temp\TestLauncherStartsF4WithoutAConsole4170172796\001\f4.exe: Access is denied.
-FAIL
-coverage: 0.0% of statements in ./...
-FAIL	github.com/unxed/f4/cmd/f4-gui-launcher	6.000s
-
-У main'а CI лежит
+## f4-main-ci-20261005
+Заметка владельца: у main CI лежит; лог cmd/f4 завершился зелёным, но TestLauncherStartsF4WithoutAConsole получил Access is denied при удалении временного f4.exe.
+Проект: f4
+Поручение: проверить актуальный main CI после этого сбоя и устранить проблему, если она воспроизводится.
+Критерий: актуальный main-коммит имеет успешную полную проверку; при красном CI разобрать и исправить сбой.
+Состояние: взял в работу — Лунобот-2, 05-10-2026 15:55:58 UTC
 
 --
-
