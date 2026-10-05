@@ -92,7 +92,7 @@ def free_work():
             m = re.match(r"\|\s*(\d+)\s*\|\s*([^|]+)\|\s*свободен\s*\|", line)
             if m and f"/issues/{m.group(1)}" not in taken:
                 found.append(f"{p}#{m.group(1)}(п{m.group(2).strip()})")
-        rc, out = sh("python3", "check_triage.py", p)
+        rc, out = sh(sys.executable, "check_triage.py", p)
         drift = len(re.findall(r"^\[расхождение\]", out, re.M))
         if rc and drift:
             found.append(f"{p}: расхождений TRIAGE {drift}")
@@ -100,7 +100,7 @@ def free_work():
 
 
 def staged_repos():
-    rc, out = sh("python3", "-c", "import train; print('\\n'.join(train.staged_repos()))")
+    rc, out = sh(sys.executable, "-c", "import train; print('\\n'.join(train.staged_repos()))")
     return [r for r in out.split() if "/" in r] if rc == 0 else []
 
 
@@ -121,7 +121,7 @@ def check(node, minimum, last, number=None):
     if not last.get("_health") or now - last["_health"] > timedelta(minutes=5):
         last["_health"] = now
         for repo in staged_repos():
-            rc, out = sh("python3", "train.py", "health", repo)
+            rc, out = sh(sys.executable, "train.py", "health", repo)
             if rc == 1:
                 # health пишет «staging: red» латиницей — без этого красный staging не виден
                 lines = [l for l in out.splitlines()
