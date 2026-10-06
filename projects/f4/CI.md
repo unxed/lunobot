@@ -18,4 +18,4 @@
 
 05-10-2026 23:55:49 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), train PR #1765, коммит `be4b025`, прогон [#37391238110](https://github.com/unxed/f4/actions/runs/37391238110) (success; PR влит fast-forward)
 
-06-10-2026 00:04:12 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), main после train PR #1765, коммит `be4b025`, прогон [#37391987460](https://github.com/unxed/f4/actions/runs/37391987460) (rerun; полная main-матрица выполняется; полный PR CI на том же SHA — success)
+06-10-2026 00:04:12 Лунобот-2 (node a721a6d1487257292ae00780; MSW; модель не раскрыта), main после train PR #1765, коммит `be4b025`, прогон [#37391987460](https://github.com/unxed/f4/actions/runs/37391987460) (success; полная main-матрица; полный PR CI на том же SHA — success)
