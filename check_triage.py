@@ -27,6 +27,27 @@ ROW = re.compile(
 )
 
 
+def gh_pages_by_number(path):
+    """Все страницы через gh api с явным page=N, не доверяя заголовку Link."""
+    items = []
+    page = 1
+    while True:
+        separator = "&" if "?" in path else "?"
+        result = subprocess.run(
+            ["gh", "api", f"{path}{separator}page={page}"],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "gh api завершился с ошибкой")
+        batch = json.loads(result.stdout)
+        if not isinstance(batch, list):
+            return batch
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
+        page += 1
+
+
 def gh_pages(path):
     """Получить все страницы endpoint через gh или обычный HTTP."""
     if shutil.which("gh"):
@@ -41,6 +62,11 @@ def gh_pages(path):
             if isinstance(pages[0], list):
                 return [item for page in pages for item in page]
             return pages
+        # Прокси некоторых сред (Claude Code в облаке) запрещает числовые пути
+        # repositories/{id}, на которые gh --paginate переходит по заголовку
+        # Link. Тогда страницы берём по одной, без заголовка.
+        if "repositories/" in result.stderr or "proxy" in result.stderr:
+            return gh_pages_by_number(path)
         raise RuntimeError(result.stderr.strip() or "gh api завершился с ошибкой")
 
     items = []
@@ -120,7 +146,13 @@ def main():
 
     issues = gh_pages(f"/repos/{repo}/issues?state=open&per_page=100")
     open_issues = {item["number"]: item for item in issues if "pull_request" not in item}
-    count = gh_one(f"/search/issues?q={urllib.parse.quote(f'repo:{repo} is:issue is:open')}&per_page=1")["total_count"]
+    try:
+        count = gh_one(f"/search/issues?q={urllib.parse.quote(f'repo:{repo} is:issue is:open')}&per_page=1")["total_count"]
+    except RuntimeError:
+        # Прокси без search API: у репозитория open_issues_count включает PR,
+        # а PR в списке выше мы видим сами.
+        open_prs = sum(1 for item in issues if "pull_request" in item)
+        count = gh_one(f"/repos/{repo}")["open_issues_count"] - open_prs
 
     problems = []
     if count != len(open_issues):
