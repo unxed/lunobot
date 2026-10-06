@@ -138,8 +138,12 @@ def origin_repo():
 
 def quick_runs(repo):
     """Завершённые (не отменённые) прогоны quick на staging, новые первыми."""
-    rs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?branch={STAGING}&per_page=60")
-    rs = [r for r in rs["workflow_runs"] if r["status"] == "completed"
+    # Передача branch=lunobot/staging через `gh api -f` на Windows иногда возвращает
+    # старую страницу runs. Берём свежую страницу без slash-фильтра и фильтруем branch
+    # локально, чтобы не принять зелёный quick чужой ветки за проверку staging.
+    rs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?per_page=100")
+    rs = [r for r in rs["workflow_runs"] if r.get("head_branch") == STAGING
+          and r["status"] == "completed"
           and r["conclusion"] not in ("cancelled", "skipped")]
     return sorted(rs, key=lambda r: r["created_at"], reverse=True)
 
