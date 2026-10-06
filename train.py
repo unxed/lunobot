@@ -297,10 +297,34 @@ def train_pr(repo):
     return trains[0] if trains else None
 
 
+def rollup_rest(repo, number):
+    """statusCheckRollup через REST: в облачных сессиях Claude Code GraphQL закрыт прокси
+    (`gh pr view --json` отвечает 403), а tick без него не может разобрать поезд.
+    Приводит check-runs и commit statuses к виду, который отдаёт GraphQL."""
+    sha = api(f"repos/{repo}/pulls/{number}")["head"]["sha"]
+    checks = []
+    for page in range(1, 11):
+        runs = api(f"repos/{repo}/commits/{sha}/check-runs?per_page=100&page={page}")
+        for r in runs.get("check_runs", []):
+            checks.append({
+                "name": r["name"],
+                "status": (r.get("status") or "completed").upper(),
+                "conclusion": (r.get("conclusion") or "").upper() or None,
+            })
+        if len(runs.get("check_runs", [])) < 100:
+            break
+    for st in api(f"repos/{repo}/commits/{sha}/status").get("statuses", []):
+        checks.append({"name": st.get("context", ""), "state": st["state"].upper()})
+    return checks
+
+
 def rollup(repo, number):
-    out = run("gh", "pr", "view", str(number), "--repo", repo,
-              "--json", "statusCheckRollup").stdout
-    checks = json.loads(out)["statusCheckRollup"]
+    p = run("gh", "pr", "view", str(number), "--repo", repo,
+            "--json", "statusCheckRollup", check=False)
+    if p.returncode == 0:
+        checks = json.loads(p.stdout)["statusCheckRollup"]
+    else:
+        checks = rollup_rest(repo, number)
     # codecov/* — informational (f4/vtui PROJECT.md): ждут вечно и блокируют tick
     # (05-10-2026 поезд unxed/f4#1756: staging 12 ч, main стоял на codecov/project).
     material = [c for c in checks
