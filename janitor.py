@@ -22,6 +22,8 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from gh_post import check_text
+
 ROOT = Path(__file__).resolve().parent
 SILENT_MIN = 90
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
@@ -222,8 +224,50 @@ def main():
                 (kept if m.group(1) in live else gone).append(b)
             total += save(f, kept, gone, "ветки больше нет")
 
+        # 4. комментарии, дошедшие до GitHub кашей из «?» (кодировка сломалась по дороге)
+        mojibake(d, repo)
+
     print("нечего убирать" if not total else f"итого убрано записей: {total}")
     return 0
+
+
+MOJIBAKE_DAYS = 7
+
+
+def mojibake(project_dir, repo):
+    """Свежие комментарии, которые гейт gh_post.py отклонил бы, — в MOJIBAKE.md проекта.
+
+    Файл переписывается целиком на каждом проходе: восстановил комментарий правкой
+    (`gh_post.py edit`) — на следующем проходе строка пропала, пропали все — пропал файл.
+    """
+    since = (datetime.now(timezone.utc) - timedelta(days=MOJIBAKE_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    comments = gh_all(f"/repos/{repo}/issues/comments?since={since}&per_page=100")
+    if comments is None:
+        print(f"{repo}: нет доступа к комментариям, проверка кодировки пропущена", file=sys.stderr)
+        return
+    rows = []
+    for c in comments:
+        if c.get("user", {}).get("type") == "Bot":
+            continue
+        reason = check_text(c.get("body") or "")
+        if reason and reason != "текст пуст":
+            rows.append(f"- {c['html_url']} (id {c['id']}, {c['user']['login']}, "
+                        f"{c['created_at']}): {reason}")
+    f = project_dir / "MOJIBAKE.md"
+    if not rows:
+        if f.exists():
+            f.unlink()
+            print(f"{f.name}: испорченных комментариев больше нет, файл убран")
+        return
+    text = (f"# Испорченные комментарии в {repo}\n\n"
+            "Пишет janitor (`janitor.py`, шаг 4). Эти комментарии дошли до GitHub с «?» на месте "
+            "букв. Восстанови текст правкой того же комментария через `gh_post.py edit "
+            f"{repo} <id> <файл>` (по ASCII-остову, соседним сообщениям и учёту) — "
+            "строка пропадёт на следующем проходе janitor. LUNOBOT.md § 2.\n\n"
+            + "\n".join(rows) + "\n")
+    if not f.exists() or f.read_text(encoding="utf-8") != text:
+        f.write_text(text, encoding="utf-8")
+        print(f"{f.name}: испорченных комментариев {len(rows)}")
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ jobs:
           fi
           git config user.name  'lunobot-janitor'
           git config user.email 'lunobot-janitor@users.noreply.github.com'
+          git add -A projects
           git commit -am 'lunobot-janitor: подмёл учёт'
           git pull --rebase -q
           git push
