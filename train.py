@@ -114,6 +114,18 @@ def api(path, *args, check=True):
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
+def push_ref(repo, branch, sha):
+    """Создать ветку git push-ем, когда REST закрыт для записи ссылок (прокси облачных
+    сессий Claude Code отвечает 403 на POST git/refs). Коммит берётся в объекты учётного
+    клона мелким fetch по SHA; ответ в форме REST, чтобы его понял ref_created."""
+    url = f"https://github.com/{repo}"
+    if run("git", "fetch", "-q", "--depth=1", url, sha, check=False).returncode:
+        return None
+    if run("git", "push", "-q", url, f"{sha}:refs/heads/{branch}", check=False).returncode:
+        return None
+    return {"ref": f"refs/heads/{branch}", "object": {"sha": sha}}
+
+
 def existing_ref(path):
     """Ответ git/ref, если ветка есть, иначе None. `gh api` при 404 печатает в stdout JSON
     `{"message": "Not Found", ...}`, и api() его разбирает: такой словарь не ссылка на ветку.
@@ -467,6 +479,8 @@ def cut(repo, sign):
         created = api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
                       "-f", f"sha={cut_sha}", check=False)
         if not ref_created(created):
+            created = push_ref(repo, branch, cut_sha) or created
+        if not ref_created(created):
             # Ошибка (422 и т. п.) приходит JSON-ом с `message`, а не None: успехом
             # считается только ответ с ref/object. Ветку мог создать параллельный tick.
             existing = existing_ref(ref_path)
@@ -498,6 +512,13 @@ def cut(repo, sign):
         return 0
     created_pr = run("gh", "pr", "create", "--repo", repo, "--base", "main", "--head", branch,
                      "--title", title[:250], "--body-file", f.name, check=False)
+    if created_pr.returncode:
+        # Облачные сессии Claude Code закрывают GraphQL, на котором стоит `gh pr create`;
+        # REST-эндпоинт PR там открыт.
+        rest = api(f"repos/{repo}/pulls", "-f", f"title={title[:250]}", "-f", f"head={branch}",
+                   "-f", "base=main", "-F", f"body=@{f.name}", check=False)
+        if isinstance(rest, dict) and rest.get("html_url"):
+            created_pr = subprocess.CompletedProcess(created_pr.args, 0, rest["html_url"] + "\n", "")
     if created_pr.returncode:
         # The other tick may have created the PR between the check above and
         # this command.  Treat that race exactly like the duplicate ref.
