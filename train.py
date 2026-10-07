@@ -114,6 +114,18 @@ def api(path, *args, check=True):
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
+def push_ref(repo, branch, sha):
+    """Создать ветку git push-ем, когда REST закрыт для записи ссылок (прокси облачных
+    сессий Claude Code отвечает 403 на POST git/refs). Коммит берётся в объекты учётного
+    клона мелким fetch по SHA; ответ в форме REST, чтобы его понял ref_created."""
+    url = f"https://github.com/{repo}"
+    if run("git", "fetch", "-q", "--depth=1", url, sha, check=False).returncode:
+        return None
+    if run("git", "push", "-q", url, f"{sha}:refs/heads/{branch}", check=False).returncode:
+        return None
+    return {"ref": f"refs/heads/{branch}", "object": {"sha": sha}}
+
+
 def existing_ref(path):
     """Ответ git/ref, если ветка есть, иначе None. `gh api` при 404 печатает в stdout JSON
     `{"message": "Not Found", ...}`, и api() его разбирает: такой словарь не ссылка на ветку.
@@ -297,6 +309,27 @@ def train_pr(repo):
     return trains[0] if trains else None
 
 
+def rollup_rest(repo, number):
+    """statusCheckRollup через REST: в облачных сессиях Claude Code GraphQL закрыт прокси
+    (`gh pr view --json` отвечает 403), а tick без него не может разобрать поезд.
+    Приводит check-runs и commit statuses к виду, который отдаёт GraphQL."""
+    sha = api(f"repos/{repo}/pulls/{number}")["head"]["sha"]
+    checks = []
+    for page in range(1, 11):
+        runs = api(f"repos/{repo}/commits/{sha}/check-runs?per_page=100&page={page}")
+        for r in runs.get("check_runs", []):
+            checks.append({
+                "name": r["name"],
+                "status": (r.get("status") or "completed").upper(),
+                "conclusion": (r.get("conclusion") or "").upper() or None,
+            })
+        if len(runs.get("check_runs", [])) < 100:
+            break
+    for st in api(f"repos/{repo}/commits/{sha}/status").get("statuses", []):
+        checks.append({"name": st.get("context", ""), "state": st["state"].upper()})
+    return checks
+
+
 def green_train_covering(repo, staging_sha):
     """Return an open train whose green checks already cover the staging tip.
 
@@ -316,9 +349,12 @@ def green_train_covering(repo, staging_sha):
 
 
 def rollup(repo, number):
-    out = run("gh", "pr", "view", str(number), "--repo", repo,
-              "--json", "statusCheckRollup").stdout
-    checks = json.loads(out)["statusCheckRollup"]
+    p = run("gh", "pr", "view", str(number), "--repo", repo,
+            "--json", "statusCheckRollup", check=False)
+    if p.returncode == 0:
+        checks = json.loads(p.stdout)["statusCheckRollup"]
+    else:
+        checks = rollup_rest(repo, number)
     # codecov/* — informational (f4/vtui PROJECT.md): ждут вечно и блокируют tick
     # (05-10-2026 поезд unxed/f4#1756: staging 12 ч, main стоял на codecov/project).
     material = [c for c in checks
@@ -443,6 +479,8 @@ def cut(repo, sign):
         created = api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}",
                       "-f", f"sha={cut_sha}", check=False)
         if not ref_created(created):
+            created = push_ref(repo, branch, cut_sha) or created
+        if not ref_created(created):
             # Ошибка (422 и т. п.) приходит JSON-ом с `message`, а не None: успехом
             # считается только ответ с ref/object. Ветку мог создать параллельный tick.
             existing = existing_ref(ref_path)
@@ -474,6 +512,13 @@ def cut(repo, sign):
         return 0
     created_pr = run("gh", "pr", "create", "--repo", repo, "--base", "main", "--head", branch,
                      "--title", title[:250], "--body-file", f.name, check=False)
+    if created_pr.returncode:
+        # Облачные сессии Claude Code закрывают GraphQL, на котором стоит `gh pr create`;
+        # REST-эндпоинт PR там открыт.
+        rest = api(f"repos/{repo}/pulls", "-f", f"title={title[:250]}", "-f", f"head={branch}",
+                   "-f", "base=main", "-F", f"body=@{f.name}", check=False)
+        if isinstance(rest, dict) and rest.get("html_url"):
+            created_pr = subprocess.CompletedProcess(created_pr.args, 0, rest["html_url"] + "\n", "")
     if created_pr.returncode:
         # The other tick may have created the PR between the check above and
         # this command.  Treat that race exactly like the duplicate ref.
