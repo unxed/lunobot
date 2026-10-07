@@ -30,6 +30,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime, timedelta, timezone
 
 CODE_BLOCK = re.compile(r"```.*?(```|$)", re.S)
@@ -143,9 +144,30 @@ def verify_pr(repo, number, text, path):
     return 1
 
 
+def find_comment(repo, number, text):
+    """Свежий комментарий тикета с таким же текстом (после обрыва ответа GitHub)."""
+    comments = api(f"repos/{repo}/issues/{number}/comments?per_page=100&sort=created&direction=desc",
+                   check=False) or []
+    for c in comments[-10:][::-1]:
+        if same_text(c.get("body") or "", text):
+            return c
+    return None
+
+
 def post_comment(repo, number, path):
     text = gate(path)
-    comment = api(f"repos/{repo}/issues/{number}/comments", "-F", f"body=@{path}")
+    comment = None
+    for attempt in range(3):
+        # Прокси и GitHub иногда обрывают ответ («unexpected end of JSON input», 502):
+        # комментарий при этом может уже быть создан, поэтому перед повтором ищем его.
+        out = gh("api", f"repos/{repo}/issues/{number}/comments", "-F", f"body=@{path}", check=False)
+        if out.returncode == 0 and out.stdout.strip():
+            comment = json.loads(out.stdout)
+            break
+        comment = find_comment(repo, number, text)
+        if comment:
+            break
+        time.sleep(3 * (attempt + 1))
     if not comment:
         raise SystemExit("комментарий не создан")
     return verify_comment(repo, comment, text, path)
