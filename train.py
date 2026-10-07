@@ -659,8 +659,12 @@ def bisect(repo, pr, os_label, cmd, good=-1, bad=None):
 
 
 def bisect_refs(repo, n):
-    refs = api(f"repos/{repo}/git/matching-refs/heads/bisect/{n}/") or []
-    return sorted(r["ref"].removeprefix("refs/heads/") for r in refs)
+    # Прокси облачной сессии отвечает 400 («path could not be canonicalized») на путь с
+    # завершающим «/», поэтому спрашиваем префикс без него и отбираем «bisect/<N>/…» сами
+    # (иначе под префикс bisect/17 попали бы и bisect/170/…).
+    refs = api(f"repos/{repo}/git/matching-refs/heads/bisect/{n}") or []
+    prefix = f"refs/heads/bisect/{n}/"
+    return sorted(r["ref"].removeprefix("refs/heads/") for r in refs if r["ref"].startswith(prefix))
 
 
 def drop_bisect(repo, refs):
