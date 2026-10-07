@@ -1,6 +1,6 @@
 # DISPATCH — f4
 
-2026-10-07 23:40:55 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1782 (кнопка по умолчанию в GUI-диалогах f4-gui.exe) [land]
+2026-10-07 23:40:55 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1782 (кнопка по умолчанию в GUI-диалогах f4-gui.exe) [land: 3fbd58a]
 
 2026-10-07 23:23:56 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1749 (скачки строк в Windows-терминале при интенсивном ANSI-выводе) [land]
 
