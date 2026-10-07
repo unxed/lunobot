@@ -115,9 +115,10 @@ def api(path, *args, check=True):
 
 
 def push_ref(repo, branch, sha):
-    """Создать ветку git push-ем, когда REST закрыт для записи ссылок (прокси облачных
-    сессий Claude Code отвечает 403 на POST git/refs). Коммит берётся в объекты учётного
-    клона мелким fetch по SHA; ответ в форме REST, чтобы его понял ref_created."""
+    """Создать или продвинуть ветку git push-ем (не force: только вперёд), когда REST
+    закрыт для записи ссылок (прокси облачных сессий Claude Code отвечает 403 на
+    git/refs). Коммит берётся в объекты учётного клона мелким fetch по SHA; ответ
+    в форме REST, чтобы его понял ref_created."""
     url = f"https://github.com/{repo}"
     if run("git", "fetch", "-q", "--depth=1", url, sha, check=False).returncode:
         return None
@@ -673,7 +674,10 @@ def close_train(repo, pr, comment):
     n = pr["number"]
     branches = [pr["head"]["ref"]] + bisect_refs(repo, n)
     if comment:  # None — PR уже закрыт, только уборка
-        run("gh", "pr", "close", str(n), "--repo", repo, "--comment", comment, check=False)
+        closed = run("gh", "pr", "close", str(n), "--repo", repo, "--comment", comment, check=False)
+        if closed.returncode:
+            api(f"repos/{repo}/issues/{n}/comments", "-f", f"body={comment}", check=False)
+            api(f"repos/{repo}/pulls/{n}", "-X", "PATCH", "-f", "state=closed", check=False)
     for br in branches:
         for st in ("in_progress", "queued"):
             runs = api(f"repos/{repo}/actions/runs?branch={br}&status={st}&per_page=100",
@@ -1059,6 +1063,10 @@ def train_step(repo, sign):
         return 0
     ff = run("gh", "api", "-X", "PATCH", f"repos/{repo}/git/refs/heads/main",
              "-f", f"sha={head}", "-F", "force=false", check=False)
+    if ff.returncode and push_ref(repo, "main", head):
+        # Прокси облачной сессии закрывает запись git/refs; обычный (не force) git push
+        # точно так же продвигает main только вперёд.
+        ff = subprocess.CompletedProcess(ff.args, 0, "", "")
     if ff.returncode == 0:
         how = "fast-forward"
         if should_cancel_main_run(repo):
@@ -1067,7 +1075,14 @@ def train_step(repo, sign):
                 run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
         api(f"repos/{repo}/git/refs/heads/{pr['head']['ref']}", "-X", "DELETE", check=False)
     else:
-        run("gh", "pr", "merge", str(n), "--repo", repo, "--merge", "--delete-branch")
+        merged = run("gh", "pr", "merge", str(n), "--repo", repo, "--merge", "--delete-branch", check=False)
+        if merged.returncode:
+            # `gh pr merge` стоит на GraphQL; REST-эндпоинт мержа открыт и там, где он закрыт.
+            rest = api(f"repos/{repo}/pulls/{n}/merge", "-X", "PUT", "-f", "merge_method=merge",
+                       check=False)
+            if not (isinstance(rest, dict) and rest.get("merged")):
+                sys.exit(f"gh pr merge {n}: {merged.stderr.strip() or merged.stdout.strip()}")
+            api(f"repos/{repo}/git/refs/heads/{pr['head']['ref']}", "-X", "DELETE", check=False)
         how = "merge-коммит (main ушёл вперёд — прогон main не отменять, § 7.3)"
     if repo in TAG_AFTER_MERGE:
         tag_next(repo)
