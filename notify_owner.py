@@ -33,10 +33,18 @@ def main():
         print(f"отклонено: {reason}. {GATE_MESSAGE}", file=sys.stderr)
         return 2
     ticket = opts.get("ticket") or "/".join(url.split("/")[3:5]) + "#" + url.split("/")[6].split("#")[0]
-    cmd = ["gh", "workflow", "run", "owner-question.yml", "-R", opts.get("repo", "unxed/lunobot"),
+    repo = opts.get("repo", "unxed/lunobot")
+    cmd = ["gh", "workflow", "run", "owner-question.yml", "-R", repo,
            "-f", f"url={url}", "-f", f"ticket={ticket}", "-f", f"text={opts.get('text', '')}"]
     result = subprocess.run(cmd, capture_output=True, text=True)
-    print((result.stdout or result.stderr).strip())
+    if result.returncode != 0 and "GraphQL" in (result.stderr or ""):
+        # Облачные сессии закрывают GraphQL, а `gh workflow run` его просит (ищет ветку по умолчанию):
+        # тот же запуск через REST, ветку называем сами.
+        cmd = ["gh", "api", "-X", "POST", f"repos/{repo}/actions/workflows/owner-question.yml/dispatches",
+               "-f", "ref=main", "-f", f"inputs[url]={url}", "-f", f"inputs[ticket]={ticket}",
+               "-f", f"inputs[text]={opts.get('text', '')}"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+    print((result.stdout or result.stderr or "отправлено").strip())
     return result.returncode
 
 
