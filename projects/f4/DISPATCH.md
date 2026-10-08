@@ -1,5 +1,7 @@
 # DISPATCH — f4
 
+2026-10-08 00:58:30 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), повторно взял задачу https://github.com/unxed/f4/issues/1783 после отката красного staging-коммита [land: 3a3c27d]
+
 2026-10-08 00:10:28 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1792 (Ctrl+Shift+D в редакторе зависает) [land: abdd14f]
 
 2026-10-07 23:56:11 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1783 (горячие клавиши с кириллицей в GUI Wayland) [land: 95219db]
