@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import train
@@ -241,6 +242,37 @@ class MainPushRunsTest(unittest.TestCase):
         with mock.patch.object(train, "api", return_value={"workflow_runs": []}) as api:
             train.main_push_runs_in_progress("o/r", "abc")
         self.assertEqual(api.call_args.kwargs.get("check"), False)
+
+class EnsureQuickOnTipTest(unittest.TestCase):
+    def tip(self, minutes):
+        when = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return {"commit": {"sha": "a" * 40, "commit": {"committer": {"date": when}}}}
+
+    def run_tick(self, tip, total):
+        calls = []
+
+        def fake_api(path, *args, check=True):
+            calls.append((path, args))
+            if path.endswith(f"branches/{train.STAGING}"):
+                return tip
+            if "quick.yml/runs" in path:
+                return {"total_count": total}
+            return {}
+
+        with mock.patch.object(train, "api", fake_api):
+            train.ensure_quick_on_tip("o/r")
+        return [c for c in calls if "dispatches" in c[0]]
+
+    def test_old_tip_without_runs_gets_quick_dispatched(self):
+        dispatched = self.run_tick(self.tip(30), 0)
+        self.assertEqual(len(dispatched), 1)
+        self.assertIn(f"ref={train.STAGING}", dispatched[0][1])
+
+    def test_fresh_tip_is_left_to_the_push_trigger(self):
+        self.assertEqual(self.run_tick(self.tip(2), 0), [])
+
+    def test_tip_with_a_run_is_left_alone(self):
+        self.assertEqual(self.run_tick(self.tip(60), 1), [])
 
 
 if __name__ == "__main__":

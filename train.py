@@ -943,7 +943,32 @@ def health(repo):
     return rc
 
 
+QUICK_TIP_WAIT_MIN = 10
+
+
+def ensure_quick_on_tip(repo):
+    """Вершина staging без единого прогона quick (push только с .md/docs/** — например, слияние main в
+    staging, где весь код уже был, — не запускает workflow): поезд от такого коммита не режется и
+    вечно «ждёт quick» (08-10-2026: слияние main в staging висело 2 часа). Через QUICK_TIP_WAIT_MIN минут
+    после коммита quick запускается руками: workflow_dispatch на ветке staging (REST, не `gh workflow run` —
+    тот просит GraphQL, закрытый в облачных сессиях)."""
+    tip = api(f"repos/{repo}/branches/{STAGING}", check=False)
+    if not tip:
+        return
+    sha = tip["commit"]["sha"]
+    runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?head_sha={sha}&per_page=5", check=False)
+    if runs and runs.get("total_count"):
+        return
+    when = tip["commit"]["commit"]["committer"]["date"]
+    age = (datetime.now(timezone.utc) - datetime.fromisoformat(when.replace("Z", "+00:00"))).total_seconds() / 60
+    if age < QUICK_TIP_WAIT_MIN:
+        return
+    api(f"repos/{repo}/actions/workflows/quick.yml/dispatches", "-X", "POST", "-f", f"ref={STAGING}", check=False)
+    print(f"на вершине staging {sha[:9]} нет прогона quick уже {int(age)} мин — запустил quick вручную (workflow_dispatch)")
+
+
 def tick(repo, sign):
+    ensure_quick_on_tip(repo)
     rc = max(stuck(repo), main_ci(repo), heal(repo))
     rc = max(rc, train_step(repo, sign))
     transit_warn(repo)
