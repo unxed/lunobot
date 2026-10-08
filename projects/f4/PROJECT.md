@@ -101,3 +101,5 @@
 
 Перед `land` новой UI-вставки гоняй ещё `go test ./cmd/f4` (12 с): там аудит командной палитры (`command_palette_coverage_test.go`: каждый новый приёмник `ProcessKey` — запись в `commandPaletteProcessKeyAudit` и +1 к `commandPaletteF4Surfaces`; новый `vtui.NewVMenu` — запись в `commandPaletteNewVMenuAudit`) и `TestNoNewHardcodedUIStrings` (базовая линия литералов подписи: новую подпись клавиши/кнопки вроде `"F9"` в литерале `vtui.KeyBarLabels{...}` не пиши — ставь по индексу или бери из lng). Staticcheck в CI (Lint) придирается к `var x int = -1` (QF1011), лишнему `list.ListBox.OnKeyDown` через встраивание (QF1008) и неиспользуемым полям (08-10-2026).
 
+
+Меняешь отрисовку или цвета панели (`internal/panel`) — перед `land` прогони весь пакет `go test ./internal/panel` (≈50 с), а не только свои тесты: 08-10-2026 `TestFileSystemPanel_FastFind_Rendering` ждал старый цвет строки ввода фильтра и краснил staging после «Filter window: edit-field colour…».
