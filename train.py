@@ -851,10 +851,14 @@ def attempts(failed):
 
 
 def rerun(failed):
+    """Перезапуск упавших и отменённых job'ов их прогонов. REST, а не `gh run rerun`: тот в облачной
+    сессии не срабатывал (08-10-2026: tick писал «перезапустил», а run_attempt оставался 1)."""
+    seen = set()
     for c in failed:
         m = re.search(r"github\.com/([^/]+/[^/]+)/actions/runs/(\d+)", c.get("detailsUrl") or "")
-        if m:
-            run("gh", "run", "rerun", m.group(2), "--failed", "--repo", m.group(1), check=False)
+        if m and m.groups() not in seen:
+            seen.add(m.groups())
+            api(f"repos/{m.group(1)}/actions/runs/{m.group(2)}/rerun-failed-jobs", "-X", "POST", check=False)
 
 
 def covered(repo, sha):
@@ -976,7 +980,17 @@ def main_ci(repo):
             return 1
         print(f"main {head[:9]}: полная матрица идёт — {r['html_url']} (строка в CI.md, § 7.3)")
         return 0
-    if r["conclusion"] in ("success", "skipped", "cancelled"):
+    if r["conclusion"] == "cancelled":
+        # Отменённый прогон на вершине main никто не повторит: новых push нет (09-10-2026: прогон
+        # поезда #1841 отменился, tick печатал «cancelled» как норму, красный Race увидели через час).
+        if r.get("run_attempt", 1) < 2:
+            api(f"repos/{repo}/actions/runs/{r['id']}/rerun", "-X", "POST", check=False)
+            print(f"main {head[:9]}: прогон отменён (не упал) — перезапустил: {r['html_url']}")
+        else:
+            print(f"main {head[:9]}: прогон отменён и после перезапуска — {r['html_url']}; "
+                  "разобрать, кто отменяет (§ 5 п. 2)")
+        return 0
+    if r["conclusion"] in ("success", "skipped"):
         print(f"main {head[:9]}: {r['conclusion']} — {r['html_url']}")
         return 0
     print(f"main {head[:9]}: КРАСНЫЙ — {r['html_url']}. СРОЧНО (§ 5 п. 2): красный main")

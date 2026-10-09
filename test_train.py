@@ -310,5 +310,33 @@ class SummariesTest(unittest.TestCase):
         self.assertEqual(got, {})
 
 
+class MainCancelledRunTest(unittest.TestCase):
+    def _fake_api(self, attempt, calls):
+        def api(path, *args, check=True):
+            calls.append((path, args))
+            if path.endswith("/branches/main"):
+                return {"commit": {"sha": "abc123def"}}
+            if "actions/runs?" in path:
+                return {"workflow_runs": [{"id": 7, "name": "CI", "status": "completed",
+                                           "conclusion": "cancelled", "run_attempt": attempt,
+                                           "created_at": "2026-10-09T19:29:03Z",
+                                           "html_url": "https://example/runs/7"}]}
+            return {}
+        return api
+
+    def test_cancelled_main_run_is_rerun_once(self):
+        calls = []
+        with mock.patch.object(train, "api", side_effect=self._fake_api(1, calls)):
+            self.assertEqual(train.main_ci("o/r"), 0)
+        self.assertIn(("repos/o/r/actions/runs/7/rerun", ("-X", "POST")), calls)
+
+    def test_cancelled_again_is_not_rerun_forever(self):
+        calls = []
+        with mock.patch.object(train, "api", side_effect=self._fake_api(2, calls)):
+            train.main_ci("o/r")
+        self.assertFalse(any(p.endswith("/rerun") for p, _ in calls))
+
+
+
 if __name__ == "__main__":
     unittest.main()
