@@ -415,6 +415,13 @@ def cut(repo, sign):
         r = run("gh", "api", f"repos/{repo}/merges", "-f", f"base={STAGING}", "-f", "head=main",
                 "-f", "commit_message=Merge main into lunobot/staging", check=False)
         if r.returncode:
+            if "not permitted through this proxy" in (r.stderr or "") + (r.stdout or ""):
+                # Облачная сессия: REST `merges` закрыт прокси (403), конфликта может и не быть.
+                print(f"слияние main в {STAGING} через REST закрыто прокси (облачная сессия) — "
+                      f"слей в клоне: `git fetch origin main {STAGING}; git checkout -B w-merge origin/{STAGING}; "
+                      f"git merge origin/main` (при конфликте в go.mod/go.sum/flake.nix — рецепт в PROJECT.md "
+                      f"проекта) и `git push origin w-merge:{STAGING}`")
+                return 1
             print(f"main не вливается в staging без конфликта — срочная работа (§ 5 п. 2): "
                   f"разреши вручную в клоне и запушь в {STAGING}\n{r.stderr.strip()}")
             return 1
