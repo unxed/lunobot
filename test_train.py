@@ -275,5 +275,40 @@ class EnsureQuickOnTipTest(unittest.TestCase):
         self.assertEqual(self.run_tick(self.tip(60), 1), [])
 
 
+class SummariesTest(unittest.TestCase):
+    """Тело PR поезда: под номером тикета очень короткая сводка проблемы и исправления."""
+
+    @staticmethod
+    def commit(message, parents=1):
+        return {"commit": {"message": message}, "parents": [{}] * parents}
+
+    def test_problem_and_fix_sections_are_used(self):
+        msg = ("fix(menu): long subject line that must not be shown\n\nbody text\n\n"
+               "Проблема: курсор тормозит в большой папке\n"
+               "Исправление: меню опрашивается не на каждый кадр\n\n"
+               "Touch: unxed/f4#1832\n\nПроверить:\nпройдитесь по папке\n")
+        got = train.summaries("unxed/f4", [self.commit(msg)])
+        self.assertEqual(got, {"unxed/f4#1832": {
+            "problem": ["курсор тормозит в большой папке"],
+            "fix": ["меню опрашивается не на каждый кадр"]}})
+
+    def test_without_sections_the_subject_is_the_fix(self):
+        got = train.summaries("unxed/f4", [self.commit("fix(x): short subject\n\nTouch: #5\n")])
+        self.assertEqual(got["unxed/f4#5"], {"problem": [], "fix": ["fix(x): short subject"]})
+
+    def test_repeats_are_dropped_and_long_text_is_cut(self):
+        long_fix = "а" * 500
+        msgs = [self.commit(f"s\n\nПроблема: одна\nИсправление: {long_fix}\n\nTouch: #7\n")] * 2
+        got = train.summaries("unxed/f4", msgs)["unxed/f4#7"]
+        self.assertEqual(got["problem"], ["одна"])
+        self.assertEqual(len(got["fix"]), 1)
+        self.assertLessEqual(len(got["fix"][0]), train.SUMMARY_LEN)
+
+    def test_merge_commits_and_commits_without_a_trailer_are_skipped(self):
+        got = train.summaries("unxed/f4", [self.commit("Merge\n\nTouch: #1\n", parents=2),
+                                           self.commit("no trailer here\n")])
+        self.assertEqual(got, {})
+
+
 if __name__ == "__main__":
     unittest.main()

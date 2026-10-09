@@ -68,6 +68,11 @@ PRESERVE_MAIN = {"unxed/vtui"}
 TAG_AFTER_MERGE = {"unxed/vtui"}
 TRAILER = re.compile(r"^(Touch|Lunobot-Task):\s*(.+)$", re.M)
 CHECK = re.compile(r"^Проверить:\s*\n(.*?)(?:\n\s*\n[A-Z][\w-]+:|\Z)", re.M | re.S)
+# Очень короткая сводка для тела PR поезда: «Проблема:» и «Исправление:» в сообщении коммита,
+# по одной строке каждая (LUNOBOT.md § 7.2 п. 1). Без них в тело идёт заголовок коммита.
+SUMMARY_LEN = 200
+PROBLEM = re.compile(r"^Проблема:[ \t]*(.+)$", re.M)
+FIXED = re.compile(r"^Исправление:[ \t]*(.+)$", re.M)
 # Коммит, чинящий красный staging: ручная починка (land --fix-staging) или автооткат tick'а.
 HEAL = re.compile(r"^(Fixes-Staging|Staging-Revert):", re.M)
 # Автокоммит бота с новым vendorHash в flake.nix (workflow nix-vendor-hash): несёт Fixes-Staging,
@@ -390,6 +395,39 @@ def tickets(repo, commits):
     return out
 
 
+def _short(text):
+    text = " ".join(text.split())
+    return text if len(text) <= SUMMARY_LEN else text[:SUMMARY_LEN - 1].rstrip() + "…"
+
+
+def summaries(repo, commits):
+    """{ключ: {"problem": [..], "fix": [..]}} для тела PR поезда: очень короткая сводка
+    проблемы и очень короткая сводка исправления из секций «Проблема:»/«Исправление:» сообщения
+    коммита; нет секции исправления — заголовок коммита. Повторы убираются."""
+    out = {}
+    for c in commits:
+        msg = c["commit"]["message"]
+        if len(c.get("parents", [])) > 1:
+            continue
+        found = TRAILER.findall(msg)
+        if not found:
+            continue
+        subject = msg.splitlines()[0].strip() if msg.strip() else ""
+        problem = PROBLEM.search(msg)
+        fixed = FIXED.search(msg)
+        for kind, val in found:
+            key = val.strip()
+            if kind == "Touch" and key.startswith("#"):
+                key = f"{repo}{key}"
+            entry = out.setdefault(key, {"problem": [], "fix": []})
+            if problem and _short(problem.group(1)) not in entry["problem"]:
+                entry["problem"].append(_short(problem.group(1)))
+            fix = _short(fixed.group(1)) if fixed else _short(subject)
+            if fix and fix not in entry["fix"]:
+                entry["fix"].append(fix)
+    return out
+
+
 def pick_green(repo, main_sha, staging_sha, runs):
     """Последний коммит staging с зелёным quick, до которого можно резать поезд: впереди main,
     предок вершины staging и СОДЕРЖИТ текущий main (behind_by == 0). Коммит до слияния main в
@@ -501,9 +539,13 @@ def cut(repo, sign):
     body = [f"Поезд из `{STAGING}` до `{cut_sha[:9]}` — последнего коммита с зелёным quick "
             f"({green['html_url']}); {len(own)} коммитов. Собран `train.py` — отдельных "
             "бот-PR больше нет, всё рутинное едет так (LUNOBOT.md § 7.2).", ""]
-    for key, texts in tk.items():
+    sm = summaries(repo, own)
+    for key in tk:
         body.append(f"### {key}")
-        body += texts or ["(автор не оставил блока «Проверить:»)"]
+        entry = sm.get(key, {"problem": [], "fix": []})
+        if entry["problem"]:
+            body.append("**Проблема:** " + "; ".join(entry["problem"]))
+        body.append("**Исправление:** " + ("; ".join(entry["fix"]) or "(нет описания в коммите)"))
         if key.startswith(f"{repo}#"):
             body.append(f"\nTouch #{key.split('#')[1]}")
         elif "#" in key:
