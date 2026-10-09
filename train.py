@@ -328,6 +328,9 @@ def rollup_rest(repo, number):
                 "name": r["name"],
                 "status": (r.get("status") or "completed").upper(),
                 "conclusion": (r.get("conclusion") or "").upper() or None,
+                # rerun() берёт id прогона отсюда; без этого поля tick в облаке писал
+                # «перезапуск», а перезапуска не было (09-10-2026, поезд #1843).
+                "detailsUrl": r.get("details_url") or r.get("html_url") or "",
             })
         if len(runs.get("check_runs", [])) < 100:
             break

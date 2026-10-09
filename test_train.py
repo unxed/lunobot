@@ -338,5 +338,25 @@ class MainCancelledRunTest(unittest.TestCase):
 
 
 
+class RollupRestRerunTest(unittest.TestCase):
+    def test_failed_check_from_rest_can_be_rerun(self):
+        def api(path, *args, check=True):
+            if path.endswith("/pulls/5"):
+                return {"head": {"sha": "abc"}}
+            if "check-runs" in path:
+                return {"check_runs": [{"name": "Race (shard 3)", "status": "completed",
+                                        "conclusion": "failure",
+                                        "details_url": "https://github.com/o/r/actions/runs/42/job/7"}]}
+            if path.endswith("/status"):
+                return {"statuses": []}
+            return {}
+        with mock.patch.object(train, "api", side_effect=api):
+            checks = train.rollup_rest("o/r", 5)
+        posted = []
+        with mock.patch.object(train, "api", side_effect=lambda p, *a, check=True: posted.append(p)):
+            train.rerun(checks)
+        self.assertEqual(posted, ["repos/o/r/actions/runs/42/rerun-failed-jobs"])
+
+
 if __name__ == "__main__":
     unittest.main()
