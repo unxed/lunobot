@@ -1283,8 +1283,20 @@ def tag_next(repo):
     tag = f"v{a}.{b}.{c + 1}"
     r = run("gh", "api", f"repos/{repo}/git/refs", "-f", f"ref=refs/tags/{tag}", "-f",
             f"sha={head}", check=False)
+    if r.returncode and push_tag(repo, tag, head):
+        # Прокси облачной сессии закрывает запись git/refs, как и для веток (push_ref);
+        # обычный git push тега проходит (10-10-2026: vtui v0.1.399 не ставился).
+        r = subprocess.CompletedProcess(r.args, 0, "", "")
     print(f"{repo}: тег {tag} на {head[:9]}" if r.returncode == 0 else
           f"{repo}: тег {tag} не создан: {r.stderr.strip()}")
+
+
+def push_tag(repo, tag, sha):
+    """Поставить тег git push-ем, когда REST закрыт для записи ссылок. True — тег стоит."""
+    url = f"https://github.com/{repo}"
+    if run("git", "fetch", "-q", "--depth=1", url, sha, check=False).returncode:
+        return False
+    return run("git", "push", "-q", url, f"{sha}:refs/tags/{tag}", check=False).returncode == 0
 
 
 def eject(repo, shas, reason):
