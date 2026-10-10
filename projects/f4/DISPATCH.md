@@ -21,4 +21,3 @@
 2026-10-07 19:01:49 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1789 (исправление сброса выделения мышью в редакторе) [land]
 2026-10-07 19:18:55 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1790 (исправление Copy/Paste через меню F9 в редакторе) [land]
 2026-10-07 19:32:53 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1791 (исправление многострочного Copy/Paste в редакторе) [land]
-10-10-2026 15:17:28 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/issues/1861 (Alt+F6: имя без пути — в папке исходной панели; LN на Windows; ссылки в Ctrl+A) [land]
