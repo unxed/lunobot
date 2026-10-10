@@ -113,3 +113,23 @@
 Отзывчивость интерфейса (09-10-2026, f4#1832): всё, что `GetMenuBar`, отрисовка панели и `Enabled`/`Visible`-функции строк меню делают на каждый кадр и нажатие (vtui зовёт меню 2–3 раза на клавишу), не должно ходить по `Entries`, в файловую систему или в плагин на каждый вызов — пользователи сразу замечают «жуткие тормоза» в папке из десятков тысяч файлов. Коммит f4#1814 (динамическое затемнение строк) именно так сломал навигацию. Правило: такое состояние опрашивается по штампу (панель, курсор, число строк) и не чаще раза в 250 мс, выделение читается один раз за проход (`FileSystemPanel.MemoizeSelection`), а на новое действие в меню нужен тест, который СЧИТАЕТ обходы (`panel.SelectionWalks`), как `TestMenuBarCostDoesNotGrowWithTheFolder`, а не меряет время.
 
 vendorHash локально (09-10-2026): в песочнице есть nix, и хэш считается без CI: после смены go.mod/go.sum — `rm -rf vendor && go mod vendor && nix --extra-experimental-features nix-command hash path --sri vendor` (затем `rm -rf vendor`, не коммитить), значение — в `vendorHash` в flake.nix, всё одним коммитом с bump (проверено: на неизменённом go.mod метод воспроизводит текущий vendorHash один в один). Так поезд не краснеет на «vendorHash matches». Тег vtui из облака не поставить, поэтому зависимость — pseudo-версия main vtui: `GOFLAGS=-mod=mod go get github.com/unxed/vtui@<sha>`, потом `GOFLAGS=-mod=mod go mod tidy`.
+
+## Проверки перед land (облачная сессия)
+
+Ретро 10-10-2026: за день staging и поезд краснели пять раз на том, что можно было поймать до
+`land` (gosec G115, gofmt -s Go 1.26, staticcheck QF1001, аудит импортов XP, гонка в тесте), и
+работа ждала main больше двух часов. Перед каждым `train.py land` в клоне:
+
+1. `go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest` (один раз;
+   тулчейн 1.26 Go скачает сам), затем
+   `git fetch origin main && GOTOOLCHAIN=go1.26.6 ~/go/bin/golangci-lint run --new-from-rev=origin/main ./<пакеты>/`
+   — так же, как quick.yml; для файлов `_windows.go` ещё раз с `GOOS=windows`.
+2. Формат — gofmt из тулчейна 1.26:
+   `/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.6.linux-amd64/bin/gofmt -s -l <пакеты>`.
+3. Новый вызов Windows API — минимальная версия Windows из его документации: всё новее XP
+   (Vista+) идёт в файл под `//go:build windows && !go2xp`, иначе аудит go2xp сборки
+   legacy windows/386 валит поезд; проверка сборки: `GOOS=windows go build -tags go2xp ./...`.
+4. Тесты затронутых пакетов с `-race`; тест, который запускает горутины (воркеры, загрузчики),
+   дожидается их конца до своей очистки (`setupPortableIni` сбрасывает каталог настроек).
+5. Неглубокий клон: `git log main..lunobot/staging` врёт — сверять через
+   `gh api repos/unxed/f4/compare/main...lunobot/staging`.
