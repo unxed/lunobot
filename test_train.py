@@ -1,3 +1,6 @@
+import contextlib
+import io
+import subprocess
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest import mock
@@ -248,31 +251,50 @@ class EnsureQuickOnTipTest(unittest.TestCase):
         when = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
         return {"commit": {"sha": "a" * 40, "commit": {"committer": {"date": when}}}}
 
-    def run_tick(self, tip, total):
-        calls = []
+    def run_tick(self, tip, total, ahead=1, rc=0):
+        dispatched = []
 
         def fake_api(path, *args, check=True):
-            calls.append((path, args))
             if path.endswith(f"branches/{train.STAGING}"):
                 return tip
+            if "/compare/" in path:
+                return {"ahead_by": ahead}
             if "quick.yml/runs" in path:
                 return {"total_count": total}
             return {}
 
-        with mock.patch.object(train, "api", fake_api):
+        def fake_run(*cmd, check=True, cwd=None):
+            dispatched.append(cmd)
+            return subprocess.CompletedProcess(cmd, rc, "", "HTTP 422: Workflow does not have 'workflow_dispatch' trigger" if rc else "")
+
+        out = io.StringIO()
+        with mock.patch.object(train, "api", fake_api), mock.patch.object(train, "run", fake_run), \
+                contextlib.redirect_stdout(out):
             train.ensure_quick_on_tip("o/r")
-        return [c for c in calls if "dispatches" in c[0]]
+        self.out = out.getvalue()
+        return [c for c in dispatched if any("dispatches" in a for a in c)]
 
     def test_old_tip_without_runs_gets_quick_dispatched(self):
         dispatched = self.run_tick(self.tip(30), 0)
         self.assertEqual(len(dispatched), 1)
-        self.assertIn(f"ref={train.STAGING}", dispatched[0][1])
+        self.assertIn(f"ref={train.STAGING}", dispatched[0])
+        self.assertIn("запустил quick вручную", self.out)
 
     def test_fresh_tip_is_left_to_the_push_trigger(self):
         self.assertEqual(self.run_tick(self.tip(2), 0), [])
 
     def test_tip_with_a_run_is_left_alone(self):
         self.assertEqual(self.run_tick(self.tip(60), 1), [])
+
+    def test_staging_with_nothing_beyond_main_needs_no_quick(self):
+        self.assertEqual(self.run_tick(self.tip(600), 0, ahead=0), [])
+        self.assertEqual(self.out, "")
+
+    def test_a_refused_dispatch_is_not_reported_as_started(self):
+        self.assertEqual(len(self.run_tick(self.tip(30), 0, rc=1)), 1)
+        self.assertNotIn("запустил quick вручную", self.out)
+        self.assertIn("НЕ вышло", self.out)
+        self.assertIn("workflow_dispatch", self.out)
 
 
 class SummariesTest(unittest.TestCase):

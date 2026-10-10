@@ -1022,6 +1022,12 @@ def ensure_quick_on_tip(repo):
     if not tip:
         return
     sha = tip["commit"]["sha"]
+    # staging, в котором нет ничего сверх main (вершина — сам main после перемотки), поезду не нужен:
+    # код уже проверен полным CI main, и quick на нём ждать незачем (10-10-2026: vtui каждый круг
+    # «запускал quick» на такой вершине).
+    ahead = api(f"repos/{repo}/compare/main...{sha}", check=False)
+    if ahead and ahead.get("ahead_by") == 0:
+        return
     runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?head_sha={sha}&per_page=5", check=False)
     if runs and runs.get("total_count"):
         return
@@ -1029,7 +1035,16 @@ def ensure_quick_on_tip(repo):
     age = (datetime.now(timezone.utc) - datetime.fromisoformat(when.replace("Z", "+00:00"))).total_seconds() / 60
     if age < QUICK_TIP_WAIT_MIN:
         return
-    api(f"repos/{repo}/actions/workflows/quick.yml/dispatches", "-X", "POST", "-f", f"ref={STAGING}", check=False)
+    # Ответ проверяется: quick.yml без триггера workflow_dispatch отвечает 422, и «запустил» было бы
+    # неправдой (10-10-2026, vtui).
+    p = run("gh", "api", "-X", "POST", f"repos/{repo}/actions/workflows/quick.yml/dispatches",
+            "-f", f"ref={STAGING}", check=False)
+    if p.returncode:
+        err = (p.stderr or p.stdout or "").strip().splitlines()
+        print(f"на вершине staging {sha[:9]} нет прогона quick уже {int(age)} мин, запустить вручную НЕ вышло: "
+              f"{err[-1] if err else 'код ' + str(p.returncode)} — добавь workflow_dispatch в quick.yml проекта "
+              f"или запусти quick пушем в staging")
+        return
     print(f"на вершине staging {sha[:9]} нет прогона quick уже {int(age)} мин — запустил quick вручную (workflow_dispatch)")
 
 
