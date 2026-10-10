@@ -1129,6 +1129,19 @@ def mark_checking(repo, nums, sign):
     print("TRIAGE: не удалось запушить правку `в пути` → `проверяют` (сеть/гонка) — сделай руками")
 
 
+def tried_since(repo, n, commits):
+    """Тикет из нескольких частей законно остаётся `в пути` и после «Пробуйте!»: в staging едет
+    следующая часть. Предупреждать незачем, если «Пробуйте!» в тикете новее последнего его
+    коммита в main (10-10-2026: f4#1842 ложно предупреждался каждый круг)."""
+    dates = [c["commit"]["committer"]["date"] for c in commits
+             if n in own_numbers(repo, [c]) and c.get("commit", {}).get("committer", {}).get("date")]
+    if not dates:
+        return False
+    comments = api(f"repos/{repo}/issues/{n}/comments?since={max(dates)}&per_page=100", check=False) or []
+    return any("Пробуйте!" in (c.get("body") or "") and (c.get("created_at") or "") >= max(dates)
+               for c in comments)
+
+
 def transit_warn(repo):
     """Предупреждение (не ошибка): тикет `в пути` в TRIAGE.md, а его `Touch:` уже в main за
     последние TRANSIT_WINDOW_H ч — «Пробуйте!» не разнесён, состояние не сдвинулось.
@@ -1142,7 +1155,7 @@ def transit_warn(repo):
         return
     since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
     commits = api(f"repos/{repo}/commits?sha=main&since={since}&per_page=100", check=False) or []
-    stale = sorted(transit & own_numbers(repo, commits))
+    stale = sorted(n for n in transit & own_numbers(repo, commits) if not tried_since(repo, n, commits))
     if stale:
         print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
               f"нет «Пробуйте!»: {', '.join(f'#{n}' for n in stale)}. Разнеси «Пробуйте!» "

@@ -382,3 +382,24 @@ class RollupRestRerunTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TriedSinceTest(unittest.TestCase):
+    """Тикет из нескольких частей: «Пробуйте!» после его последнего коммита в main снимает предупреждение."""
+
+    commits = [{"commit": {"message": "feat: x\n\nTouch: unxed/f4#7\n", "committer": {"date": "2026-10-10T01:00:00Z"}}}]
+
+    def check(self, comments):
+        with mock.patch.object(train, "api", return_value=comments):
+            return train.tried_since("unxed/f4", 7, self.commits)
+
+    def test_try_after_the_commit_counts(self):
+        self.assertTrue(self.check([{"body": "Пробуйте! всё", "created_at": "2026-10-10T02:00:00Z"}]))
+
+    def test_other_comments_do_not(self):
+        self.assertFalse(self.check([{"body": "спасибо", "created_at": "2026-10-10T02:00:00Z"}]))
+        self.assertFalse(self.check(None))
+
+    def test_ticket_without_commits_is_not_tried(self):
+        with mock.patch.object(train, "api", return_value=[{"body": "Пробуйте!", "created_at": "2026-10-10T02:00:00Z"}]):
+            self.assertFalse(train.tried_since("unxed/f4", 8, self.commits))
