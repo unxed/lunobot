@@ -126,6 +126,9 @@ vendorHash локально (09-10-2026): в песочнице есть nix, и
    — так же, как quick.yml; для файлов `_windows.go` ещё раз с `GOOS=windows`.
 2. Формат — gofmt из тулчейна 1.26:
    `/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.6.linux-amd64/bin/gofmt -s -l <пакеты>`.
+   `gofmt -l` всегда выходит с 0 — в цепочке перед коммитом только как
+   `test -z "$(gofmt -s -l <пакеты>)" && git commit …` (10-10: 1b991c1 ушёл с неформатированным
+   тестом именно так). CI проверяет все .go файлы, и в `tools/` тоже.
 3. Новый вызов Windows API — минимальная версия Windows из его документации: всё новее XP
    (Vista+) идёт в файл под `//go:build windows && !go2xp`, иначе аудит go2xp сборки
    legacy windows/386 валит поезд; проверка сборки: `GOOS=windows go build -tags go2xp ./...`.
