@@ -1050,8 +1050,13 @@ def ensure_quick_on_tip(repo):
 
 def tick(repo, sign):
     ensure_quick_on_tip(repo)
-    rc = max(stuck(repo), main_ci(repo), heal(repo))
+    rc = max(main_ci(repo), heal(repo))
     rc = max(rc, train_step(repo, sign))
+    # После шага поезда, а не до: поезд, который этот же tick влил, больше не «ждёт
+    # main». До 11-10-2026 stuck() мерил staging против main до вливания и объявлял
+    # инцидент, который тот же tick тут же снимал (f4 #1872: «2.2 ч» при уже зелёном
+    # поезде — а настоящий хвост после вливания был ~1 ч).
+    rc = max(rc, stuck(repo))
     transit_warn(repo)
     return rc
 
