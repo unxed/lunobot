@@ -12,3 +12,4 @@
 2026-10-12 06:50 PR #28 (unxed/dn#4, автообновление находит пре-релизы) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml не проверены https://github.com/unxed/dn/pull/28
 2026-10-12 07:05 PR #29 (unxed/dn#20, часть 1: «!» у битой ссылки) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/29
 2026-10-12 07:42 PR #30 (unxed/dn#19, число колонок имён) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/30
+2026-10-12 08:16 PR #34 (unxed/dn#31, Load palette / xlat открывают диалог) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/34
