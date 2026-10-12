@@ -11,3 +11,4 @@
 09-10-2026 (Лунобот-1): dn-accept на main eeb03ae5 (run 37870657554) красный 174/180 (по ворота закрыты, запускаются вручную, object-ревизия заморожена); набор FAIL идентичен прогону PR #27 (37868341093). Основная причина — нижняя рамка панели `[ C * ]` у object против пустой у class (docs/PATHS.md, Open) + записи путей. PR #27 закрыт.
 2026-10-12 06:50 PR #28 (unxed/dn#4, автообновление находит пре-релизы) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml не проверены https://github.com/unxed/dn/pull/28
 2026-10-12 07:05 PR #29 (unxed/dn#20, часть 1: «!» у битой ссылки) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/29
+2026-10-12 07:42 PR #30 (unxed/dn#19, число колонок имён) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/30
