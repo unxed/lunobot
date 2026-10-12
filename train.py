@@ -68,6 +68,33 @@ PRESERVE_MAIN = {"unxed/vtui"}
 TAG_AFTER_MERGE = {"unxed/vtui"}
 TRAILER = re.compile(r"^(Touch|Lunobot-Task):\s*(.+)$", re.M)
 CHECK = re.compile(r"^Проверить:\s*\n(.*?)(?:\n\s*\n[A-Z][\w-]+:|\Z)", re.M | re.S)
+# «Проверить:» — текст для автора тикета, его поезд кладёт в «Пробуйте!» (§ 7.2 п. 1). 12-10-2026
+# в поезде unxed/f4#1889 оба коммита несли «Проверить: go test …» в одной строке: CHECK их не
+# распознал, tick молча напечатал пустоту, а будь секция распознана — пользователь получил бы
+# команду go test вместо описания. Поэтому land проверяет секцию заранее.
+CHECK_SAME_LINE = re.compile(r"^Проверить:[ \t]*\S", re.M)
+CHECK_COMMAND = re.compile(r"^\s*(\$ |go (test|vet|build|run)\b|(make|python3?|bash|sh|npm|cargo)\s|\./)", re.M)
+
+
+def check_section_problem(body):
+    """Почему секция «Проверить:» коммита не годится для «Пробуйте!», или None.
+
+    Секция обязательна у коммита с Touch: (у него есть автор тикета); у коммита только с
+    Lunobot-Task: её может не быть (кастомная задача без пользовательской стороны)."""
+    touch = any(kind == "Touch" for kind, _ in TRAILER.findall(body))
+    if CHECK_SAME_LINE.search(body):
+        return ("текст «Проверить:» стоит в той же строке — пиши его со СЛЕДУЮЩЕЙ строки "
+                "(`Проверить:` отдельной строкой), иначе поезд его не увидит")
+    m = CHECK.search(body)
+    if not m or not m.group(1).strip():
+        return "нет текста «Проверить:» для автора тикета" if touch else None
+    if CHECK_COMMAND.search(m.group(1)):
+        return ("в «Проверить:» команда, а не текст для автора тикета: напиши 1–3 предложения "
+                "на его языке — что и где проверить в программе (команды тестов — в тело "
+                "коммита выше, не в эту секцию)")
+    return None
+
+
 # Очень короткая сводка для тела PR поезда: «Проблема:» и «Исправление:» в сообщении коммита,
 # по одной строке каждая (LUNOBOT.md § 7.2 п. 1). Без них в тело идёт заголовок коммита.
 SUMMARY_LEN = 200
@@ -272,6 +299,10 @@ def land(fix=False):
     if bad:
         sys.exit(f"коммиты без трейлера Touch:/Lunobot-Task: {', '.join(bad)} — проводник не "
                  "сможет разнести «Пробуйте!» по тикетам; допиши трейлер (git commit --amend)")
+    bad = [f"{sha[:9]}: {why}" for sha, body in msgs if (why := check_section_problem(body))]
+    if bad:
+        sys.exit("секция «Проверить:» не годится (§ 7.2 п. 1), поправь (git commit --amend / "
+                 "rebase -i):\n  " + "\n  ".join(bad))
     if fix and not any(re.search(r"^Fixes-Staging:", body, re.M) for _, body in msgs):
         sys.exit("--fix-staging: хотя бы один коммит обязан нести трейлер "
                  "`Fixes-Staging: <ссылка на красный quick>` — по нему остальные поймут, что "
@@ -1221,6 +1252,9 @@ def train_step(repo, sign):
         print(f"--- {key}")
         for t in texts:
             print(t)
+        if not texts and "#" in key:
+            print("(текста «Проверить:» нет — напиши «Пробуйте!» сам по «Проблема:»/"
+                  "«Исправление:» коммитов, понятно автору тикета)")
     mark_checking(repo, own_numbers(repo, commits), sign)
     return 0
 

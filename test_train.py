@@ -403,3 +403,36 @@ class TriedSinceTest(unittest.TestCase):
     def test_ticket_without_commits_is_not_tried(self):
         with mock.patch.object(train, "api", return_value=[{"body": "Пробуйте!", "created_at": "2026-10-10T02:00:00Z"}]):
             self.assertFalse(train.tried_since("unxed/f4", 8, self.commits))
+
+
+class CheckSectionTest(unittest.TestCase):
+    TOUCH = "\n\nTouch: unxed/f4#912\n"
+
+    def test_human_text_on_next_line_passes(self):
+        body = "fix\n\nПроверить:\nОткройте меню дисков: Bookmarks теперь под Tools." + self.TOUCH
+        self.assertIsNone(train.check_section_problem(body))
+
+    def test_text_on_same_line_is_refused(self):
+        body = "fix\n\nПроверить: Откройте меню дисков." + self.TOUCH
+        self.assertIn("той же строке", train.check_section_problem(body))
+
+    def test_go_test_command_is_refused(self):
+        body = "fix\n\nПроверить:\ngo test -run TestX ./internal/panel/" + self.TOUCH
+        self.assertIn("команда", train.check_section_problem(body))
+
+    def test_touch_without_section_is_refused(self):
+        self.assertIn("нет текста", train.check_section_problem("fix" + self.TOUCH))
+
+    def test_custom_task_may_skip_section(self):
+        self.assertIsNone(train.check_section_problem("ci: fix\n\nLunobot-Task: ci-fix\n"))
+
+    def test_both_1889_commits_would_have_been_refused(self):
+        body = ("panel: x\n\nПроблема: y\n\nTouch: unxed/f4#1148\n\n"
+                "Проверить: go test -run 'TestA|TestB' ./internal/panel/\n\n"
+                "Lunobot-Instance: Лунобот-1 (node a; LNX)\n")
+        self.assertIsNotNone(train.check_section_problem(body))
+
+    def test_text_starting_with_code_span_passes(self):
+        body = "fix\n\nПроверить:\n`highlight.ini` теперь сохраняется." + self.TOUCH
+        self.assertIsNone(train.check_section_problem(body))
+
