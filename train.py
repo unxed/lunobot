@@ -67,7 +67,39 @@ PRESERVE_MAIN = {"unxed/vtui"}
 # (28-09-2026 поезд vtui #166 влит, тег никто не поставил, #1571 в f4 проверить было нельзя).
 TAG_AFTER_MERGE = {"unxed/vtui"}
 TRAILER = re.compile(r"^(Touch|Lunobot-Task):\s*(.+)$", re.M)
-CHECK = re.compile(r"^Проверить:\s*\n(.*?)(?:\n\s*\n[A-Z][\w-]+:|\Z)", re.M | re.S)
+# «Проверить:» — текст для автора тикета, его поезд кладёт в «Пробуйте!» (§ 7.2 п. 1). Текст
+# допустим и в той же строке, и со следующей: до 13-10-2026 CHECK понимал только второй вид и
+# молча терял первый (из 300 коммитов main f4 — 57 нормальных текстов и 21 команда go test, в
+# том числе оба коммита поезда unxed/f4#1889), а пустую секцию перед трейлерами читал как текст
+# «Lunobot-Instance: … Co-Authored-By: …». Конец секции — пустая строка перед трейлером.
+CHECK = re.compile(r"^Проверить:[ \t]*(.*?)(?=\n\s*\n(?:[A-Z][\w-]+|Проблема|Исправление):|\Z)",
+                   re.M | re.S)
+# Команда вместо текста: пользователю в «Пробуйте!» она ни к чему, land такой коммит не пускает.
+CHECK_COMMAND = re.compile(r"^\s*(\$ |go (test|vet|build|run)\b|(make|python3?|bash|sh|npm|cargo)\s|\./)", re.M)
+
+
+def check_text(body):
+    """Текст секции «Проверить:» (может быть пустым) или None, если секции нет."""
+    m = CHECK.search(body)
+    return m.group(1).strip() if m else None
+
+
+def check_section_problem(body):
+    """Почему секция «Проверить:» коммита не годится для «Пробуйте!», или None.
+
+    Секция обязательна у коммита с Touch: (у него есть автор тикета); у коммита только с
+    Lunobot-Task: её может не быть (кастомная задача без пользовательской стороны)."""
+    touch = any(kind == "Touch" for kind, _ in TRAILER.findall(body))
+    text = check_text(body)
+    if not text:
+        return "нет текста «Проверить:» для автора тикета" if touch else None
+    if CHECK_COMMAND.search(text):
+        return ("в «Проверить:» команда, а не текст для автора тикета: напиши 1–3 предложения "
+                "на его языке — что и где проверить в программе (команды тестов — в тело "
+                "коммита выше, не в эту секцию)")
+    return None
+
+
 # Очень короткая сводка для тела PR поезда: «Проблема:» и «Исправление:» в сообщении коммита,
 # по одной строке каждая (LUNOBOT.md § 7.2 п. 1). Без них в тело идёт заголовок коммита.
 SUMMARY_LEN = 200
@@ -272,6 +304,10 @@ def land(fix=False):
     if bad:
         sys.exit(f"коммиты без трейлера Touch:/Lunobot-Task: {', '.join(bad)} — проводник не "
                  "сможет разнести «Пробуйте!» по тикетам; допиши трейлер (git commit --amend)")
+    bad = [f"{sha[:9]}: {why}" for sha, body in msgs if (why := check_section_problem(body))]
+    if bad:
+        sys.exit("секция «Проверить:» не годится (§ 7.2 п. 1), поправь (git commit --amend / "
+                 "rebase -i):\n  " + "\n  ".join(bad))
     if fix and not any(re.search(r"^Fixes-Staging:", body, re.M) for _, body in msgs):
         sys.exit("--fix-staging: хотя бы один коммит обязан нести трейлер "
                  "`Fixes-Staging: <ссылка на красный quick>` — по нему остальные поймут, что "
@@ -387,14 +423,16 @@ def tickets(repo, commits):
         msg = c["commit"]["message"]
         if len(c.get("parents", [])) > 1:
             continue
-        chk = CHECK.search(msg)
+        chk = check_text(msg)
+        if chk and CHECK_COMMAND.search(chk):
+            chk = None  # приземлён до проверки в land: команду пользователю не отдаём
         for kind, val in TRAILER.findall(msg):
             key = val.strip()
             if kind == "Touch" and key.startswith("#"):
                 key = f"{repo}{key}"
             out.setdefault(key, [])
             if chk:
-                out[key].append(chk.group(1).strip())
+                out[key].append(chk)
     return out
 
 
@@ -1221,6 +1259,9 @@ def train_step(repo, sign):
         print(f"--- {key}")
         for t in texts:
             print(t)
+        if not texts and "#" in key:
+            print("(текста «Проверить:» нет — напиши «Пробуйте!» сам по «Проблема:»/"
+                  "«Исправление:» коммитов, понятно автору тикета)")
     mark_checking(repo, own_numbers(repo, commits), sign)
     return 0
 
