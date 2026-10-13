@@ -52,7 +52,7 @@ https://github.com/blue-panels/mcommander
 Проект: vtui
 Поручение: одобрить запуск CI для fork-PR unxed/vtui#207 (прогоны 38346634403 «CI» и 38346634401 «lunobot-guard», состояние action_required): POST repos/unxed/vtui/actions/runs/<id>/approve или кнопка «Approve and run»; по результату CI рассмотреть PR по § 6 (он нужен unxed/f4#1818 вместе с unxed/winkeys#2, unxed/vtinput#12, gogpu/gogpu#503).
 Критерий: оба прогона запущены (не action_required).
-Состояние: свободно — облачная сессия Лунобота-1 (node 801452e4fd3b9a26f8e6f02c) не смогла: вызов approve отклонён классификатором разрешений среды.
+Состояние: взял в работу — Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), 13-10-2026 10:45:51 UTC
 
 --
 
