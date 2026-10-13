@@ -45,6 +45,13 @@ def download(url, path):
         f.write(resp.read())
 
 
+def image_directory(repo, number, script_file=None):
+    """Каталог изображений внутри каталога своего номера, рядом с accounting/."""
+    script_file = script_file or __file__
+    bot_dir = os.path.dirname(os.path.dirname(os.path.abspath(script_file)))
+    return os.path.join(bot_dir, "img", f"{repo.replace('/', '-')}-{number}")
+
+
 def main(argv):
     if len(argv) < 2:
         print(__doc__)
@@ -52,7 +59,7 @@ def main(argv):
     repo, number = argv[0], argv[1]
     comment = argv[argv.index("--comment") + 1] if "--comment" in argv else None
     since = argv[argv.index("--since") + 1] if "--since" in argv else None
-    out_dir = os.path.join("/tmp/lunobot-1/img", f"{repo.replace('/', '-')}-{number}")
+    out_dir = image_directory(repo, number)
     os.makedirs(out_dir, exist_ok=True)
 
     sources = []
