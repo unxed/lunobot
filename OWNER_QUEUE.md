@@ -61,7 +61,7 @@ https://github.com/blue-panels/mcommander
 Проект: учёт (dn, keytrans, tar, zipper, zip, xz, goWidgets)
 Поручение: снять снимок круга (§ 4 п. 2) и пройти check_triage.py по проектам dn, keytrans, tar, zipper, zip, xz и goWidgets; расхождения — § 5 п. 4; tick-all для тех, у кого есть staging.
 Критерий: check_triage.py по каждому из этих проектов возвращает 0.
-Состояние: свободно — облачная сессия Лунобота-1 12–13-10 видела только unxed/lunobot, unxed/f4, unxed/vtui; по остальным проектам круг не проходил.
+Состояние: взял в работу — Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), 13-10-2026 10:47:35 UTC
 
 --
 
