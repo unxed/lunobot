@@ -65,5 +65,59 @@ class InstancesTest(unittest.TestCase):
         self.assertIn("последний след 3 мин назад: f4 #926: исправил проверку", page)
 
 
+class GitHubRestFallbackTest(unittest.TestCase):
+    def test_merged_pull_requests_use_rest_pages_and_cutoff(self):
+        calls = []
+
+        def api(path):
+            calls.append(path)
+            if "page=1" in path:
+                return [{"number": 12, "merged_at": "2026-10-10T12:00:00Z",
+                         "updated_at": "2026-10-10T12:00:00Z"},
+                        {"number": 11, "merged_at": "2026-09-30T12:00:00Z",
+                         "updated_at": "2026-09-30T12:00:00Z"}]
+            return []
+
+        with patch.object(status, "gh_json", side_effect=api):
+            prs = status.merged_pull_requests("example/project", "2026-10-01T00:00:00Z")
+
+        self.assertEqual([p["number"] for p in prs], [12])
+        self.assertIn("/repos/example/project/pulls?state=closed", calls[0])
+        self.assertIn("page=1", calls[0])
+
+    def test_open_issue_count_subtracts_all_open_pulls(self):
+        calls = []
+
+        def api(path):
+            calls.append(path)
+            if path == "/repos/example/project":
+                return {"open_issues_count": 8}
+            if "page=1" in path:
+                return [{"number": 1}, {"number": 2}, {"number": 3}]
+            return []
+
+        with patch.object(status, "gh_json", side_effect=api):
+            count = status.open_issue_count("example/project")
+
+        self.assertEqual(count, 5)
+        self.assertTrue(any("/repos/example/project/pulls?state=open" in c for c in calls))
+
+    def test_report_surfaces_rest_failures_instead_of_empty_data(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "DISPATCH.md").write_text("# DISPATCH\n", encoding="utf-8")
+            (root / "CI.md").write_text("# CI\n", encoding="utf-8")
+            with patch.object(status, "effective_now", return_value=datetime.now()), \
+                 patch.object(status, "instances", return_value=[]), \
+                 patch.object(status, "gh_json", return_value=None), \
+                 patch.object(status, "gh_pages", return_value=None):
+                blocks = status.report("example", "example/project", root, 24)
+
+        titles = {block[0]: block[1] for block in blocks}
+        self.assertIn("Не удалось получить список влитых PR из GitHub API.",
+                      titles["Сделано за 24 ч — влитые PR"])
+        self.assertIn("Открытых тикетов: недоступно", titles)
+
+
 if __name__ == "__main__":
     unittest.main()

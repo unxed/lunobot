@@ -50,6 +50,48 @@ def gh_json(path):
         return None
 
 
+def gh_pages(path):
+    """GET all pages of a GitHub REST collection; None means the request failed."""
+    items = []
+    page = 1
+    while True:
+        separator = "&" if "?" in path else "?"
+        result = gh_json(f"{path}{separator}per_page=100&page={page}")
+        if not isinstance(result, list):
+            return None
+        items.extend(result)
+        if len(result) < 100:
+            return items
+        page += 1
+
+
+def merged_pull_requests(repo, since):
+    """Merged PRs since the cutoff, using REST instead of GraphQL-backed search."""
+    items = []
+    page = 1
+    while True:
+        result = gh_json(f"/repos/{repo}/pulls?state=closed&sort=updated&direction=desc"
+                         f"&per_page=100&page={page}")
+        if not isinstance(result, list):
+            return None
+        items.extend(p for p in result if p.get("merged_at") and p["merged_at"] >= since)
+        # Updated PRs are ordered newest first, and a merge cannot be later than
+        # the PR's updated_at. Once this page predates the cutoff, later pages do too.
+        if len(result) < 100 or (result and all(
+                (p.get("updated_at") or "") < since for p in result)):
+            return items
+        page += 1
+
+
+def open_issue_count(repo):
+    """Open issues exclude pull requests; repo.open_issues_count includes both."""
+    repository = gh_json(f"/repos/{repo}")
+    pulls = gh_pages(f"/repos/{repo}/pulls?state=open")
+    if not isinstance(repository, dict) or pulls is None:
+        return None
+    return max(0, int(repository.get("open_issues_count", 0)) - len(pulls))
+
+
 def projects(only=None):
     """Только проекты из INDEX.md; адрес репозитория — из паспорта."""
     index = (ROOT / "projects" / "INDEX.md").read_text(encoding="utf-8")
@@ -342,10 +384,10 @@ def report(name, repo, d, hours):
         return blocks
 
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    done = gh_json(f"/search/issues?q=repo:{repo}+is:pr+is:merged+merged:>={since}&per_page=50")
+    done = merged_pull_requests(repo, since)
     groups, loose, hidden = {}, [], 0
-    if done and done.get("items"):
-        for pr in done["items"]:
+    if done is not None:
+        for pr in done:
             if SERVICE_PR.search(pr["title"]):
                 hidden += 1
                 continue
@@ -376,11 +418,15 @@ def report(name, repo, d, hours):
         items.append(f"[PR #{n}]({u}) {t}")
     if hidden:
         items.append(f"скрыто служебных записей бота: {hidden}")
+    if done is None:
+        items.append("Не удалось получить список влитых PR из GitHub API.")
     blocks.append((f"Сделано за {hours} ч — влитые PR", items))
 
-    counts = gh_json(f"/search/issues?q=repo:{repo}+is:issue+is:open&per_page=1")
-    if counts:
-        blocks.append((f"Открытых тикетов: {counts.get('total_count', '?')}", []))
+    counts = open_issue_count(repo)
+    if counts is None:
+        blocks.append(("Открытых тикетов: недоступно", ["Не удалось получить число через GitHub REST API."]))
+    else:
+        blocks.append((f"Открытых тикетов: {counts}", []))
 
     prs = gh_json(f"/repos/{repo}/pulls?state=open&per_page=100")
     if prs:
