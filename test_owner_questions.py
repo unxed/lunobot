@@ -1,12 +1,41 @@
 """Гейт уведомлений владельцу: пропускаются только вопросы."""
 
+import json
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import notify_owner
 import owner_questions as oq
 
 URL = "https://github.com/unxed/f4/issues/1#issuecomment-1"
+
+
+class ApiJsonPaginationTest(unittest.TestCase):
+    def test_proxy_link_error_falls_back_to_explicit_pages(self):
+        page1 = [{"id": i} for i in range(100)]
+        page2 = [{"id": 100}]
+        with patch("owner_questions.subprocess.run") as run:
+            run.side_effect = [
+                SimpleNamespace(returncode=1, stdout="", stderr=(
+                    "Numeric-ID repositories/123 paths are not supported through this proxy"
+                )),
+                SimpleNamespace(returncode=0, stdout=json.dumps(page1), stderr=""),
+                SimpleNamespace(returncode=0, stdout=json.dumps(page2), stderr=""),
+            ]
+            result = oq.api_json("repos/example/project/issues/1/comments?per_page=100")
+
+        self.assertEqual(len(result), 101)
+        self.assertEqual(run.call_args_list[1].args[0][-1], "repos/example/project/issues/1/comments?per_page=100&page=1")
+        self.assertEqual(run.call_args_list[2].args[0][-1], "repos/example/project/issues/1/comments?per_page=100&page=2")
+
+    def test_non_proxy_error_is_not_mistaken_for_empty_results(self):
+        with patch("owner_questions.subprocess.run") as run:
+            run.return_value.returncode = 1
+            run.return_value.stdout = ""
+            run.return_value.stderr = "HTTP 403: forbidden"
+            self.assertIsNone(oq.api_json("repos/example/project/comments", check=False))
+            self.assertEqual(run.call_count, 1)
 
 
 class GateTest(unittest.TestCase):

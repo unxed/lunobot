@@ -96,13 +96,45 @@ def gh(*args, check=True):
 
 
 def api_json(path, check=True):
-    out = gh("api", "--paginate", "--slurp", path, check=check)
-    if out is None:
-        return None
-    data = json.loads(out)
-    if data and isinstance(data[0], list):
-        return [item for page in data for item in page]
-    return data
+    out = subprocess.run(
+        ["gh", "api", "--paginate", "--slurp", path],
+        capture_output=True, text=True,
+    )
+    if out.returncode == 0:
+        data = json.loads(out.stdout)
+        if data and isinstance(data[0], list):
+            return [item for page in data for item in page]
+        return data
+
+    error = out.stderr.strip()
+    # Some proxies rewrite GitHub's Link header to a numeric repository path that
+    # they reject. Fetch pages by number instead of following that header.
+    if "repositories/" in error or "proxy" in error.lower():
+        items = []
+        page = 1
+        while True:
+            separator = "&" if "?" in path else "?"
+            result = subprocess.run(
+                ["gh", "api", f"{path}{separator}page={page}"],
+                capture_output=True, text=True,
+            )
+            if result.returncode != 0:
+                if check:
+                    raise RuntimeError(
+                        f"gh api {path}: {result.stderr.strip()[:300]}"
+                    )
+                return None
+            batch = json.loads(result.stdout)
+            if not isinstance(batch, list):
+                return batch
+            items.extend(batch)
+            if len(batch) < 100:
+                return items
+            page += 1
+
+    if check:
+        raise RuntimeError(f"gh api {path}: {error[:300]}")
+    return None
 
 
 def find_issue(create):
