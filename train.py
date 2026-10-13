@@ -932,7 +932,9 @@ def heal(repo):
     last = info["last"]
     print(f"staging КРАСНЫЙ: {last['html_url']} (вершина {last['head_sha'][:9]})")
     if last.get("run_attempt", 1) < 2:
-        run("gh", "run", "rerun", str(last["id"]), "--failed", "--repo", repo, check=False)
+        # `gh run rerun` молча не срабатывал в облачной сессии Claude Code. Проверяем
+        # результат REST-запроса до того, как сообщать, что quick перезапущен.
+        api(f"repos/{repo}/actions/runs/{last['id']}/rerun-failed-jobs", "-X", "POST")
         print("  перезапустил упавший quick — отсеиваем флейк")
         return 0
     first_red, culprits = red_range(repo, info)

@@ -156,6 +156,16 @@ class TrainStepCancellationTest(unittest.TestCase):
         rerun.assert_called_once_with(cancelled)
 
 
+class HealRerunTest(unittest.TestCase):
+    def test_red_staging_rerun_uses_checked_rest_endpoint(self):
+        last = {"html_url": "https://github.com/o/r/actions/runs/42",
+                "head_sha": "abcdef123", "id": 42, "run_attempt": 1}
+        with mock.patch.object(train, "staging_health", return_value=("red", {"last": last})), \
+                mock.patch.object(train, "api") as api:
+            self.assertEqual(train.heal("o/r"), 0)
+        api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
+
+
 class NightlyStaleTest(unittest.TestCase):
     """nightly_is_stale / should_cancel_main_run: the main run after a fast-forward is kept
     only while the floating nightly of a project that has one is old (or unknown)."""
