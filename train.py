@@ -416,10 +416,33 @@ def compare(repo, base, head):
     return api(f"repos/{repo}/compare/{base}...{head}")
 
 
-def tickets(repo, commits):
-    """{ключ: [тексты «Проверить»]} по трейлерам коммитов поезда."""
-    out = {}
+REVERTS = re.compile(r"^This reverts commit ([0-9a-f]{7,40})\.", re.M)
+
+
+def live(commits):
+    """Коммиты поезда без откатанных в нём же: коммит, чей откат (`git revert`, «This reverts
+    commit <sha>.») едет в том же поезде, и сам этот откат в main ничего не приносят —
+    «Пробуйте!» по ним не пишется и тикет не уходит в «проверяют» (13-10-2026 поезд
+    unxed/f4#1907 вёз 2fe2ef8 вместе с откатом cfaec5c, а tick разнёс «Пробуйте!» для f4#912).
+    Откат коммита, который уже был в main до поезда, остаётся: это настоящее изменение."""
+    shas = [c.get("sha") or "" for c in commits]
+
+    def in_train(ref):
+        return next((sha for sha in shas if sha and (sha.startswith(ref) or ref.startswith(sha))), None)
+
+    drop = set()
     for c in commits:
+        for ref in REVERTS.findall(c["commit"]["message"]):
+            target = in_train(ref)
+            if target and c.get("sha"):
+                drop.update((target, c["sha"]))
+    return [c for c in commits if (c.get("sha") or "") not in drop]
+
+
+def tickets(repo, commits):
+    """{ключ: [тексты «Проверить»]} по трейлерам коммитов поезда (без откатанных в нём же)."""
+    out = {}
+    for c in live(commits):
         msg = c["commit"]["message"]
         if len(c.get("parents", [])) > 1:
             continue
@@ -446,7 +469,7 @@ def summaries(repo, commits):
     проблемы и очень короткая сводка исправления из секций «Проблема:»/«Исправление:» сообщения
     коммита; нет секции исправления — заголовок коммита. Повторы убираются."""
     out = {}
-    for c in commits:
+    for c in live(commits):
         msg = c["commit"]["message"]
         if len(c.get("parents", [])) > 1:
             continue

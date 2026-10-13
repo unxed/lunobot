@@ -524,6 +524,24 @@ class TicketsCheckTextTest(unittest.TestCase):
         self.assertEqual(got, {"unxed/f4#1": ["откройте CSV, нажмите Alt+S."],
                                "unxed/f4#2": ["Откройте меню дисков.\nВторая строка."]})
 
+    def test_commit_reverted_in_the_same_train_is_not_announced(self):
+        commits = [
+            {"sha": "aaa1111", "parents": [{}], "commit": {"message":
+             "fix\n\nTouch: #912\n\nПроверить: откройте highlight.ini.\n"}},
+            {"sha": "bbb2222", "parents": [{}], "commit": {"message":
+             "viewer\n\nTouch: #1898\n\nПроверить: нажмите Shift+F7.\n"}},
+            {"sha": "ccc3333", "parents": [{}], "commit": {"message":
+             'Revert "fix"\n\nThis reverts commit aaa1111.\n\nStaging-Revert: u\n'}},
+        ]
+        self.assertEqual(train.tickets("unxed/f4", commits),
+                         {"unxed/f4#1898": ["нажмите Shift+F7."]})
+        self.assertEqual(list(train.summaries("unxed/f4", commits)), ["unxed/f4#1898"])
+
+    def test_revert_of_a_commit_already_in_main_stays(self):
+        commits = [{"sha": "ccc3333", "parents": [{}], "commit": {"message":
+                    'Revert "x"\n\nThis reverts commit 9999999.\n\nTouch: #7\n'}}]
+        self.assertEqual(train.tickets("unxed/f4", commits), {"unxed/f4#7": []})
+
     def test_command_and_trailers_never_reach_the_user(self):
         got = train.tickets("unxed/f4", self.commits(
             "a\n\nTouch: #1\n\nПроверить: go test -run TestA ./internal/panel/\n\nLunobot-Instance: x\n",
