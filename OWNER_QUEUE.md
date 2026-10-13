@@ -61,7 +61,7 @@ https://github.com/blue-panels/mcommander
 Проект: f4
 Поручение: удалить временную ветку tmp/8014/aimgr-1013 в unxed/f4 (её работа приземлена в lunobot/staging коммитом 8dd7297, гонка TestAIManagerStopsWithItsWorkers) и ветку жалобы complaint/proverit-text в unxed/lunobot (PR unxed/lunobot#44 влит, e7efb4f9).
 Критерий: обеих веток нет.
-Состояние: свободно — облачная сессия Лунобота-1 не смогла: прокси запрещает удаление веток (git push --delete и DELETE git/refs — 403).
+Состояние: взял в работу — Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), 13-10-2026 10:46:54 UTC
 
 --
 
