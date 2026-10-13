@@ -6,10 +6,11 @@
 тело с подписанными ссылками (`private-user-images.githubusercontent.com/...?jwt=...`,
 живут минуты), и они скачиваются. Скрипт берёт тело тикета или комментария в виде HTML
 (`Accept: application/vnd.github.full+json`), достаёт из него ссылки на картинки и сохраняет
-файлы в каталог (по умолчанию /tmp/lunobot-1/img/<repo>-<номер>/).
+файлы в уникальный каталог внутри /tmp/lunobot-<номер бота>/work/; номер бота берётся из пути
+учётного клона, поэтому файлы не попадают в каталог другого бота.
 
-    python3 fetch_images.py <owner/repo> <номер тикета>            # картинки тикета и всех его комментариев
-    python3 fetch_images.py <owner/repo> <номер тикета> --comment <id>   # одного комментария
+    python3 fetch_images.py <owner/repo> <номер тикета>                 # картинки тикета и всех его комментариев
+    python3 fetch_images.py <owner/repo> <номер тикета> --comment <id>  # одного комментария
     python3 fetch_images.py <owner/repo> <номер тикета> --since 2026-10-08T00:00:00Z
 
 Печатает пути файлов; их открывает Read (он показывает изображения).
@@ -21,7 +22,9 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import urllib.request
+from pathlib import Path
 
 FULL = ["-H", "Accept: application/vnd.github.full+json"]
 SRC = re.compile(r'<img[^>]+src="([^"]+)"')
@@ -45,6 +48,16 @@ def download(url, path):
         f.write(resp.read())
 
 
+def image_output_dir(script_path, repo, number):
+    bot_root = Path(script_path).resolve().parent.parent
+    if not re.fullmatch(r"lunobot-\d+", bot_root.name):
+        raise ValueError(f"accounting clone is not under /tmp/lunobot-<number>: {bot_root}")
+    work_dir = bot_root / "work"
+    work_dir.mkdir(parents=True, exist_ok=True)
+    prefix = f"images-{repo.replace('/', '-')}-{number}-"
+    return tempfile.mkdtemp(prefix=prefix, dir=work_dir)
+
+
 def main(argv):
     if len(argv) < 2:
         print(__doc__)
@@ -52,8 +65,7 @@ def main(argv):
     repo, number = argv[0], argv[1]
     comment = argv[argv.index("--comment") + 1] if "--comment" in argv else None
     since = argv[argv.index("--since") + 1] if "--since" in argv else None
-    out_dir = os.path.join("/tmp/lunobot-1/img", f"{repo.replace('/', '-')}-{number}")
-    os.makedirs(out_dir, exist_ok=True)
+    out_dir = image_output_dir(__file__, repo, number)
 
     sources = []
     if comment:
