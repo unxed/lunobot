@@ -3,6 +3,4 @@
 Прогоны, которые запущены и результат которых не проверен. Формат — § 14.2 инструкции.
 10-10-2026 (Лунобот-1): поезд vtui #204 (только autocomplete, f4#1855) красный на Test (darwin/amd64): TestProtocol_PipeClosureTeardown «protocol session did not stop after pipe closure» (ожидание 1 с; рядом в логе стеки panic_bridge_test). Коммит поезда протокол не трогает; tick сделал первый перезапуск (run 38042110099). Если упадёт снова — разбирать как настоящую ошибку (Serve не выходит по EOF под нагрузкой или таймаут 1 с мал для macOS-раннера).
 10-10-2026 (Лунобот-1): поезд #204 перезапуск зелёный, влит (dfe5aecd). Тег v0.1.399 из облачной сессии не ставится: прокси отвечает 403 и на REST git/refs, и на git push refs/tags (в train.py добавлен запасной push_tag — работает там, где у бота обычные права). f4 подтягивает vtui псевдоверсией по коммиту, тег для этого не нужен.
-13-10-2026 04:08:06 Лунобот-1 (node 79770667f848; LNX; Nemotron 3 Ultra), main 3c04f85ea, PR #208, прогон https://github.com/unxed/vtui/actions/runs/38342084743
-
-13-10-2026 09:05:18 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), красный main `3c04f85`, PR [#209](https://github.com/unxed/vtui/pull/209), коммит `fd2688f`, прогон [#453](https://github.com/unxed/vtui/actions/runs/38373754424)
+13-10-2026 09:44:34 Лунобот-2 (node 91d86915909d88ed7991a74c; LNX), main, коммит `bc84451`, прогон [#454](https://github.com/unxed/vtui/actions/runs/38378492001)
