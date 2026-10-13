@@ -928,6 +928,23 @@ def heal(repo):
     return 0
 
 
+def unreverted_commits(commits):
+    """Оставить самые поздние изменения из цепочек явных git revert.
+
+    Ejected train commits remain in staging history, but must not keep their old
+    age as outstanding user work after a later commit explicitly reverts them.
+    The revert commit itself remains, so any real outstanding history still has
+    an age anchored to the corrective action.
+    """
+    reverted = set()
+    for commit in commits:
+        message = commit.get("commit", {}).get("message", "")
+        match = re.search(r"(?im)^This reverts commit ([0-9a-f]{40})\.?$", message)
+        if match:
+            reverted.add(match.group(1))
+    return [c for c in commits if c.get("sha") not in reverted]
+
+
 def stuck(repo):
     """Метрика результата, а не активности: как долго УЖЕ ПРИЗЕМЛЁННАЯ работа ждёт main.
     Флот может выглядеть очень занятым (десятки land, поезд за поездом) и при этом не
@@ -944,7 +961,8 @@ def stuck(repo):
     if green_train:
         print(f"staging tip уже покрыт зелёным поездом #{green_train['number']} — ждёт merge в main")
         return 0
-    own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
+    own = [c for c in unreverted_commits(compare(repo, main, staging)["commits"])
+           if len(c["parents"]) == 1]
     if not own:
         print("staging не впереди main — приземлённая работа вся в main")
         return 0

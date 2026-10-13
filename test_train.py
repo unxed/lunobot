@@ -403,3 +403,22 @@ class TriedSinceTest(unittest.TestCase):
     def test_ticket_without_commits_is_not_tried(self):
         with mock.patch.object(train, "api", return_value=[{"body": "Пробуйте!", "created_at": "2026-10-10T02:00:00Z"}]):
             self.assertFalse(train.tried_since("unxed/f4", 8, self.commits))
+
+
+class UnrevertedStuckCommitsTest(unittest.TestCase):
+    def test_ejected_old_commit_does_not_keep_its_age_after_revert(self):
+        original = {
+            "sha": "a" * 40,
+            "commit": {"message": "test change"},
+            "parents": [{}],
+        }
+        revert = {
+            "sha": "b" * 40,
+            "commit": {"message": f'Revert "test change"\n\nThis reverts commit {"a" * 40}.'},
+            "parents": [{}],
+        }
+        self.assertEqual(train.unreverted_commits([original, revert]), [revert])
+
+    def test_non_revert_commit_is_kept(self):
+        work = {"sha": "c" * 40, "commit": {"message": "new work"}, "parents": [{}]}
+        self.assertEqual(train.unreverted_commits([work]), [work])
