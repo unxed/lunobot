@@ -6,11 +6,12 @@
 тело с подписанными ссылками (`private-user-images.githubusercontent.com/...?jwt=...`,
 живут минуты), и они скачиваются. Скрипт берёт тело тикета или комментария в виде HTML
 (`Accept: application/vnd.github.full+json`), достаёт из него ссылки на картинки и сохраняет
-файлы в каталог (по умолчанию /tmp/lunobot-1/img/<repo>-<номер>/).
+файлы в каталог, заданный обязательным параметром `--out-dir` (путь должен быть внутри
+каталога шага текущего бота).
 
-    python3 fetch_images.py <owner/repo> <номер тикета>            # картинки тикета и всех его комментариев
-    python3 fetch_images.py <owner/repo> <номер тикета> --comment <id>   # одного комментария
-    python3 fetch_images.py <owner/repo> <номер тикета> --since 2026-10-08T00:00:00Z
+    python3 fetch_images.py <owner/repo> <номер тикета> --out-dir <каталог>  # картинки тикета и комментариев
+    python3 fetch_images.py <owner/repo> <номер тикета> --comment <id> --out-dir <каталог>
+    python3 fetch_images.py <owner/repo> <номер тикета> --since <UTC> --out-dir <каталог>
 
 Печатает пути файлов; их открывает Read (он показывает изображения).
 Ссылки подписаны на несколько минут: скачивать надо сразу, не складывать ссылки в учёт.
@@ -52,7 +53,9 @@ def main(argv):
     repo, number = argv[0], argv[1]
     comment = argv[argv.index("--comment") + 1] if "--comment" in argv else None
     since = argv[argv.index("--since") + 1] if "--since" in argv else None
-    out_dir = os.path.join("/tmp/lunobot-1/img", f"{repo.replace('/', '-')}-{number}")
+    if "--out-dir" not in argv or not argv[argv.index("--out-dir") + 1:]:
+        raise SystemExit("укажите --out-dir внутри /tmp/lunobot-<номер>/work/<слаг>/")
+    out_dir = argv[argv.index("--out-dir") + 1]
     os.makedirs(out_dir, exist_ok=True)
 
     sources = []
