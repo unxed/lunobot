@@ -166,6 +166,44 @@ class HealRerunTest(unittest.TestCase):
         api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
+class BisectDispatchTest(unittest.TestCase):
+    COMMITS = [{"sha": "a" * 40}, {"sha": "b" * 40}]
+    PR = {"number": 7, "base": {"sha": "c" * 40}}
+
+    def test_workflow_cli_failure_falls_back_to_checked_rest_dispatch(self):
+        def run(*args, **kwargs):
+            if args[0:3] == ("gh", "workflow", "run"):
+                return subprocess.CompletedProcess(args, 1, "", "GraphQL unavailable")
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        with mock.patch.object(train, "train_commits", return_value=self.COMMITS), \
+                mock.patch.object(train, "api"), \
+                mock.patch.object(train, "sandbox_cmd", return_value="go test ./..."), \
+                mock.patch.object(train, "run", side_effect=run) as mocked_run:
+            self.assertIsNone(train.bisect("o/r", self.PR, "ubuntu-latest", "go test ./...",
+                                           good=-1, bad=0))
+
+        fallbacks = [call.args for call in mocked_run.call_args_list
+                     if call.args[0:3] == ("gh", "api", "-X")]
+        self.assertEqual(len(fallbacks), 2)
+        self.assertEqual(fallbacks[0], (
+            "gh", "api", "-X", "POST", "repos/o/r/actions/workflows/sandbox.yml/dispatches",
+            "-f", "ref=bisect/7/base-ccccccccc", "-f", "inputs[os]=ubuntu-latest",
+            "-f", "inputs[command]=go test ./..."))
+
+    def test_failed_rest_dispatch_is_reported(self):
+        def run(*args, **kwargs):
+            return subprocess.CompletedProcess(args, 1, "", "HTTP 403")
+
+        with mock.patch.object(train, "train_commits", return_value=self.COMMITS), \
+                mock.patch.object(train, "api"), \
+                mock.patch.object(train, "sandbox_cmd", return_value="go test ./..."), \
+                mock.patch.object(train, "run", side_effect=run):
+            with self.assertRaisesRegex(SystemExit, "не удалось запустить sandbox.yml.*HTTP 403"):
+                train.bisect("o/r", self.PR, "ubuntu-latest", "go test ./...",
+                             good=-1, bad=0)
+
+
 class NightlyStaleTest(unittest.TestCase):
     """nightly_is_stale / should_cancel_main_run: the main run after a fast-forward is kept
     only while the floating nightly of a project that has one is old (or unknown)."""

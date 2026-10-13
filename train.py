@@ -742,8 +742,18 @@ def bisect(repo, pr, os_label, cmd, good=-1, bad=None):
     for ref, sha in refs:
         api(f"repos/{repo}/git/refs", "-f", f"ref=refs/heads/{ref}", "-f", f"sha={sha}",
             check=False)
-        run("gh", "workflow", "run", "sandbox.yml", "--repo", repo, "--ref", ref,
-            "-f", f"os={os_label}", "-f", f"command={sandbox_cmd(repo, ref, os_label, cmd)}")
+        command = sandbox_cmd(repo, ref, os_label, cmd)
+        dispatched = run("gh", "workflow", "run", "sandbox.yml", "--repo", repo, "--ref", ref,
+                         "-f", f"os={os_label}", "-f", f"command={command}", check=False)
+        if dispatched.returncode:
+            dispatched = run("gh", "api", "-X", "POST",
+                             f"repos/{repo}/actions/workflows/sandbox.yml/dispatches",
+                             "-f", f"ref={ref}", "-f", f"inputs[os]={os_label}",
+                             "-f", f"inputs[command]={command}", check=False)
+            if dispatched.returncode:
+                error = (dispatched.stderr or dispatched.stdout).strip()
+                sys.exit(f"не удалось запустить sandbox.yml для {ref}: "
+                         f"{error or 'код ' + str(dispatched.returncode)}")
     print(f"бисект: окно ({good}, {bad}] из {len(commits)} коммитов, {len(refs)} прогонов "
           f"({os_label}, `{cmd}`) — результат разберёт следующий tick")
 
