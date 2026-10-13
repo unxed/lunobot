@@ -46,10 +46,38 @@ def gh(path, *args):
 
 
 def gh_all(path):
-    p = subprocess.run(["gh", "api", "--paginate", path], capture_output=True, text=True)
-    if p.returncode or not p.stdout.strip():
-        return []
-    return json.loads(p.stdout.replace("][", ","))
+    try:
+        p = subprocess.run(["gh", "api", "--paginate", path], capture_output=True,
+                           text=True, timeout=60)
+        if p.returncode == 0 and p.stdout.strip():
+            pages = json.loads(p.stdout.replace("][", ","))
+            if isinstance(pages, list):
+                return pages
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+
+    # gh --paginate follows GitHub's Link header, which some proxies rewrite to
+    # unsupported numeric repository paths. Request each page explicitly instead.
+    items = []
+    for page in range(1, 101):
+        separator = "&" if "?" in path else "?"
+        try:
+            p = subprocess.run(["gh", "api", f"{path}{separator}page={page}"],
+                               capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        if p.returncode != 0:
+            return None
+        try:
+            batch = json.loads(p.stdout)
+        except ValueError:
+            return None
+        if not isinstance(batch, list):
+            return None
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
+    return None
 
 
 def repos():
