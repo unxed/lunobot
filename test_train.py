@@ -166,6 +166,13 @@ class HealRerunTest(unittest.TestCase):
         api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
+class CancelRunTest(unittest.TestCase):
+    def test_cancel_uses_rest_endpoint(self):
+        with mock.patch.object(train, "api") as api:
+            train.cancel_run("o/r", 42)
+        api.assert_called_once_with("repos/o/r/actions/runs/42/cancel", "-X", "POST")
+
+
 class BisectDispatchTest(unittest.TestCase):
     COMMITS = [{"sha": "a" * 40}, {"sha": "b" * 40}]
     PR = {"number": 7, "base": {"sha": "c" * 40}}

@@ -772,6 +772,11 @@ def drop_bisect(repo, refs):
         api(f"repos/{repo}/git/refs/heads/{ref}", "-X", "DELETE", check=False)
 
 
+def cancel_run(repo, run_id):
+    """Cancel an Actions run through REST; `gh run cancel` is unreliable in Claude Code cloud."""
+    return api(f"repos/{repo}/actions/runs/{run_id}/cancel", "-X", "POST")
+
+
 def close_train(repo, pr, comment):
     """Закрыть поезд целиком: комментарий и закрытие PR, удаление ветки поезда и bisect/<N>/*,
     отмена идущих прогонов (поезда и бисекта) — чтобы это не делалось руками и не сжигало раннеры."""
@@ -787,7 +792,7 @@ def close_train(repo, pr, comment):
             runs = api(f"repos/{repo}/actions/runs?branch={br}&status={st}&per_page=100",
                        check=False) or {}
             for r in runs.get("workflow_runs", []):
-                run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
+                cancel_run(repo, r["id"])
     drop_bisect(repo, branches)  # и ветка поезда: DELETE refs/heads/<ref> одинаков для всех
 
 
@@ -1250,7 +1255,7 @@ def train_step(repo, sign):
         if should_cancel_main_run(repo):
             time.sleep(5)
             for r in main_push_runs_in_progress(repo, head):
-                run("gh", "run", "cancel", str(r["id"]), "--repo", repo, check=False)
+                cancel_run(repo, r["id"])
         api(f"repos/{repo}/git/refs/heads/{pr['head']['ref']}", "-X", "DELETE", check=False)
     else:
         merged = run("gh", "pr", "merge", str(n), "--repo", repo, "--merge", "--delete-branch", check=False)
