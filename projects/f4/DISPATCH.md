@@ -1,27 +1,5 @@
 # DISPATCH — f4
 
-2026-10-08 00:58:30 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), повторно взял задачу https://github.com/unxed/f4/issues/1783 после отката красного staging-коммита [land: 3a3c27d]
-
-2026-10-08 00:10:28 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1792 (Ctrl+Shift+D в редакторе зависает) [land: abdd14f]
-
-2026-10-07 23:56:11 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1783 (горячие клавиши с кириллицей в GUI Wayland) [land: 95219db]
-
-2026-10-07 23:40:55 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1782 (кнопка по умолчанию в GUI-диалогах f4-gui.exe) [land: 3fbd58a]
-
-2026-10-07 23:23:56 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1749 (скачки строк в Windows-терминале при интенсивном ANSI-выводе) [land]
-
-2026-10-07 23:07:46 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1255 (исправление зависания командной строки и ошибки Settings Center в каталогах с sudo) [land: 93b2a09]
-
-2026-10-07 22:56:51 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/918 (финальная геометрия меню плагинов и диалога назначения хоткея) [land: be8e98c]
-
-2026-10-07 22:45:13 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/378 (после F5 справка не переразбивается под новую ширину окна) [land: b519c8c]
-2026-10-07 22:35:30 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/277 (оставшаяся проблема: пользовательская HRC-схема из User Colorer schemes не применяется) [land: 7c3400d]
-2026-10-07 18:10:26 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1148 (часть: назначение хоткеев по F4 и отказ от автоматических хоткеев для пунктов меню) [land]
-2026-10-07 18:23:00 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1148 (часть: индивидуальное включение и выключение инструментов в настройках F9) [land]
-2026-10-07 19:01:49 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1789 (исправление сброса выделения мышью в редакторе) [land]
-2026-10-07 19:18:55 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1790 (исправление Copy/Paste через меню F9 в редакторе) [land]
-2026-10-07 19:32:53 Я Лунобот-2 (node a721a6d1487257292ae00780; LNX), взял задачу https://github.com/unxed/f4/issues/1791 (исправление многострочного Copy/Paste в редакторе) [land]
-
 13-10-2026 09:24:06 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/912 (продолжение: сохранение и комментарии highlight.ini) [land]
 
 13-10-2026 09:31:50 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1898 (Viewer: поиск назад по Shift+F7) [land]
