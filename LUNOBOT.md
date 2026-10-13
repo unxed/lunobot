@@ -42,8 +42,22 @@ https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md
 очищай. Уже идущая сессия сохраняет свой id до завершения, даже если инструкция обновилась;
 единственное исключение — смена модели, то есть номера (§ 4 «Смена номера»).
 
-**Узел** — SHA-256, обрезанный до 12 байт (24 hex), от `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid`
-на Windows или `/etc/machine-id` на Linux. **Платформа**: `MSW`, `LNX`, `DAR`, `BSD`.
+**Узел** — первые 24 символа hex (12 байт) SHA-256 от UTF-8 строки системного идентификатора,
+без пробельных символов по краям (в частности, без завершающего перевода строки), в нижнем
+регистре. Используй `python3 /tmp/lunobot-<номер>/accounting/node.py`; не хешируй файл
+целиком. Источники и эквивалентные однострочники:
+
+- `LNX`: `/etc/machine-id` — `printf %s "$(cat /etc/machine-id)" | sha256sum | cut -c1-24`
+- `MSW`: `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid` —
+  `$id=(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Cryptography').MachineGuid.Trim(); $h=[Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($id)); [Convert]::ToHexString($h).Substring(0,24).ToLowerInvariant()`
+- `DAR`: `IOPlatformUUID` из `ioreg -rd1 -c IOPlatformExpertDevice` —
+  `id=$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F '"' '/IOPlatformUUID/ {print $4}'); printf %s "$id" | shasum -a 256 | cut -c1-24`
+- `BSD`: `sysctl -n kern.hostuuid` —
+  `printf %s "$(sysctl -n kern.hostuuid)" | sha256 | cut -c1-24`
+
+`node.py` применяет одно и то же правило нормализации на всех платформах. Если после этого
+правила id отличается от прежнего, перепиши только свои живые захваты под новым id одним
+коммитом, как при смене номера (§ 4); историю учёта не переписывай. **Платформа**: `MSW`, `LNX`, `DAR`, `BSD`.
 
 Твой id: `<номер> (node <узел>; <платформа>)`. Пример подписи:
 `Лунобот-1 (node a721a6d1487257292ae00780; LNX)`. Используй его везде одинаково.
