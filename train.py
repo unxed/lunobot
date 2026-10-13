@@ -899,7 +899,7 @@ def rerun(failed):
         m = re.search(r"github\.com/([^/]+/[^/]+)/actions/runs/(\d+)", c.get("detailsUrl") or "")
         if m and m.groups() not in seen:
             seen.add(m.groups())
-            api(f"repos/{m.group(1)}/actions/runs/{m.group(2)}/rerun-failed-jobs", "-X", "POST", check=False)
+            api(f"repos/{m.group(1)}/actions/runs/{m.group(2)}/rerun-failed-jobs", "-X", "POST")
 
 
 def covered(repo, sha):

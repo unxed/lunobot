@@ -385,9 +385,16 @@ class RollupRestRerunTest(unittest.TestCase):
         with mock.patch.object(train, "api", side_effect=api):
             checks = train.rollup_rest("o/r", 5)
         posted = []
-        with mock.patch.object(train, "api", side_effect=lambda p, *a, check=True: posted.append(p)):
+        with mock.patch.object(train, "api", side_effect=lambda p, *a, check=True: posted.append((p, a, check))):
             train.rerun(checks)
-        self.assertEqual(posted, ["repos/o/r/actions/runs/42/rerun-failed-jobs"])
+        self.assertEqual(posted, [("repos/o/r/actions/runs/42/rerun-failed-jobs", ("-X", "POST"), True)])
+
+    def test_failed_rerun_request_is_not_silently_ignored(self):
+        checks = [{"detailsUrl": "https://github.com/o/r/actions/runs/42/job/7"}]
+        with mock.patch.object(train, "api", side_effect=SystemExit("request failed")) as api:
+            with self.assertRaisesRegex(SystemExit, "request failed"):
+                train.rerun(checks)
+        api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
 if __name__ == "__main__":
