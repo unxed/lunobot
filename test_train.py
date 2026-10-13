@@ -412,9 +412,20 @@ class CheckSectionTest(unittest.TestCase):
         body = "fix\n\nПроверить:\nОткройте меню дисков: Bookmarks теперь под Tools." + self.TOUCH
         self.assertIsNone(train.check_section_problem(body))
 
-    def test_text_on_same_line_is_refused(self):
-        body = "fix\n\nПроверить: Откройте меню дисков." + self.TOUCH
-        self.assertIn("той же строке", train.check_section_problem(body))
+    def test_human_text_on_same_line_passes(self):
+        # 57 из 300 коммитов main f4 пишут текст в той же строке — это нормальный текст.
+        body = "fix\n\nПроверить: Windows: Alt+F6 → «Жёсткая ссылка» — ссылка рядом." + self.TOUCH
+        self.assertIsNone(train.check_section_problem(body))
+
+    def test_command_on_same_line_is_refused(self):
+        body = "fix\n\nПроверить: go test ./vfs/ -run TestSudoClient — зелёный." + self.TOUCH
+        self.assertIn("команда", train.check_section_problem(body))
+
+    def test_empty_section_before_trailers_is_not_text(self):
+        body = ("fix\n\nTouch: unxed/vtui#5\n\nПроверить:\n\n"
+                "Lunobot-Instance: Лунобот-1 (node a; LNX)\nCo-Authored-By: X <x@y>\n")
+        self.assertEqual(train.check_text(body), "")
+        self.assertIn("нет текста", train.check_section_problem(body))
 
     def test_go_test_command_is_refused(self):
         body = "fix\n\nПроверить:\ngo test -run TestX ./internal/panel/" + self.TOUCH
@@ -436,3 +447,23 @@ class CheckSectionTest(unittest.TestCase):
         body = "fix\n\nПроверить:\n`highlight.ini` теперь сохраняется." + self.TOUCH
         self.assertIsNone(train.check_section_problem(body))
 
+
+class TicketsCheckTextTest(unittest.TestCase):
+    """tick: текст «Проверить:» из коммитов поезда для «Пробуйте!»."""
+
+    @staticmethod
+    def commits(*messages):
+        return [{"commit": {"message": m}, "parents": [{}]} for m in messages]
+
+    def test_text_on_same_line_and_next_line_are_both_read(self):
+        got = train.tickets("unxed/f4", self.commits(
+            "a\n\nTouch: #1\n\nПроверить: откройте CSV, нажмите Alt+S.\n\nLunobot-Instance: x\n",
+            "b\n\nTouch: #2\n\nПроверить:\nОткройте меню дисков.\nВторая строка.\n\nLunobot-Instance: x\n"))
+        self.assertEqual(got, {"unxed/f4#1": ["откройте CSV, нажмите Alt+S."],
+                               "unxed/f4#2": ["Откройте меню дисков.\nВторая строка."]})
+
+    def test_command_and_trailers_never_reach_the_user(self):
+        got = train.tickets("unxed/f4", self.commits(
+            "a\n\nTouch: #1\n\nПроверить: go test -run TestA ./internal/panel/\n\nLunobot-Instance: x\n",
+            "b\n\nLunobot-Task: ci\n\nПроверить:\n\nLunobot-Instance: x\nCo-Authored-By: y\n"))
+        self.assertEqual(got, {"unxed/f4#1": [], "ci": []})
