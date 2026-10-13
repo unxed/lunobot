@@ -68,4 +68,4 @@ https://github.com/blue-panels/mcommander
 Проект: учёт
 Поручение: Исправить gh_post.py: убрать хвостовые подписи Claude Code перед сверкой текста, добавить регрессионные тесты и указание в LUNOBOT.md § 13.2.
 Критерий: `python3 -m unittest test_gh_post` проходит; отчёт оставлен в issue #47 через gh_post.py.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 13-10-2026 11:36:06 UTC
+Состояние: ждёт владельца — live-проверка переписывания подвала доступна только в Claude Code cloud session; код и 13 тестов в be09a573, отчёт: https://github.com/unxed/lunobot/issues/47#issuecomment-6144687065; 13-10-2026 11:38:31 UTC
