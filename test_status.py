@@ -44,6 +44,33 @@ class InstancesTest(unittest.TestCase):
             self.assertEqual(status.work_commits(), [])
             self.assertEqual(status.instances(), [])
 
+    def test_work_commits_only_queries_staging_for_train_projects(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            projects = root / "projects"
+            for name, publication in (("f4", "поезда"), ("dn", "PR"),
+                                      ("vtui", "lunobot/staging + train.py land")):
+                project = projects / name
+                project.mkdir(parents=True)
+                mode = (f"- Режим публикации: {publication}\n" if name != "vtui" else
+                        f"- PR: {publication}\n")
+                (project / "PROJECT.md").write_text(
+                    f"- Код: https://github.com/example/{name}\n{mode}", encoding="utf-8")
+            (projects / "INDEX.md").write_text(
+                "1. [f4](f4/PROJECT.md)\n2. [dn](dn/PROJECT.md)\n"
+                "3. [vtui](vtui/PROJECT.md)\n", encoding="utf-8")
+            calls = []
+
+            def api(path):
+                calls.append(path)
+                return []
+
+            with patch.object(status, "ROOT", root), patch.object(status, "gh_json", side_effect=api):
+                status.work_commits()
+
+        self.assertEqual(sum("sha=lunobot%2Fstaging" in call for call in calls), 2)
+        self.assertEqual(sum("sha=main" in call for call in calls), 3)
+
     def test_times_are_localized_in_browser(self):
         with patch.object(status, "instances_block", return_value=[]), \
              patch.object(status, "fleet_line", return_value=""):

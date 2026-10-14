@@ -512,6 +512,26 @@ class RollupRestRerunTest(unittest.TestCase):
             train.rerun(checks)
         self.assertEqual(posted, [("repos/o/r/actions/runs/42/rerun-failed-jobs", ("-X", "POST"), True)])
 
+    def test_runs_of_other_branches_on_the_train_commit_are_not_its_checks(self):
+        def api(path, *args, check=True):
+            if path.endswith("/pulls/5"):
+                return {"head": {"sha": "abc", "ref": "lunobot/train/vtui/x"}}
+            if "check-suites" in path:
+                return {"check_suites": [{"id": 1, "head_branch": "lunobot/train/vtui/x"},
+                                         {"id": 2, "head_branch": "tmp/19d3/golden-fix"}]}
+            if "check-runs" in path:
+                return {"check_runs": [
+                    {"name": "Test (linux)", "status": "completed", "conclusion": "success",
+                     "check_suite": {"id": 1}, "details_url": "u1"},
+                    {"name": "Sandbox (ubuntu-latest)", "status": "completed", "conclusion": "failure",
+                     "check_suite": {"id": 2}, "details_url": "u2"}]}
+            if path.endswith("/status"):
+                return {"statuses": []}
+            return {}
+        with mock.patch.object(train, "api", side_effect=api):
+            checks = train.rollup_rest("o/r", 5)
+        self.assertEqual([c["name"] for c in checks], ["Test (linux)"])
+
     def test_failed_rerun_request_is_not_silently_ignored(self):
         checks = [{"detailsUrl": "https://github.com/o/r/actions/runs/42/job/7"}]
         with mock.patch.object(train, "api", side_effect=SystemExit("request failed")) as api:
@@ -656,3 +676,43 @@ class TickAllTest(unittest.TestCase):
         self.assertEqual(calls, ["o/a", "o/b"])
         self.assertEqual(rc, 1)
         self.assertIn("ОШИБКА tick o/a", out.getvalue())
+
+
+class MainHelpTest(unittest.TestCase):
+    """5а.1: `--help` и опечатка в аргументах не должны запускать настоящий land."""
+
+    def run_main(self, argv):
+        out = io.StringIO()
+        with mock.patch.object(train, "land", return_value=0) as land, \
+                contextlib.redirect_stdout(out):
+            rc = train.main(argv)
+        return rc, land, out.getvalue()
+
+    def test_land_help_does_nothing(self):
+        for argv in (["land", "--help"], ["land", "-h"], ["--help"], ["help"]):
+            rc, land, out = self.run_main(argv)
+            self.assertEqual(rc, 0, argv)
+            land.assert_not_called()
+            self.assertIn("train.py land", out)
+
+    def test_other_commands_help_does_not_run(self):
+        with mock.patch.object(train, "tick") as tick, \
+                mock.patch.object(train, "health") as health, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.main(["tick", "unxed/f4", "--help"]), 0)
+            self.assertEqual(train.main(["health", "-h"]), 0)
+        tick.assert_not_called()
+        health.assert_not_called()
+
+    def test_land_unknown_argument_refused(self):
+        rc, land, out = self.run_main(["land", "--fix-stagin"])
+        self.assertEqual(rc, 2)
+        land.assert_not_called()
+        self.assertIn("--fix-staging", out)
+
+    def test_land_known_flags_still_work(self):
+        rc, land, _ = self.run_main(["land"])
+        land.assert_called_once_with(fix=False)
+        land.reset_mock()
+        rc, land, _ = self.run_main(["land", "--fix-staging"])
+        land.assert_called_once_with(fix=True)

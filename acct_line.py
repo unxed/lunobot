@@ -44,23 +44,24 @@ RECORD = re.compile(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d ")
 RECORD_FILES = ("DISPATCH.md", "CI.md", "BRANCHES.md")
 
 
-def remove_line(text, key, records_only=False):
+def remove_line(text, key, records_only=False, remove_all=False):
     """Новый текст без единственной строки с key; None — такой строки нет; ValueError — их несколько.
-    records_only: искать только среди записей с меткой времени, чтобы ключ не снёс шапку файла."""
+    records_only: искать только среди записей с меткой времени, чтобы ключ не снёс шапку файла.
+    remove_all: убрать все строки с key одним проходом (пять строк прогонов одного main — один коммит)."""
     lines = text.split("\n")
     hits = [i for i, l in enumerate(lines)
             if key in l and (not records_only or RECORD.match(l))]
     if not hits:
         return None
-    if len(hits) > 1:
-        raise ValueError(f"подстрока {key!r} есть в {len(hits)} строках — уточни ключ")
-    i = hits[0]
-    del lines[i]
-    # строка была абзацем: убрать лишнюю пустую строку, чтобы не осталось двух подряд
-    if i < len(lines) and lines[i] == "" and (i == 0 or lines[i - 1] == ""):
+    if len(hits) > 1 and not remove_all:
+        raise ValueError(f"подстрока {key!r} есть в {len(hits)} строках — уточни ключ или добавь --all")
+    for i in reversed(hits):
         del lines[i]
-    elif i == len(lines) and i > 0 and lines[i - 1] == "":
-        del lines[i - 1]
+        # строка была абзацем: убрать лишнюю пустую строку, чтобы не осталось двух подряд
+        if i < len(lines) and lines[i] == "" and (i == 0 or lines[i - 1] == ""):
+            del lines[i]
+        elif i == len(lines) and i > 0 and lines[i - 1] == "":
+            del lines[i - 1]
     return "\n".join(lines)
 
 
@@ -83,7 +84,7 @@ def gate(relpath, text, added_line_no):
     return [p for p in problems if p[1] == added_line_no]
 
 
-def attempt(repo, remote, branch, op, relpath, arg, message, sign):
+def attempt(repo, remote, branch, op, relpath, arg, message, sign, remove_all=False):
     git(repo, "fetch", "-q", remote, branch)
     base = git(repo, "rev-parse", "FETCH_HEAD").stdout.strip()
     old = git(repo, "show", f"{base}:{relpath}", check=False)
@@ -94,7 +95,7 @@ def attempt(repo, remote, branch, op, relpath, arg, message, sign):
         new = add_paragraph(old.stdout, arg)
         added = len(new.rstrip("\n").split("\n"))
     else:
-        new = remove_line(old.stdout, arg, os.path.basename(relpath) in RECORD_FILES)
+        new = remove_line(old.stdout, arg, os.path.basename(relpath) in RECORD_FILES, remove_all)
         if new is None:
             print(f"в {relpath} нет строки с {arg!r} — удалять нечего")
             return "noop"
@@ -128,7 +129,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("op", choices=["add", "remove"])
     ap.add_argument("file", help="путь от корня учётного репозитория")
-    ap.add_argument("text", help="add: строка целиком; remove: подстрока-ключ")
+    ap.add_argument("text", help="add: строка целиком; remove: подстрока-ключ (несколько строк — с --all)")
+    ap.add_argument("--all", action="store_true", help="remove: убрать все строки с ключом одним коммитом")
     ap.add_argument("-m", "--message", required=True)
     ap.add_argument("--sign", required=True, help="id инстанса, как в подписи (§ 1)")
     ap.add_argument("--repo", default=HERE, help="клон учёта (по умолчанию каталог скрипта)")
@@ -141,7 +143,7 @@ def main(argv=None):
     relpath = a.file.replace("\\", "/")
     try:
         for _ in range(3):
-            r = attempt(a.repo, a.remote, a.branch, a.op, relpath, a.text, a.message, a.sign)
+            r = attempt(a.repo, a.remote, a.branch, a.op, relpath, a.text, a.message, a.sign, a.all)
             if r in ("ok", "noop"):
                 return 0
             if r == "gate":
