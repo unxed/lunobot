@@ -85,6 +85,15 @@ class OwnerTest(unittest.TestCase):
         found = kinds(["взял задачу https://github.com/unxed/dn/issues/40 [land]"])
         self.assertIn("формат", found)
 
+    def test_rejects_unrecognized_record_without_url_or_route(self):
+        found = kinds(["взял кастомную задачу «триаж 1929–1929» по § 5 п. 4"])
+        self.assertIn("формат", found)
+
+    def test_file_header_text_is_not_malformed(self):
+        found = kinds(["Файл содержит только действующие захваты. Формат — § 8 инструкции.\n"
+                       "Закончил шаг — удали свои строки, а не дописывай отчёт."])
+        self.assertEqual(found, [])
+
 
 class OverlapTest(unittest.TestCase):
     def test_custom_task_and_url_for_same_ticket_overlap(self):
