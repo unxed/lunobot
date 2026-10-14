@@ -1084,6 +1084,12 @@ def main_ci(repo):
         # видны через ~20 минут, а прогон шёл ещё полчаса) — починку начинаем сразу.
         jobs = api(f"repos/{repo}/actions/runs/{r['id']}/jobs?per_page=100", check=False) or {}
         bad = [j["name"] for j in jobs.get("jobs", []) if j.get("conclusion") == "failure"]
+        if bad and r.get("run_attempt", 1) < 2 and len(bad) <= MAIN_FLAKE_MAX_JOBS:
+            # rerun-failed-jobs GitHub принимает только у завершённого прогона: ждём конца,
+            # потом ветка ниже перезапустит (до этого красным не объявляем — § 5 п. 2).
+            print(f"main {head[:9]}: полная матрица идёт, упал {', '.join(bad)} — после конца "
+                  f"прогона перезапущу один раз (флейк?): {r['html_url']}")
+            return 0
         if bad:
             print(f"main {head[:9]}: полная матрица ещё идёт, но уже КРАСНАЯ ({len(bad)}: "
                   f"{', '.join(bad[:6])}{' …' if len(bad) > 6 else ''}) — {r['html_url']}. "
