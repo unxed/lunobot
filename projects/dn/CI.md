@@ -14,8 +14,6 @@
 
 14-10-2026 08:38:46 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), main, коммит `662a00c` (мерж unxed/dn#49, часть 3 из 4), прогон layout [#583](https://github.com/unxed/dn/actions/runs/38536438920)
 
-14-10-2026 08:39:20 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `b2a9353` (после мержа PR [#44](https://github.com/unxed/dn/pull/44) и [#53](https://github.com/unxed/dn/pull/53); оба отставали от main — новая комбинация, не отменять; push-прогоны dn/dn-linux/dn-windows на `ea0b810` сняты concurrency вторым мержем), прогоны [dn #635](https://github.com/unxed/dn/actions/runs/38536523405), [dn-linux #661](https://github.com/unxed/dn/actions/runs/38536523429), [dn-windows #558](https://github.com/unxed/dn/actions/runs/38536523414), [layout #584 на `ea0b810`](https://github.com/unxed/dn/actions/runs/38536504600)
-
 14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон dn-linux [#665](https://github.com/unxed/dn/actions/runs/38547942315)
 
 14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон dn [#640](https://github.com/unxed/dn/actions/runs/38547942383)
