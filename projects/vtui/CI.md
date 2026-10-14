@@ -8,4 +8,4 @@
 
 14-10-2026 07:32:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a806225a), кастомная задача «красный main vtui 2ca4a1cb1 (Race)» по § 5 п. 2, PR [#214](https://github.com/unxed/vtui/pull/214), коммит `1589f99`, прогон [#463](https://github.com/unxed/vtui/actions/runs/38528946427)
 
-14-10-2026 08:02:17 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер ad5d076f), кастомная задача «красный main vtui 7d73940 (Test darwin/amd64)» по § 5 п. 2, PR [#215](https://github.com/unxed/vtui/pull/215), коммит `7a444df`, прогон [#464](https://github.com/unxed/vtui/actions/runs/38532273832)
+14-10-2026 08:02:17 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер ad5d076f), кастомная задача «красный main vtui 7d73940 (Test darwin/amd64)» по § 5 п. 2, PR [#215](https://github.com/unxed/vtui/pull/215), коммит `0349182`, прогон [#465](https://github.com/unxed/vtui/actions/runs/38532575497)
