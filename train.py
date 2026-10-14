@@ -1508,6 +1508,21 @@ def staged_repos():
     return out
 
 
+def tick_all(sign):
+    """tick по всем проектам со staging. Сбой одного (сеть, API: tick падает через sys.exit)
+    не прерывает остальные — иначе 14-10-2026 TLS-таймаут в f4 оставил vtui без tick."""
+    rc = 0
+    for repo in staged_repos():
+        print(f"=== {repo}")
+        try:
+            rc = max(rc, tick(repo, sign))
+        except SystemExit as e:
+            print(f"ОШИБКА tick {repo}: {e.code}")
+            rc = max(rc, 1)
+    dispatch_format_warn()
+    return rc
+
+
 def main(argv):
     if not argv:
         print(__doc__)
@@ -1524,12 +1539,7 @@ def main(argv):
             return 2
         return land(fix="--fix-staging" in rest)
     if cmd == "tick-all" and opt("--sign"):
-        rc = 0
-        for repo in staged_repos():
-            print(f"=== {repo}")
-            rc = max(rc, tick(repo, opt("--sign")))
-        dispatch_format_warn()
-        return rc
+        return tick_all(opt("--sign"))
     if cmd == "health" and len(rest) == 1:
         return health(rest[0])
     if cmd == "covered" and len(rest) == 2:

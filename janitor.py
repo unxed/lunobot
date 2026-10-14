@@ -234,6 +234,35 @@ def main():
 MOJIBAKE_DAYS = 7
 
 
+def body_rows(repo, since):
+    """Испорченные тела тикетов и PR, обновлённых за окно (`issues` отдаёт и PR).
+
+    Тело тикета или PR портится тем же путём, что и комментарий (однобайтовая кодовая
+    страница, «?» вместо букв), а сканировались только комментарии. Ловится только то, что
+    ловит `check_text`. Повод — описание PR unxed/goWidgets#15, но испорчено оно иначе:
+    shell подставил содержимое обратных кавычек (на их месте пустые места), а не «?»; такой
+    сбой эта проверка НЕ находит — от него защищает отправка через `gh_post.py` (сверка с файлом).
+    """
+    items = gh_all(f"/repos/{repo}/issues?state=all&since={since}&per_page=100")
+    if items is None:
+        print(f"{repo}: нет доступа к тикетам, проверка тел пропущена", file=sys.stderr)
+        return []
+    rows = []
+    for it in items:
+        if it.get("user", {}).get("type") == "Bot":
+            continue
+        reason = check_text(it.get("body") or "")
+        if not reason or reason == "текст пуст":
+            continue
+        if "pull_request" in it:
+            fix = f"`gh_post.py pr-body {repo} {it['number']} <файл>`"
+        else:
+            fix = f"`gh_post.py issue-body {repo} {it['number']} <файл>`"
+        rows.append(f"- {it['html_url']} (#{it['number']}, тело тикета/PR, "
+                    f"{it['user']['login']}, {it.get('updated_at')}): {reason}; чинить: {fix}")
+    return rows
+
+
 def mojibake(project_dir, repo):
     """Свежие комментарии, которые гейт gh_post.py отклонил бы, — в MOJIBAKE.md проекта.
 
@@ -253,6 +282,7 @@ def mojibake(project_dir, repo):
         if reason and reason != "текст пуст":
             rows.append(f"- {c['html_url']} (id {c['id']}, {c['user']['login']}, "
                         f"{c['created_at']}): {reason}")
+    rows += body_rows(repo, since)
     f = project_dir / "MOJIBAKE.md"
     if not rows:
         if f.exists():
@@ -262,7 +292,9 @@ def mojibake(project_dir, repo):
     text = (f"# Испорченные комментарии в {repo}\n\n"
             "Пишет janitor (`janitor.py`, шаг 4). Эти комментарии дошли до GitHub с «?» на месте "
             "букв. Восстанови текст правкой того же комментария через `gh_post.py edit "
-            f"{repo} <id> <файл>` (по ASCII-остову, соседним сообщениям и учёту) — "
+            f"{repo} <id> <файл>`, а строки «тело тикета/PR» — через `gh_post.py pr-body` "
+            "или `gh_post.py issue-body` (команда указана в строке), по ASCII-остову, "
+            "соседним сообщениям и учёту — "
             "строка пропадёт на следующем проходе janitor. LUNOBOT.md § 2.\n\n"
             + "\n".join(rows) + "\n")
     if not f.exists() or f.read_text(encoding="utf-8") != text:
