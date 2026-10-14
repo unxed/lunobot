@@ -100,12 +100,13 @@ class JanitorMojibakeTest(unittest.TestCase):
         bot = dict(comment, id=2, user={"login": "codecov[bot]", "type": "Bot"})
         with TemporaryDirectory() as directory:
             d = Path(directory)
-            with patch.object(janitor, "gh_all", return_value=[comment, bot]):
+            only = lambda items: (lambda path: items if "/issues/comments" in path else [])
+            with patch.object(janitor, "gh_all", side_effect=only([comment, bot])):
                 janitor.mojibake(d, "o/r")
             text = (d / "MOJIBAKE.md").read_text(encoding="utf-8")
             self.assertIn("id 1", text)
             self.assertNotIn("id 2", text)
-            with patch.object(janitor, "gh_all", return_value=[dict(comment, body="Исправлено.")]):
+            with patch.object(janitor, "gh_all", side_effect=only([dict(comment, body="Исправлено.")])):
                 janitor.mojibake(d, "o/r")
             self.assertFalse((d / "MOJIBAKE.md").exists())
 

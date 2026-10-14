@@ -234,6 +234,33 @@ def main():
 MOJIBAKE_DAYS = 7
 
 
+def body_rows(repo, since):
+    """Испорченные тела тикетов и PR, обновлённых за окно (`issues` отдаёт и PR).
+
+    Комментарии — не единственный путь сбоя: описание PR unxed/goWidgets#15 дошло
+    с «?» вместо букв, а сканировались только комментарии.
+    """
+    items = gh_all(f"/repos/{repo}/issues?state=all&since={since}&per_page=100")
+    if items is None:
+        print(f"{repo}: нет доступа к тикетам, проверка тел пропущена", file=sys.stderr)
+        return []
+    rows = []
+    for it in items:
+        if it.get("user", {}).get("type") == "Bot":
+            continue
+        reason = check_text(it.get("body") or "")
+        if not reason or reason == "текст пуст":
+            continue
+        if "pull_request" in it:
+            fix = f"`gh_post.py pr-body {repo} {it['number']} <файл>`"
+        else:
+            fix = (f"правка тела тикета вручную через `gh api -X PATCH repos/{repo}/issues/"
+                   f"{it['number']} -F body=@файл` (в gh_post.py подкоманды нет)")
+        rows.append(f"- {it['html_url']} (#{it['number']}, тело тикета/PR, "
+                    f"{it['user']['login']}, {it.get('updated_at')}): {reason}; чинить: {fix}")
+    return rows
+
+
 def mojibake(project_dir, repo):
     """Свежие комментарии, которые гейт gh_post.py отклонил бы, — в MOJIBAKE.md проекта.
 
@@ -253,6 +280,7 @@ def mojibake(project_dir, repo):
         if reason and reason != "текст пуст":
             rows.append(f"- {c['html_url']} (id {c['id']}, {c['user']['login']}, "
                         f"{c['created_at']}): {reason}")
+    rows += body_rows(repo, since)
     f = project_dir / "MOJIBAKE.md"
     if not rows:
         if f.exists():
