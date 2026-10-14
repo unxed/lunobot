@@ -1513,6 +1513,37 @@ def staged_repos():
     return out
 
 
+COMPLAINT_STALE_H = 3
+
+
+def complaints_warn(repo=None, now=None):
+    """Предупреждение (код возврата не меняет): открытые PR `complaint/*` учётного репозитория старше
+    COMPLAINT_STALE_H часов. Лунобот-2 жалобы не вливает (§ 12), и без напоминания они копятся
+    (14-10-2026: 13 открытых PR жалоб за сутки, разобраны одним кругом Лунобота-1)."""
+    if repo is None:
+        url = run("git", "-C", ACCOUNTING, "remote", "get-url", "origin", check=False).stdout.strip()
+        m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", url)
+        repo = m.group(1) if m else None
+    if not repo:
+        return
+    now = now or datetime.now(timezone.utc)
+    old = []
+    try:
+        prs = api(f"repos/{repo}/pulls?state=open&per_page=100", check=False)
+        for pr in prs if isinstance(prs, list) else []:
+            if not pr.get("head", {}).get("ref", "").startswith("complaint/"):
+                continue
+            created = datetime.fromisoformat(pr["created_at"].replace("Z", "+00:00"))
+            if (now - created).total_seconds() >= COMPLAINT_STALE_H * 3600:
+                old.append(pr["number"])
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return  # предупреждение не должно ронять tick-all: битый ответ API — тишина
+    if old:
+        print(f"ПРЕДУПРЕЖДЕНИЕ: {len(old)} PR жалоб {repo} открыты дольше {COMPLAINT_STALE_H} ч "
+              f"({', '.join('#' + str(n) for n in sorted(old))}) — Лунобот-1: review отдельным субагентом "
+              f"и вливание по § 12; Лунобот-2 их не вливает")
+
+
 def tick_all(sign):
     """tick по всем проектам со staging. Сбой одного (сеть, API: tick падает через sys.exit)
     не прерывает остальные — иначе 14-10-2026 TLS-таймаут в f4 оставил vtui без tick."""
@@ -1525,6 +1556,7 @@ def tick_all(sign):
             print(f"ОШИБКА tick {repo}: {e.code}")
             rc = max(rc, 1)
     dispatch_format_warn()
+    complaints_warn()
     return rc
 
 
