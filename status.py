@@ -106,6 +106,13 @@ def projects(only=None):
         yield d.name, (m.group(1) if m else None), d
 
 
+def uses_staging(project_dir):
+    """Whether the project's passport routes routine changes through train.py."""
+    passport = (project_dir / "PROJECT.md").read_text(encoding="utf-8")
+    return (re.search(r"Режим публикации:\s*поезда\b", passport) is not None or
+            ("lunobot/staging" in passport and "train.py land" in passport))
+
+
 def effective_now(marks, scope="projects"):
     """Сейчас — в тех же часах, в которых пишут боты.
 
@@ -222,10 +229,11 @@ def work_commits(hours=24):
     """
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
     out, seen = [], set()
-    for _name, repo, _d in projects():
+    for _name, repo, project_dir in projects():
         if not repo:
             continue
-        for branch in ("lunobot/staging", "main"):
+        branches = (["lunobot/staging"] if uses_staging(project_dir) else []) + ["main"]
+        for branch in branches:
             data = gh_json(f"/repos/{repo}/commits?sha={branch.replace('/', '%2F')}"
                            f"&since={since}&per_page=100")
             for c in data or []:
