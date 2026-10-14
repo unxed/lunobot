@@ -1133,6 +1133,7 @@ def health(repo):
     rc = max(stuck(repo), main_ci(repo), 1 if state == "red" else 0)
     transit_warn(repo)
     dispatch_format_warn()
+    complaints_warn()
     return rc
 
 
@@ -1511,6 +1512,34 @@ def staged_repos():
         if m and "commit" in (api(f"repos/{m.group(1)}/branches/{STAGING}", check=False) or {}):
             out.append(m.group(1))
     return out
+
+
+COMPLAINT_STALE_H = 3
+
+
+def complaints_warn(repo=None, now=None):
+    """Предупреждение (код возврата не меняет): открытые PR `complaint/*` учётного репозитория старше
+    COMPLAINT_STALE_H часов. Лунобот-2 жалобы не вливает (§ 12), и без напоминания они копятся
+    (14-10-2026: 13 открытых PR жалоб за сутки, разобраны одним кругом Лунобота-1)."""
+    if repo is None:
+        url = run("git", "-C", ACCOUNTING, "remote", "get-url", "origin", check=False).stdout.strip()
+        m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", url)
+        repo = m.group(1) if m else None
+    if not repo:
+        return
+    prs = api(f"repos/{repo}/pulls?state=open&per_page=100", check=False)
+    now = now or datetime.now(timezone.utc)
+    old = []
+    for pr in prs if isinstance(prs, list) else []:
+        if not pr.get("head", {}).get("ref", "").startswith("complaint/"):
+            continue
+        created = datetime.fromisoformat(pr["created_at"].replace("Z", "+00:00"))
+        if (now - created).total_seconds() >= COMPLAINT_STALE_H * 3600:
+            old.append(pr["number"])
+    if old:
+        print(f"ПРЕДУПРЕЖДЕНИЕ: {len(old)} PR жалоб {repo} открыты дольше {COMPLAINT_STALE_H} ч "
+              f"({', '.join('#' + str(n) for n in sorted(old))}) — Лунобот-1: review отдельным субагентом "
+              f"и вливание по § 12; Лунобот-2 их не вливает")
 
 
 def tick_all(sign):
