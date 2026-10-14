@@ -8,9 +8,9 @@
 
 ## Сделано
 
-- Коммит `01e521b2` в клоне `/tmp/lunobot-1/vtui`, ветка `lunobot/work-far2l-flake`: явный таймаут 200 мс, защита от зависания 30 с. Песочница macos-latest (gofmt, vet, `-count=3`, lint) — [38574909529](https://github.com/unxed/vtui/actions/runs/38574909529). Прогон main перезапущен (`rerun --failed`).
+- Коммит `01e521b2` в клоне `/tmp/lunobot-1/vtui`, ветка `lunobot/work-far2l-flake`: явный таймаут 200 мс, защита от зависания 30 с. Песочница macos-latest (vet, `-count=3`, lint) — [38574909529](https://github.com/unxed/vtui/actions/runs/38574909529). Вторым коммитом `16c87343` (там же, ветка `tmp/19d3/far2l-flake-1014` = HEAD клона) — класс: защитные сроки 1–3 с в 7 местах тестов (far2l_extensions, framemanager, tasks, screenbuf_cursor) подняты до 30 с; песочница macos-latest, полный `go test -count=1 .` + lint — [38575308724](https://github.com/unxed/vtui/actions/runs/38575308724) (результат не проверен; `headSha` обязан быть 16c87343). Прогон main перезапущен (`rerun --failed`).
 
 ## Дальше
 
-- Песочница зелёная — `python3 train.py land` из `/tmp/lunobot-1/vtui` (коммит несёт `Lunobot-Task: vtui-flaky-far2l-timeout`), снять захват «красный main 53ed802», этот файл удалить. Красная — читать лог.
-- Класс: пройти `grep -n 'time.After(' *_test.go` и поднять защитные сроки ниже 5 с там, где ждут горутину/раннер (отдельный шаг, один `land`).
+- Обе песочницы зелёные — `python3 train.py land` (два коммита) из `/tmp/lunobot-1/vtui` (коммит несёт `Lunobot-Task: vtui-flaky-far2l-timeout`), снять захват «красный main 53ed802», этот файл удалить. Красная — читать лог.
+- Остаток класса: короткие `time.After(N*time.Millisecond)` в `wayland_host_test.go` (6), `x11_host_test.go` (4), `gogpu_host_test.go` (2), `group_test.go`, `graphics_external_test.go` — открыть каждый: если это защита «событие обязано прийти», поднять до 30 с; если «ничего не должно прийти» — оставить. Отдельный шаг, один `land`.
