@@ -117,6 +117,16 @@ class AcctLineGitTest(unittest.TestCase):
         code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(4), "-m", "x", "--sign", "Лунобот-1")
         self.assertEqual(code, 2, out)
 
+    def test_sign_with_incomplete_node_identity_is_refused(self):
+        for sign in (
+            "Лунобот-2 (node 19d368003c6c048e43dbec70; LNX",
+            "Лунобот-2 (node 19d368003c6c048e43dbec7z; LNX)",
+            "Лунобот-2 (node 19d368003c6c048e43dbec70; UNKNOWN)",
+        ):
+            with self.subTest(sign=sign):
+                code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(4), "-m", "x", "--sign", sign)
+                self.assertEqual(code, 2, out)
+
 
 class RemoveLineTest(unittest.TestCase):
     def test_ambiguous_key(self):
