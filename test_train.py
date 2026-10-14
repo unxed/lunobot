@@ -512,6 +512,26 @@ class RollupRestRerunTest(unittest.TestCase):
             train.rerun(checks)
         self.assertEqual(posted, [("repos/o/r/actions/runs/42/rerun-failed-jobs", ("-X", "POST"), True)])
 
+    def test_runs_of_other_branches_on_the_train_commit_are_not_its_checks(self):
+        def api(path, *args, check=True):
+            if path.endswith("/pulls/5"):
+                return {"head": {"sha": "abc", "ref": "lunobot/train/vtui/x"}}
+            if "check-suites" in path:
+                return {"check_suites": [{"id": 1, "head_branch": "lunobot/train/vtui/x"},
+                                         {"id": 2, "head_branch": "tmp/19d3/golden-fix"}]}
+            if "check-runs" in path:
+                return {"check_runs": [
+                    {"name": "Test (linux)", "status": "completed", "conclusion": "success",
+                     "check_suite": {"id": 1}, "details_url": "u1"},
+                    {"name": "Sandbox (ubuntu-latest)", "status": "completed", "conclusion": "failure",
+                     "check_suite": {"id": 2}, "details_url": "u2"}]}
+            if path.endswith("/status"):
+                return {"statuses": []}
+            return {}
+        with mock.patch.object(train, "api", side_effect=api):
+            checks = train.rollup_rest("o/r", 5)
+        self.assertEqual([c["name"] for c in checks], ["Test (linux)"])
+
     def test_failed_rerun_request_is_not_silently_ignored(self):
         checks = [{"detailsUrl": "https://github.com/o/r/actions/runs/42/job/7"}]
         with mock.patch.object(train, "api", side_effect=SystemExit("request failed")) as api:

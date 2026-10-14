@@ -357,11 +357,20 @@ def rollup_rest(repo, number):
     """statusCheckRollup через REST: в облачных сессиях Claude Code GraphQL закрыт прокси
     (`gh pr view --json` отвечает 403), а tick без него не может разобрать поезд.
     Приводит check-runs и commit statuses к виду, который отдаёт GraphQL."""
-    sha = api(f"repos/{repo}/pulls/{number}")["head"]["sha"]
+    head = api(f"repos/{repo}/pulls/{number}")["head"]
+    sha, ref = head["sha"], head.get("ref")
+    # Прогоны того же коммита с ДРУГИХ веток — не проверки поезда: песочница бота
+    # (sandbox.yml, workflow_dispatch на tmp/<узел>/...) на вершине поезда падала и делала
+    # поезд «красным», tick перезапускал её и шёл бы в бисект (14-10-2026, unxed/vtui#216).
+    suites = api(f"repos/{repo}/commits/{sha}/check-suites?per_page=100", check=False) or {}
+    foreign = {st["id"] for st in suites.get("check_suites", [])
+               if ref and st.get("head_branch") not in (None, ref)}
     checks = []
     for page in range(1, 11):
         runs = api(f"repos/{repo}/commits/{sha}/check-runs?per_page=100&page={page}")
         for r in runs.get("check_runs", []):
+            if (r.get("check_suite") or {}).get("id") in foreign:
+                continue
             checks.append({
                 "name": r["name"],
                 "status": (r.get("status") or "completed").upper(),
