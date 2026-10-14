@@ -203,6 +203,20 @@ class HealRerunTest(unittest.TestCase):
         api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
+class RerunRaceTest(unittest.TestCase):
+    def test_already_running_is_not_an_error(self):
+        err = SystemExit("gh api repos/o/r/actions/runs/7/rerun-failed-jobs -X POST: "
+                         "gh: This workflow is already running (HTTP 403)")
+        with mock.patch.object(train, "api", side_effect=err) as api:
+            train.rerun_failed_jobs("o/r", 7)
+        api.assert_called_once_with("repos/o/r/actions/runs/7/rerun-failed-jobs", "-X", "POST")
+
+    def test_other_errors_still_stop_tick(self):
+        with mock.patch.object(train, "api", side_effect=SystemExit("gh: Not Found (HTTP 404)")):
+            with self.assertRaises(SystemExit):
+                train.rerun_failed_jobs("o/r", 7)
+
+
 class DispatchFormatWarnTest(unittest.TestCase):
     """14-10-2026: 5b329822 превратил захваты dn в строки формата CI.md; dispatch-lint упал один раз,
     следующие пуши зелёные (гейт видит только добавленные строки) — health/tick-all должны это видеть."""
