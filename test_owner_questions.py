@@ -47,6 +47,9 @@ class GateTest(unittest.TestCase):
         self.assertIsNotNone(oq.check_question("Блокирует T-05: какая лицензия у HX?"))
         self.assertIsNotNone(oq.check_question("Не могу продолжить: какую версию NC скачать?"))
         self.assertIsNotNone(oq.check_question("Блокирует тест: нужно ли делать очевидное?"))
+        self.assertIsNotNone(oq.check_question("Не могу выбрать: добавить ли минимальный браузерный smoke-контракт для Init?"))
+        self.assertIsNotNone(oq.check_question("Не могу выбрать: сделать ли 0 значением по умолчанию?"))
+        self.assertIsNone(oq.check_question("Блокирует PR #5: применять ли стопку PR в порядке из комментария?"))
 
     def test_no_blocker_rejected(self):
         self.assertIsNotNone(oq.check_question("Открыть ли PR в upstream?"))
