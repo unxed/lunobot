@@ -25,3 +25,6 @@ jobs:
             python3 check_dispatch.py "$f" --added-only || status=1
           done
           exit $status
+      - name: Ссылки на разделы инструкции в шапках
+        if: always()
+        run: python3 check_refs.py
