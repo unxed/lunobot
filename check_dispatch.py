@@ -240,7 +240,8 @@ def wrong_place(path):
     except Exception:
         return None  # не в git — не наше дело, формат проверим как обычно
     if root:
-        project_dir = os.path.join(root, "projects")
+        root = os.path.normpath(os.path.abspath(root))
+        project_dir = os.path.normpath(os.path.abspath(os.path.join(root, "projects")))
         if (os.path.commonpath((real, project_dir)) != project_dir
                 or not os.path.isfile(os.path.join(root, "LUNOBOT.md"))
                 or not os.path.isfile(os.path.join(project_dir, "INDEX.md"))):

@@ -33,6 +33,21 @@ class PrivateAccountingTest(unittest.TestCase):
                               return_value=SimpleNamespace(stdout=str(root) + os.linesep)):
                 self.assertIsNone(check_dispatch.wrong_place(str(path)))
 
+    def test_dispatch_accepts_relative_path_with_relative_git_root(self):
+        cwd = Path.cwd()
+        with tempfile.TemporaryDirectory(dir=cwd) as directory:
+            root = Path(directory)
+            project = root / "projects" / "sample"
+            project.mkdir(parents=True)
+            (root / "LUNOBOT.md").touch()
+            (root / "projects" / "INDEX.md").touch()
+            (project / "DISPATCH.md").touch()
+            relative_root = os.path.relpath(root, cwd)
+            relative_path = os.path.join(relative_root, "projects", "sample", "DISPATCH.md")
+            with patch.object(check_dispatch.subprocess, "run",
+                              return_value=SimpleNamespace(stdout=relative_root + os.linesep)):
+                self.assertIsNone(check_dispatch.wrong_place(relative_path))
+
     def test_pr_route_is_valid_for_simple_project(self):
         self.assertIsNone(check_dispatch.route_error(
             "Я Лунобот-2, взял задачу https://github.com/example/project/issues/1 [pr]"))
