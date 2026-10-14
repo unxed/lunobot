@@ -636,3 +636,23 @@ class TicketsCheckTextTest(unittest.TestCase):
             "a\n\nTouch: #1\n\nПроверить: go test -run TestA ./internal/panel/\n\nLunobot-Instance: x\n",
             "b\n\nLunobot-Task: ci\n\nПроверить:\n\nLunobot-Instance: x\nCo-Authored-By: y\n"))
         self.assertEqual(got, {"unxed/f4#1": [], "ci": []})
+
+
+class TickAllTest(unittest.TestCase):
+    def test_failure_of_one_project_does_not_skip_the_rest(self):
+        calls = []
+
+        def fake_tick(repo, sign):
+            calls.append(repo)
+            if repo == "o/a":
+                raise SystemExit("gh api: TLS handshake timeout")
+            return 0
+
+        with mock.patch.object(train, "staged_repos", return_value=["o/a", "o/b"]), \
+                mock.patch.object(train, "tick", side_effect=fake_tick), \
+                mock.patch.object(train, "dispatch_format_warn"), \
+                contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = train.tick_all("sig")
+        self.assertEqual(calls, ["o/a", "o/b"])
+        self.assertEqual(rc, 1)
+        self.assertIn("ОШИБКА tick o/a", out.getvalue())
