@@ -1,0 +1,131 @@
+import io
+import os
+import subprocess
+import tempfile
+import unittest
+from contextlib import redirect_stdout, redirect_stderr
+
+import acct_line
+
+SIGN = "Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)"
+HEAD = "# Захваты\n\nПояснение.\n"
+LINE = ("14-10-2026 07:29:56 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер ac9e178c), "
+        "взял задачу https://github.com/unxed/dn/issues/{} [pr]")
+ENV = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+           GIT_COMMITTER_EMAIL="t@t", GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+
+
+def sh(cwd, *args):
+    return subprocess.run(["git", *args], cwd=cwd, env=ENV, check=True, capture_output=True,
+                          text=True, encoding="utf-8").stdout
+
+
+class AcctLineGitTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        t = self.tmp.name
+        self.bare = os.path.join(t, "bare.git")
+        sh(t, "init", "-q", "--bare", "-b", "main", self.bare)
+        self.a, self.b = os.path.join(t, "a"), os.path.join(t, "b")
+        sh(t, "clone", "-q", self.bare, self.a)
+        os.makedirs(os.path.join(self.a, "projects", "dn"))
+        self.write(self.a, HEAD)
+        sh(self.a, "add", ".")
+        sh(self.a, "commit", "-q", "-m", "init")
+        sh(self.a, "push", "-q", "origin", "HEAD:main")
+        sh(t, "clone", "-q", self.bare, self.b)
+        self.env = os.environ.copy()
+        os.environ.update(ENV)
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self.env)
+        self.tmp.cleanup()
+
+    def write(self, repo, text):
+        with open(os.path.join(repo, "projects/dn/DISPATCH.md"), "w", encoding="utf-8", newline="") as f:
+            f.write(text)
+
+    def origin(self):
+        return sh(self.a, "--git-dir", self.bare, "show", "main:projects/dn/DISPATCH.md")
+
+    def run_tool(self, *args):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = acct_line.main([*args, "--repo", self.a])
+        return code, out.getvalue() + err.getvalue()
+
+    def test_add_on_stale_clone_with_local_edits_keeps_both(self):
+        # другой бот уже запушил строку; клон a отстал и в нём чужая незакоммиченная правка
+        self.write(self.b, HEAD + "\n" + LINE.format(1) + "\n")
+        sh(self.b, "commit", "-q", "-am", "b")
+        sh(self.b, "push", "-q", "origin", "HEAD:main")
+        self.write(self.a, "локальный мусор\n")
+        code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(2), "-m", "dn#2: взял", "--sign", SIGN)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.origin(), HEAD + "\n" + LINE.format(1) + "\n\n" + LINE.format(2) + "\n")
+        msg = sh(self.a, "--git-dir", self.bare, "log", "-1", "--format=%B", "main")
+        self.assertIn("Lunobot-Instance: " + SIGN, msg)
+        files = sh(self.a, "--git-dir", self.bare, "show", "--name-only", "--format=", "main").split()
+        self.assertEqual(files, ["projects/dn/DISPATCH.md"])
+        with open(os.path.join(self.a, "projects/dn/DISPATCH.md"), encoding="utf-8") as f:
+            self.assertEqual(f.read(), "локальный мусор\n")  # рабочая копия не тронута
+
+    def test_push_race_retries_from_fresh_origin(self):
+        real, raced = acct_line.git, []
+
+        def racing_git(repo, *args, **kw):
+            if args[:1] == ("push",) and not raced:  # другой бот пушит прямо перед нами
+                raced.append(1)
+                self.write(self.b, HEAD + "\n" + LINE.format(5) + "\n")
+                sh(self.b, "commit", "-q", "-am", "b")
+                sh(self.b, "push", "-q", "origin", "HEAD:main")
+            return real(repo, *args, **kw)
+
+        acct_line.git = racing_git
+        try:
+            code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(6), "-m", "x", "--sign", SIGN)
+        finally:
+            acct_line.git = real
+        self.assertEqual(code, 0, out)
+        self.assertIn("пуш отклонён", out)
+        self.assertEqual(self.origin(), HEAD + "\n" + LINE.format(5) + "\n\n" + LINE.format(6) + "\n")
+
+    def test_remove_drops_paragraph(self):
+        self.write(self.b, HEAD + "\n" + LINE.format(1) + "\n\n" + LINE.format(2) + "\n")
+        sh(self.b, "commit", "-q", "-am", "b")
+        sh(self.b, "push", "-q", "origin", "HEAD:main")
+        code, out = self.run_tool("remove", "projects/dn/DISPATCH.md", "dn/issues/1 ", "-m", "dn#1: снял", "--sign", SIGN)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.origin(), HEAD + "\n" + LINE.format(2) + "\n")
+
+    def test_remove_absent_is_noop(self):
+        before = sh(self.a, "--git-dir", self.bare, "rev-parse", "main")
+        code, out = self.run_tool("remove", "projects/dn/DISPATCH.md", "issues/99 ", "-m", "x", "--sign", SIGN)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(sh(self.a, "--git-dir", self.bare, "rev-parse", "main"), before)
+
+    def test_gate_rejects_line_without_route(self):
+        before = sh(self.a, "--git-dir", self.bare, "rev-parse", "main")
+        bad = LINE.format(3).replace(" [pr]", "")
+        code, out = self.run_tool("add", "projects/dn/DISPATCH.md", bad, "-m", "x", "--sign", SIGN)
+        self.assertEqual(code, 1, out)
+        self.assertIn("ГЕЙТ", out)
+        self.assertEqual(sh(self.a, "--git-dir", self.bare, "rev-parse", "main"), before)
+
+    def test_sign_without_node_is_refused(self):
+        code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(4), "-m", "x", "--sign", "Лунобот-1")
+        self.assertEqual(code, 2, out)
+
+
+class RemoveLineTest(unittest.TestCase):
+    def test_ambiguous_key(self):
+        with self.assertRaises(ValueError):
+            acct_line.remove_line("a x\n\nb x\n", "x")
+
+    def test_last_paragraph(self):
+        self.assertEqual(acct_line.remove_line("h\n\na\n\nb\n", "b"), "h\n\na\n")
+
+
+if __name__ == "__main__":
+    unittest.main()
