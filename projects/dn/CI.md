@@ -23,3 +23,5 @@
 14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон dn [#640](https://github.com/unxed/dn/actions/runs/38547942383)
 
 14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон dn-windows [#562](https://github.com/unxed/dn/actions/runs/38547942694)
+
+14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон toolchain [#173](https://github.com/unxed/dn/actions/runs/38547942312)
