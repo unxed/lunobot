@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Отправить текст на GitHub (комментарий, правку комментария, описание PR) через гейт кодировки.
+"""Отправить текст на GitHub (комментарий, правку комментария, описание PR или тикета) через гейт кодировки.
 
 Боты пишут в тикеты по-русски, и не раз комментарий доходил до GitHub строкой знаков «?»:
 текст по дороге проходил через однобайтовую кодовую страницу (консоль Windows, аргумент
@@ -17,6 +17,7 @@
     python3 gh_post.py comment <owner/repo> <номер тикета или PR> <файл>
     python3 gh_post.py edit <owner/repo> <id комментария> <файл>
     python3 gh_post.py pr-body <owner/repo> <номер PR> <файл>
+    python3 gh_post.py issue-body <owner/repo> <номер тикета> <файл>
     python3 gh_post.py pr <owner/repo> <head> <base> <файл>   # первая строка — заголовок, дальше тело
     python3 gh_post.py scan <owner/repo> [--days 3]           # найти уже испорченные комментарии
 
@@ -148,17 +149,23 @@ def verify_comment(repo, comment, text, path):
     return 1
 
 
-def verify_pr(repo, number, text, path):
+def verify_body(repo, kind, number, text, path):
+    """Тело PR (kind="pulls") или тикета (kind="issues") на GitHub совпадает с файлом; иначе одна перезапись."""
+    what = "описание PR" if kind == "pulls" else "тело тикета"
     for attempt in range(2):
-        got = api(f"repos/{repo}/pulls/{number}")
+        got = api(f"repos/{repo}/{kind}/{number}")
         if got and same_text(got.get("body") or "", text):
             print(got.get("html_url", ""))
             return 0
         if attempt == 0:
-            api(f"repos/{repo}/pulls/{number}", "-X", "PATCH", "-F", f"body=@{path}", check=False)
-    print(f"ошибка: описание PR {repo}#{number} не совпало с {path}; поправь его вручную "
+            api(f"repos/{repo}/{kind}/{number}", "-X", "PATCH", "-F", f"body=@{path}", check=False)
+    print(f"ошибка: {what} {repo}#{number} не совпало с {path}; поправь его вручную "
           "из файла в UTF-8-среде.", file=sys.stderr)
     return 1
+
+
+def verify_pr(repo, number, text, path):
+    return verify_body(repo, "pulls", number, text, path)
 
 
 def find_comment(repo, number, text):
@@ -202,6 +209,12 @@ def pr_body(repo, number, path):
     text = gate(path)
     api(f"repos/{repo}/pulls/{number}", "-X", "PATCH", "-F", f"body=@{path}")
     return verify_pr(repo, number, text, path)
+
+
+def issue_body(repo, number, path):
+    text = gate(path)
+    api(f"repos/{repo}/issues/{number}", "-X", "PATCH", "-F", f"body=@{path}")
+    return verify_body(repo, "issues", number, text, path)
 
 
 def create_pr(repo, head, base, path):
@@ -265,6 +278,8 @@ def main(argv):
         return edit_comment(*args)
     if cmd == "pr-body" and len(args) == 3:
         return pr_body(*args)
+    if cmd == "issue-body" and len(args) == 3:
+        return issue_body(*args)
     if cmd == "pr" and len(args) == 4:
         return create_pr(*args)
     if cmd == "scan" and args:
