@@ -1485,8 +1485,15 @@ def main(argv):
         print(__doc__)
         return 2
     cmd, rest = argv[0], argv[1:]
+    if cmd in ("-h", "--help", "help") or "-h" in rest or "--help" in rest:
+        print(__doc__)
+        return 0
     opt = lambda k: rest[rest.index(k) + 1] if k in rest else None
     if cmd == "land":
+        unknown = [a for a in rest if a != "--fix-staging"]
+        if unknown:
+            print(f"land: неизвестные аргументы {unknown} — ничего не сделано; допустим только --fix-staging")
+            return 2
         return land(fix="--fix-staging" in rest)
     if cmd == "tick-all" and opt("--sign"):
         rc = 0

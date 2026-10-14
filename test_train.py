@@ -636,3 +636,43 @@ class TicketsCheckTextTest(unittest.TestCase):
             "a\n\nTouch: #1\n\nПроверить: go test -run TestA ./internal/panel/\n\nLunobot-Instance: x\n",
             "b\n\nLunobot-Task: ci\n\nПроверить:\n\nLunobot-Instance: x\nCo-Authored-By: y\n"))
         self.assertEqual(got, {"unxed/f4#1": [], "ci": []})
+
+
+class MainHelpTest(unittest.TestCase):
+    """5а.1: `--help` и опечатка в аргументах не должны запускать настоящий land."""
+
+    def run_main(self, argv):
+        out = io.StringIO()
+        with mock.patch.object(train, "land", return_value=0) as land, \
+                contextlib.redirect_stdout(out):
+            rc = train.main(argv)
+        return rc, land, out.getvalue()
+
+    def test_land_help_does_nothing(self):
+        for argv in (["land", "--help"], ["land", "-h"], ["--help"], ["help"]):
+            rc, land, out = self.run_main(argv)
+            self.assertEqual(rc, 0, argv)
+            land.assert_not_called()
+            self.assertIn("train.py land", out)
+
+    def test_other_commands_help_does_not_run(self):
+        with mock.patch.object(train, "tick") as tick, \
+                mock.patch.object(train, "health") as health, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.main(["tick", "unxed/f4", "--help"]), 0)
+            self.assertEqual(train.main(["health", "-h"]), 0)
+        tick.assert_not_called()
+        health.assert_not_called()
+
+    def test_land_unknown_argument_refused(self):
+        rc, land, out = self.run_main(["land", "--fix-stagin"])
+        self.assertEqual(rc, 2)
+        land.assert_not_called()
+        self.assertIn("--fix-staging", out)
+
+    def test_land_known_flags_still_work(self):
+        rc, land, _ = self.run_main(["land"])
+        land.assert_called_once_with(fix=False)
+        land.reset_mock()
+        rc, land, _ = self.run_main(["land", "--fix-staging"])
+        land.assert_called_once_with(fix=True)
