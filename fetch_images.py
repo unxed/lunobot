@@ -6,12 +6,19 @@
 тело с подписанными ссылками (`private-user-images.githubusercontent.com/...?jwt=...`,
 живут минуты), и они скачиваются. Скрипт берёт тело тикета или комментария в виде HTML
 (`Accept: application/vnd.github.full+json`), достаёт из него ссылки на картинки и сохраняет
-файлы в уникальный каталог внутри /tmp/lunobot-<номер бота>/work/; номер бота берётся из пути
-учётного клона, поэтому файлы не попадают в каталог другого бота.
+файлы в каталог вызвавшего бота. Номер бота берётся из пути самого скрипта (ближайший каталог
+`lunobot-<номер>` над ним), поэтому файлы не попадают в каталог другого бота:
+
+- скрипт из клона учёта внутри каталога шага (`/tmp/lunobot-<N>/work/<слаг>/accounting/`) —
+  `/tmp/lunobot-<N>/work/<слаг>/img/<repo>-<номер>/`;
+- скрипт из клона менеджера (`/tmp/lunobot-<N>/accounting/`) — новый уникальный каталог
+  `/tmp/lunobot-<N>/work/img-<repo>-<номер>-…/` (старый уберёт sweep.py);
+- `--out-dir <каталог>` — явно заданный каталог (например, каталог своего шага).
 
     python3 fetch_images.py <owner/repo> <номер тикета>                 # картинки тикета и всех его комментариев
     python3 fetch_images.py <owner/repo> <номер тикета> --comment <id>  # одного комментария
     python3 fetch_images.py <owner/repo> <номер тикета> --since 2026-10-08T00:00:00Z
+    python3 fetch_images.py <owner/repo> <номер тикета> --out-dir /tmp/lunobot-<N>/work/<слаг>/img
 
 Печатает пути файлов; их открывает Read (он показывает изображения).
 Ссылки подписаны на несколько минут: скачивать надо сразу, не складывать ссылки в учёт.
@@ -48,14 +55,24 @@ def download(url, path):
         f.write(resp.read())
 
 
-def image_output_dir(script_path, repo, number):
-    bot_root = Path(script_path).resolve().parent.parent
-    if not re.fullmatch(r"lunobot-\d+", bot_root.name):
-        raise ValueError(f"accounting clone is not under /tmp/lunobot-<number>: {bot_root}")
+def image_output_dir(script_path, repo, number, out_dir=None):
+    """Каталог для картинок: явный out_dir или каталог бота, чей клон учёта запустил скрипт."""
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+        return os.path.abspath(out_dir)
+    script = Path(script_path).resolve()
+    bot_root = next((p for p in script.parents if re.fullmatch(r"lunobot-\d+", p.name)), None)
+    if bot_root is None:
+        raise ValueError(f"скрипт лежит не под /tmp/lunobot-<номер>: {script}; укажите --out-dir")
+    name = f"{repo.replace('/', '-')}-{number}"
+    rel = script.relative_to(bot_root).parts
+    if len(rel) >= 3 and rel[0] == "work":
+        target = bot_root / "work" / rel[1] / "img" / name
+        target.mkdir(parents=True, exist_ok=True)
+        return str(target)
     work_dir = bot_root / "work"
     work_dir.mkdir(parents=True, exist_ok=True)
-    prefix = f"images-{repo.replace('/', '-')}-{number}-"
-    return tempfile.mkdtemp(prefix=prefix, dir=work_dir)
+    return tempfile.mkdtemp(prefix=f"img-{name}-", dir=work_dir)
 
 
 def main(argv):
@@ -65,7 +82,16 @@ def main(argv):
     repo, number = argv[0], argv[1]
     comment = argv[argv.index("--comment") + 1] if "--comment" in argv else None
     since = argv[argv.index("--since") + 1] if "--since" in argv else None
-    out_dir = image_output_dir(__file__, repo, number)
+    out_dir = None
+    if "--out-dir" in argv:
+        i = argv.index("--out-dir") + 1
+        if i >= len(argv) or argv[i].startswith("--"):
+            raise SystemExit("--out-dir: не задан каталог")
+        out_dir = argv[i]
+    try:
+        out_dir = image_output_dir(__file__, repo, number, out_dir)
+    except ValueError as err:
+        raise SystemExit(str(err)) from None
 
     sources = []
     if comment:
