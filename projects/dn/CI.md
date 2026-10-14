@@ -25,3 +25,5 @@
 14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон dn-windows [#562](https://github.com/unxed/dn/actions/runs/38547942694)
 
 14-10-2026 10:13:27 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `fd5cd96` (мерж unxed/dn#47, часть 1 из 5; PR не отставал от main, но по паспорту прогоны main не отменяем), прогон toolchain [#173](https://github.com/unxed/dn/actions/runs/38547942312)
+
+14-10-2026 10:14:56 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/dn/issues/38 (часть 3 из 3), PR [#57](https://github.com/unxed/dn/pull/57), коммит `2b82bee` (чинит шаг dn-linux #664 на `90fa7b1`: проверка не нажимала Enter на экране «Process ended»), прогоны PR [dn-linux #666](https://github.com/unxed/dn/actions/runs/38548114574), [dn-windows #563](https://github.com/unxed/dn/actions/runs/38548114556), [dn #641](https://github.com/unxed/dn/actions/runs/38548114957)
