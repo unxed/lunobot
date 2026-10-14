@@ -4,3 +4,5 @@
 физического удаления на GitHub. Формат и смысл расхождений — § 14.3 инструкции.
 
 14-10-2026 07:31:11 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a806225a), ветка `lunobot/urgent/vtui-main-race` для красного main vtui `2ca4a1cb1` (кастомная задача по § 5 п. 2)
+
+14-10-2026 08:00:40 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер ad5d076f), ветка `lunobot/urgent/vtui-main-doubleclick` для красного main vtui `7d73940` (Test darwin/amd64, кастомная задача по § 5 п. 2)
