@@ -1188,6 +1188,11 @@ def ensure_quick_on_tip(repo):
     ahead = api(f"repos/{repo}/compare/main...{sha}", check=False)
     if ahead and ahead.get("ahead_by") == 0:
         return
+    # слияние main в staging без правок (дерево равно main: `files` пуст) — тот же случай, что и
+    # «вершина = main»: quick на нём не запускается (push без кода), а проверять нечего
+    # (14-10-2026: vtui b7bd90f81 «Merge main into lunobot/staging», каждый круг «нет прогона quick»)
+    if ahead and "files" in ahead and not ahead["files"]:
+        return
     runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?head_sha={sha}&per_page=5", check=False)
     if runs and runs.get("total_count"):
         return

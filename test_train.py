@@ -384,14 +384,14 @@ class EnsureQuickOnTipTest(unittest.TestCase):
         when = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
         return {"commit": {"sha": "a" * 40, "commit": {"committer": {"date": when}}}}
 
-    def run_tick(self, tip, total, ahead=1, rc=0):
+    def run_tick(self, tip, total, ahead=1, rc=0, files=None):
         dispatched = []
 
         def fake_api(path, *args, check=True):
             if path.endswith(f"branches/{train.STAGING}"):
                 return tip
             if "/compare/" in path:
-                return {"ahead_by": ahead}
+                return {"ahead_by": ahead} if files is None else {"ahead_by": ahead, "files": files}
             if "quick.yml/runs" in path:
                 return {"total_count": total}
             return {}
@@ -422,6 +422,14 @@ class EnsureQuickOnTipTest(unittest.TestCase):
     def test_staging_with_nothing_beyond_main_needs_no_quick(self):
         self.assertEqual(self.run_tick(self.tip(600), 0, ahead=0), [])
         self.assertEqual(self.out, "")
+
+    def test_empty_merge_of_main_needs_no_quick(self):
+        # слияние main в staging без правок: ahead_by > 0, но diff пуст
+        self.assertEqual(self.run_tick(self.tip(600), 0, ahead=1, files=[]), [])
+        self.assertEqual(self.out, "")
+
+    def test_ahead_with_changed_files_still_gets_quick(self):
+        self.assertEqual(len(self.run_tick(self.tip(600), 0, ahead=1, files=[{"filename": "a.go"}])), 1)
 
     def test_a_refused_dispatch_is_not_reported_as_started(self):
         self.assertEqual(len(self.run_tick(self.tip(30), 0, rc=1)), 1)
