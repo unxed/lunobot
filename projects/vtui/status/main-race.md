@@ -12,5 +12,6 @@
 
 ## Дальше
 
-- Пуш ветки, песочница `go test -race -run TestFrameManager_SizePolling -count=20 .`, PR в main, строка в CI.md.
-- Прогон main 38528293854 после завершения: перезапустить упавший Race (`gh run rerun 38528293854 --failed -R unxed/vtui`), если PR ещё не влит.
+- Ветка запушена, PR [unxed/vtui#214](https://github.com/unxed/vtui/pull/214) открыт, прогон PR [#463](https://github.com/unxed/vtui/actions/runs/38528946427) и песочница [38528917774](https://github.com/unxed/vtui/actions/runs/38528917774) (`go vet . && go test -race -run TestFrameManager_SizePolling -count=30 .`) — результат не проверен; обе строки в CI.md.
+- Зелёные — влить #214 по § 7.3 (ветка из BRANCHES.md, этот файл удалить). Песочница красная — тест падает и по другой причине: читать лог.
+- Прогон main 38528293854 после завершения: если #214 ещё не влит — `gh run rerun 38528293854 --failed -R unxed/vtui`.
