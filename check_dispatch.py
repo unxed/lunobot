@@ -122,7 +122,10 @@ def parse(path):
     entries, malformed, no_origin, route = [], [], [], []
     for n, line in enumerate(open(path, encoding="utf-8"), 1):
         line = line.rstrip()
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
         if "Лунобот" not in line:
+            malformed.append((n, line[:110], {"нет id Лунобота": True}))
             continue
         if any(f in line for f in FINAL):
             continue  # записи о завершении сессии — законное исключение

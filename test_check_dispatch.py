@@ -81,6 +81,10 @@ class OwnerTest(unittest.TestCase):
             "https://github.com/unxed/dn/issues/33"])
         self.assertEqual(found, [])
 
+    def test_rejects_unrecognized_nonempty_lines(self):
+        found = kinds(["взял задачу https://github.com/unxed/dn/issues/40 [land]"])
+        self.assertIn("формат", found)
+
 
 class OverlapTest(unittest.TestCase):
     def test_custom_task_and_url_for_same_ticket_overlap(self):
