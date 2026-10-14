@@ -769,6 +769,19 @@ class ComplaintsWarnTest(unittest.TestCase):
         self.assertNotIn("#6", out)
         self.assertNotIn("#7", out)
 
+    def test_malformed_api_answer_is_silent(self):
+        self.assertEqual(self.run_warn([{"number": 5, "head": {"ref": "complaint/x"}}]), "")
+        self.assertEqual(self.run_warn({"message": "Not Found"}), "")
+
+    def test_tick_all_calls_warn_without_changing_rc(self):
+        with mock.patch.object(train, "staged_repos", return_value=["o/a"]), \
+                mock.patch.object(train, "tick", return_value=0), \
+                mock.patch.object(train, "dispatch_format_warn"), \
+                mock.patch.object(train, "complaints_warn") as warn, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.tick_all("sig"), 0)
+        warn.assert_called_once_with()
+
     def test_nothing_printed_when_all_fresh_or_api_fails(self):
         self.assertEqual(self.run_warn([self.pr(6, "complaint/y", "2026-10-14T16:00:00Z")]), "")
         self.assertEqual(self.run_warn(None), "")
