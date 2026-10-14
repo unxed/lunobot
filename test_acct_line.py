@@ -123,6 +123,10 @@ class RemoveLineTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             acct_line.remove_line("a x\n\nb x\n", "x")
 
+    def test_remove_all_hits_in_one_pass(self):
+        self.assertEqual(acct_line.remove_line("h\n\na x\n\nb\n\nc x\n", "x", remove_all=True), "h\n\nb\n")
+        self.assertIsNone(acct_line.remove_line("h\n", "x", remove_all=True))
+
     def test_last_paragraph(self):
         self.assertEqual(acct_line.remove_line("h\n\na\n\nb\n", "b"), "h\n\na\n")
 
