@@ -24,6 +24,16 @@ class SameNodeDuplicateTest(unittest.TestCase):
         found = self.problems(line("14-10-2026 16:12:49", 2), line("14-10-2026 16:16:13", 1))
         self.assertEqual([p[0] for p in found], ["дубль"])
 
+    def test_other_number_over_foreign_keepalive_is_duplicate(self):
+        found = self.problems(line("14-10-2026 16:12:49", 2),
+                              line("14-10-2026 16:14:00", 2, verb="работаю", tail=""),
+                              line("14-10-2026 16:16:13", 1))
+        self.assertEqual([p[0] for p in found], ["дубль"])
+
+    def test_rewritten_under_new_number_is_not_duplicate(self):
+        found = self.problems(line("14-10-2026 16:16:13", 1), line("14-10-2026 16:17:00", 1, verb="работаю", tail=""))
+        self.assertEqual(found, [])
+
     def test_same_number_keepalive_is_not_duplicate(self):
         found = self.problems(line("14-10-2026 16:12:49", 1),
                               line("14-10-2026 16:16:13", 1, verb="работаю", tail=""))

@@ -177,8 +177,10 @@ def check(path, timeout_min, since=None):
         # Лунобот-1 и Лунобот-2 одного узла — две разные сессии с одним id узла и без суффикса «воркер»:
         # то же «взял» на тот же ключ от другого номера на том же узле — дубль работы (14-10-2026
         # unxed/dn#40 часть 4а взяли оба, оба написали юнит; гейт молчал)
-        if (e["verb"] == "взял" and prev and prev["verb"] == "взял" and prev["node"] == e["node"]
-                and prev["num"] != e["num"]):
+        # prev — текущий держатель ключа, в том числе его «работаю»: между двумя «взял» чужой
+        # keepalive перезаписывает держателя, и сверка только с «взял» пропускала бы дубль
+        if (e["verb"] == "взял" and prev and prev["node"] == e["node"]
+                and prev["num"] != e["num"] and not (e["worker"] and prev["worker"])):
             problems.append(("дубль", e["line"],
                              f"{e['key']} уже взят Луноботом-{prev['num']} этого узла (строка {prev['line']})"))
         if e["verb"] == "работаю" and not prev:
