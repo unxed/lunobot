@@ -13,3 +13,5 @@
 2026-10-12 07:05 PR #29 (unxed/dn#20, часть 1: «!» у битой ссылки) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/29
 2026-10-12 07:42 PR #30 (unxed/dn#19, число колонок имён) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/30
 2026-10-12 08:16 PR #34 (unxed/dn#31, Load palette / xlat открывают диалог) — проверки PR dn.yml, dn-linux.yml, dn-windows.yml, class-migration.yml не проверены https://github.com/unxed/dn/pull/34
+
+14-10-2026 02:16:48 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), красный main `e715c46`, PR [#42](https://github.com/unxed/dn/pull/42), коммит `f760882`, прогоны PR [dn #599](https://github.com/unxed/dn/actions/runs/38500128146), [dn-linux #622](https://github.com/unxed/dn/actions/runs/38500128169), [dn-windows #522](https://github.com/unxed/dn/actions/runs/38500128212), [class-migration #99](https://github.com/unxed/dn/actions/runs/38500128214), layout #562 зелёный
