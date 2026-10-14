@@ -43,7 +43,8 @@ class MojibakeBodies(unittest.TestCase):
         self.assertIn("https://github.com/o/r/pull/15 (#15, тело тикета/PR", text)
         self.assertIn("gh_post.py pr-body o/r 15", text)
         self.assertIn("https://github.com/o/r/issues/7 (#7, тело тикета/PR", text)
-        self.assertIn("-F body=@файл", text)
+        self.assertIn("gh_post.py issue-body o/r 7", text)
+        self.assertNotIn("gh api -X PATCH", text)
         self.assertNotIn("/issues/8", text)
         self.assertNotIn("/issues/9", text)
 
