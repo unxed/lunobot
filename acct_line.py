@@ -137,8 +137,8 @@ def main(argv=None):
     ap.add_argument("--remote", default="origin")
     ap.add_argument("--branch", default="main")
     a = ap.parse_args(argv)
-    if "(node " not in a.sign:
-        print("--sign: нужен полный id с узлом, например «Лунобот-1 (node …; LNX)»", file=sys.stderr)
+    if not re.fullmatch(r"(?:Лунобот|Lunobot)-\d+ \(node [0-9a-f]{24}; (?:MSW|LNX|DAR|BSD)\)", a.sign):
+        print("--sign: нужен полный id с номером, 24-значным узлом и платформой, например «Лунобот-1 (node a721a6d1487257292ae00780; LNX)»", file=sys.stderr)
         return 2
     relpath = a.file.replace("\\", "/")
     try:
