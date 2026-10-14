@@ -439,6 +439,23 @@ def live(commits):
     return [c for c in commits if (c.get("sha") or "") not in drop]
 
 
+def exclude_reverted(commits):
+    """Exclude commits whose changes are reverted by a later commit in this history.
+
+    Unlike ``live()``, retain the revert commit itself: its age is the age of the
+    latest change to the staging history and it must still count toward ``stuck``.
+    """
+    shas = [c.get("sha") or "" for c in commits]
+    reverted = set()
+    for c in commits:
+        for ref in REVERTS.findall(c["commit"]["message"]):
+            target = next((sha for sha in shas if sha and
+                           (sha.startswith(ref) or ref.startswith(sha))), None)
+            if target:
+                reverted.add(target)
+    return [c for c in commits if (c.get("sha") or "") not in reverted]
+
+
 def tickets(repo, commits):
     """{ключ: [тексты «Проверить»]} по трейлерам коммитов поезда (без откатанных в нём же)."""
     out = {}
@@ -1023,6 +1040,7 @@ def stuck(repo):
         print(f"staging tip уже покрыт зелёным поездом #{green_train['number']} — ждёт merge в main")
         return 0
     own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
+    own = exclude_reverted(own)
     if not own:
         print("staging не впереди main — приземлённая работа вся в main")
         return 0

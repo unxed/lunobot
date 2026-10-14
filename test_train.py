@@ -142,6 +142,43 @@ class StagingHealthTest(unittest.TestCase):
         self.assertEqual(self.health([self.commit("w", "work\n\nTouch: #1\n")]), "red")
 
 
+class StuckTest(unittest.TestCase):
+    @staticmethod
+    def commit(sha, message, when):
+        return {"sha": sha, "parents": [{}], "commit": {
+            "message": message,
+            "committer": {"date": when.isoformat().replace("+00:00", "Z")},
+        }}
+
+    def check_stuck(self, commits):
+        with mock.patch.object(train, "api", side_effect=[
+                {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
+                mock.patch.object(train, "green_train_covering", return_value=None), \
+                mock.patch.object(train, "compare", return_value={"commits": commits}), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            result = train.stuck("o/r")
+        return result, output.getvalue()
+
+    def test_old_commit_reverted_on_staging_does_not_trigger_stuck(self):
+        now = datetime.now(timezone.utc)
+        commits = [
+            self.commit("a" * 40, "old work", now - timedelta(hours=7)),
+            self.commit("b" * 40, 'Revert "old work"\n\nThis reverts commit ' + "a" * 40 + ".",
+                        now - timedelta(minutes=10)),
+        ]
+        result, output = self.check_stuck(commits)
+        self.assertEqual(result, 0)
+        self.assertIn("1 коммит(ов) ждут main", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_new_ordinary_commit_is_still_counted_for_stuck(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("c" * 40, "new work", now - timedelta(minutes=10))]
+        result, output = self.check_stuck(commits)
+        self.assertEqual(result, 0)
+        self.assertIn("1 коммит(ов) ждут main", output)
+
+
 class TrainStepCancellationTest(unittest.TestCase):
     def test_cancelled_checks_are_restarted_while_other_checks_are_queued(self):
         pr = {"number": 197, "head": {"sha": "head"}}
