@@ -118,7 +118,7 @@ def parse(path):
         # часть не указана — значит единственная
         part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
         entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
-                        "who": who.group(0), "node": who.group("node"), "verb": verb,
+                        "who": who.group(0), "node": who.group("node"), "num": who.group("num"), "verb": verb,
                         "key": f"{key}#{part_key}",
                         "worker": (re.search(r"воркер\s+([0-9a-f]{6,})", line) or [None, None])[1]})
         if verb == "взял":
@@ -174,6 +174,13 @@ def check(path, timeout_min, since=None):
                 and prev["worker"] and e["worker"] != prev["worker"]):
             problems.append(("дубль", e["line"],
                              f"{e['key']} уже взят другим воркером узла (строка {prev['line']})"))
+        # Лунобот-1 и Лунобот-2 одного узла — две разные сессии с одним id узла и без суффикса «воркер»:
+        # то же «взял» на тот же ключ от другого номера на том же узле — дубль работы (14-10-2026
+        # unxed/dn#40 часть 4а взяли оба, оба написали юнит; гейт молчал)
+        if (e["verb"] == "взял" and prev and prev["verb"] == "взял" and prev["node"] == e["node"]
+                and prev["num"] != e["num"]):
+            problems.append(("дубль", e["line"],
+                             f"{e['key']} уже взят Луноботом-{prev['num']} этого узла (строка {prev['line']})"))
         if e["verb"] == "работаю" and not prev:
             problems.append(("состояние", e["line"], f"keepalive без захвата: {e['key']}"))
         if not prev or e["ts"] >= prev["ts"]:
