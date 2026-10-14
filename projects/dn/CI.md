@@ -9,3 +9,5 @@
 14-10-2026 12:16:29 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `0e83900` (мерж unxed/dn#60 поверх мержа unxed/dn#57; PR отставал от main, прогоны main не отменяем), прогон dn-windows [#573](https://github.com/unxed/dn/actions/runs/38562388998)
 
 14-10-2026 12:16:29 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `0e83900` (мерж unxed/dn#60 поверх мержа unxed/dn#57; PR отставал от main, прогоны main не отменяем), прогон toolchain [#182](https://github.com/unxed/dn/actions/runs/38562388891)
+
+14-10-2026 12:16:29 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `0e83900` (мерж unxed/dn#60 поверх мержа unxed/dn#57; PR отставал от main, прогоны main не отменяем), прогон layout [#595](https://github.com/unxed/dn/actions/runs/38562388915)
