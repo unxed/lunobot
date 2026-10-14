@@ -8,6 +8,26 @@ from unittest import mock
 import train
 
 
+class CommandHelpTest(unittest.TestCase):
+    def test_land_help_does_not_land(self):
+        output = io.StringIO()
+        with mock.patch.object(train, "land") as land, contextlib.redirect_stdout(output):
+            result = train.main(["land", "--help"])
+        self.assertEqual(result, 0)
+        land.assert_not_called()
+        self.assertIn("train.py land", output.getvalue())
+
+    def test_tick_all_help_does_not_discover_or_tick_repositories(self):
+        output = io.StringIO()
+        with mock.patch.object(train, "staged_repos") as staged_repos, \
+             mock.patch.object(train, "tick") as tick, \
+             contextlib.redirect_stdout(output):
+            result = train.main(["tick-all", "--sign", "test", "--help"])
+        self.assertEqual(result, 0)
+        staged_repos.assert_not_called()
+        tick.assert_not_called()
+
+
 class ExistingRefTest(unittest.TestCase):
     def test_404_json_is_not_a_ref(self):
         # `gh api` prints the 404 body to stdout; api() parses it into a dict.

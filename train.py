@@ -1485,6 +1485,9 @@ def main(argv):
         print(__doc__)
         return 2
     cmd, rest = argv[0], argv[1:]
+    if any(arg in ("-h", "--help") for arg in rest):
+        print(__doc__)
+        return 0
     opt = lambda k: rest[rest.index(k) + 1] if k in rest else None
     if cmd == "land":
         return land(fix="--fix-staging" in rest)
