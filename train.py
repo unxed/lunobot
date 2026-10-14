@@ -1239,7 +1239,7 @@ def tried_since(repo, n, commits):
     if not dates:
         return False
     comments = api(f"repos/{repo}/issues/{n}/comments?since={max(dates)}&per_page=100", check=False) or []
-    return any("Пробуйте!" in (c.get("body") or "") and (c.get("created_at") or "") >= max(dates)
+    return any("пробуйте!" in (c.get("body") or "").casefold() and (c.get("created_at") or "") >= max(dates)
                for c in comments)
 
 

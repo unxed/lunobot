@@ -495,6 +495,9 @@ class TriedSinceTest(unittest.TestCase):
     def test_try_after_the_commit_counts(self):
         self.assertTrue(self.check([{"body": "Пробуйте! всё", "created_at": "2026-10-10T02:00:00Z"}]))
 
+    def test_lowercase_try_after_the_commit_counts(self):
+        self.assertTrue(self.check([{"body": "Привет, попробуйте! изменение", "created_at": "2026-10-10T02:00:00Z"}]))
+
     def test_other_comments_do_not(self):
         self.assertFalse(self.check([{"body": "спасибо", "created_at": "2026-10-10T02:00:00Z"}]))
         self.assertFalse(self.check(None))
