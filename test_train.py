@@ -228,7 +228,7 @@ class DispatchFormatWarnTest(unittest.TestCase):
     def test_ci_md_line_in_dispatch_warns(self):
         out = self.run_warn({"dn": "# DISPATCH\n\n" + self.CI_LINE, "f4": "# DISPATCH\n"})
         self.assertIn("ПРЕДУПРЕЖДЕНИЕ: DISPATCH.md dn: формат", out)
-        self.assertNotIn("f4", out.replace("projects/dn", ""))
+        self.assertNotIn("DISPATCH.md f4", out)
 
     def test_stale_but_well_formed_claim_is_silent(self):
         self.assertEqual(self.run_warn({"dn": "# DISPATCH\n\n" + self.STALE_OK}), "")
