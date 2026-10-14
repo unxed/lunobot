@@ -6,3 +6,5 @@
 14-10-2026 03:53:35 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/285 [land]
 
 14-10-2026 07:28:09 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a8d8324b), взял задачу https://github.com/unxed/vtui/pull/206 [urgent: по § 6 — PR человека]
+
+14-10-2026 07:29:18 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a806225a), взял кастомную задачу «красный main vtui 2ca4a1cb1 (Race)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
