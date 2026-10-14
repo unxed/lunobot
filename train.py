@@ -1181,6 +1181,12 @@ def ensure_quick_on_tip(repo):
     tip = api(f"repos/{repo}/branches/{STAGING}", check=False)
     if not tip:
         return
+    # С check=False ответ с ошибкой (лимит API, отказ прокси) приходит телом {"message": ...}, а не
+    # веткой; падать на нём нельзя — tick-all ронял весь круг с KeyError: 'commit' (14-10-2026).
+    if not isinstance(tip.get("commit"), dict) or "sha" not in tip["commit"]:
+        print(f"  вершина {STAGING} не прочитана ({str(tip.get('message', tip))[:120]}) — "
+              "проверку quick на вершине пропускаю до следующего tick")
+        return
     sha = tip["commit"]["sha"]
     # staging, в котором нет ничего сверх main (вершина — сам main после перемотки), поезду не нужен:
     # код уже проверен полным CI main, и quick на нём ждать незачем (10-10-2026: vtui каждый круг
