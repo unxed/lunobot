@@ -17,6 +17,8 @@ land  — при свежей строке «объявляю заморозку
         его не починят (§ 7.2 п. 0). Починка — с --fix-staging и трейлером `Fixes-Staging:`.
 health — только чтение: состояние staging и сколько часов main не двигался; для ретро круга.
         Плюс предупреждение (код не меняет): тикеты `в пути` в TRIAGE.md, чьи `Touch:` уже в main.
+        И (здесь же и в tick-all) предупреждение о нарушениях формата в любом projects/*/DISPATCH.md:
+        полный check_dispatch без --added-only, без протухания; код возврата не меняет.
 covered — быстрый ответ автору после land: зелёный/красный/ещё едет — по первому завершённому
         quick на его коммите или потомке (quick на staging не отменяется, каждый прогон доезжает).
 tick  — идемпотентный шаг проводника; запускай в начале каждого круга. Сначала лечит staging:
@@ -1102,7 +1104,41 @@ def health(repo):
     print(f"staging: {state}" + (f" — {last['html_url']}" if last else ""))
     rc = max(stuck(repo), main_ci(repo), 1 if state == "red" else 0)
     transit_warn(repo)
+    dispatch_format_warn()
     return rc
+
+
+# Нарушения записи строк, а не состояния флота (гонка/keepalive/протухание сюда не входят).
+DISPATCH_FORMAT_KINDS = ("формат", "слиплось", "маршрут", "нет повода", "мусор")
+
+
+def dispatch_format_warn(root=None):
+    """Предупреждение (код возврата не меняет): полная проверка формата всех
+    projects/*/DISPATCH.md учётного клона тем же check_dispatch.check. Гейт перед пушем и
+    dispatch-lint.yml смотрят только добавленные строки, поэтому испорченная строка, проскочившая
+    один раз, дальше невидима (14-10-2026: 5b329822 превратил захваты dn в строки формата CI.md,
+    dispatch-lint упал, следующие пуши зелёные, мусор лежал до ручной уборки aab98732)."""
+    import check_dispatch
+    base = os.path.join(root or ACCOUNTING, "projects")
+    try:
+        names = sorted(os.listdir(base))
+    except OSError:
+        return
+    for name in names:
+        path = os.path.join(base, name, "DISPATCH.md")
+        if not os.path.isfile(path):
+            continue
+        try:
+            _, problems = check_dispatch.check(path, 45)
+        except Exception as e:  # noqa: BLE001 — предупреждение не должно ронять health
+            print(f"ПРЕДУПРЕЖДЕНИЕ: DISPATCH.md {name}: формат не проверен ({e})")
+            continue
+        bad = [p for p in problems if p[0] in DISPATCH_FORMAT_KINDS]
+        if bad:
+            shown = "; ".join(f"строка {n} [{k}]: {msg[:120]}" for k, n, msg in bad[:3])
+            more = f"; ещё {len(bad) - 3}" if len(bad) > 3 else ""
+            print(f"ПРЕДУПРЕЖДЕНИЕ: DISPATCH.md {name}: формат — {len(bad)} наруш.: {shown}{more}. "
+                  f"Проверь: python3 check_dispatch.py projects/{name}/DISPATCH.md")
 
 
 QUICK_TIP_WAIT_MIN = 10
@@ -1457,6 +1493,7 @@ def main(argv):
         for repo in staged_repos():
             print(f"=== {repo}")
             rc = max(rc, tick(repo, opt("--sign")))
+        dispatch_format_warn()
         return rc
     if cmd == "health" and len(rest) == 1:
         return health(rest[0])

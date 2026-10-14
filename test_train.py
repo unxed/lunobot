@@ -203,6 +203,47 @@ class HealRerunTest(unittest.TestCase):
         api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
+class DispatchFormatWarnTest(unittest.TestCase):
+    """14-10-2026: 5b329822 превратил захваты dn в строки формата CI.md; dispatch-lint упал один раз,
+    следующие пуши зелёные (гейт видит только добавленные строки) — health/tick-all должны это видеть."""
+    CI_LINE = ("14-10-2026 06:26:30 Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), тикет "
+               "https://github.com/unxed/dn/issues/36, PR [#45](https://github.com/unxed/dn/pull/45), "
+               "коммит `0fe1a68`\n")
+    STALE_OK = ("01-01-2026 00:00:00 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX) взял "
+                "https://github.com/unxed/dn/issues/7 [land]\n")
+
+    def run_warn(self, files):
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as root:
+            for name, text in files.items():
+                os.makedirs(os.path.join(root, "projects", name))
+                with open(os.path.join(root, "projects", name, "DISPATCH.md"), "w", encoding="utf-8") as f:
+                    f.write(text)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                train.dispatch_format_warn(root)
+            return out.getvalue()
+
+    def test_ci_md_line_in_dispatch_warns(self):
+        out = self.run_warn({"dn": "# DISPATCH\n\n" + self.CI_LINE, "f4": "# DISPATCH\n"})
+        self.assertIn("ПРЕДУПРЕЖДЕНИЕ: DISPATCH.md dn: формат", out)
+        self.assertNotIn("f4", out.replace("projects/dn", ""))
+
+    def test_stale_but_well_formed_claim_is_silent(self):
+        self.assertEqual(self.run_warn({"dn": "# DISPATCH\n\n" + self.STALE_OK}), "")
+
+    def test_health_warns_without_changing_rc(self):
+        with mock.patch.object(train, "staging_health", return_value=("green", {"last": None})), \
+                mock.patch.object(train, "stuck", return_value=0), \
+                mock.patch.object(train, "main_ci", return_value=0), \
+                mock.patch.object(train, "transit_warn"), \
+                mock.patch.object(train, "dispatch_format_warn") as warn, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.health("o/r"), 0)
+        warn.assert_called_once_with()
+
+
 class CancelRunTest(unittest.TestCase):
     def test_cancel_uses_rest_endpoint(self):
         with mock.patch.object(train, "api") as api:
