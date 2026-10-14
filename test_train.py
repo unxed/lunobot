@@ -430,6 +430,11 @@ class EnsureQuickOnTipTest(unittest.TestCase):
     def test_fresh_tip_is_left_to_the_push_trigger(self):
         self.assertEqual(self.run_tick(self.tip(2), 0), [])
 
+    def test_error_body_instead_of_the_branch_is_skipped(self):
+        # 14-10-2026: gh api вернул тело ошибки, и tick-all упал с KeyError: 'commit'.
+        self.assertEqual(self.run_tick({"message": "API rate limit exceeded"}, 0), [])
+        self.assertIn("не прочитана", self.out)
+
     def test_tip_with_a_run_is_left_alone(self):
         self.assertEqual(self.run_tick(self.tip(60), 1), [])
 
