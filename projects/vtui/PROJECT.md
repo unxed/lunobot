@@ -29,6 +29,11 @@
   требует парной правки в f4
 - Песочница `sandbox.yml` исполняет `-f command=…` через shell (`bash -c`
   на Linux/macOS, `Invoke-Expression` pwsh 7 на Windows): `&&`, `|`, `for` работают
+- Проверка в песочнице перед `land` обязана включать lint, как у f4: `git fetch -q origin
+  +refs/heads/main:refs/remotes/origin/main && go run
+  github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./...`
+  (14-10-2026 golden-тест `cmd/vtui-replay` с `defer f.Close()` приземлился с зелёным `go test`
+  и покрасил `quick` на `Lint`/errcheck — исправление пришлось приземлять `land --fix-staging`).
 - Релизы: после мержа в main тегируй следующий последовательный `vX.Y.Z`
   (смотри `gh api repos/unxed/vtui/tags --jq '.[0].name'`) на коммите мержа
   и пушь тег — только так f4 сможет подтянуть исправление через go.mod.
