@@ -14,6 +14,7 @@
 """
 import argparse
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -23,8 +24,12 @@ sys.path.insert(0, HERE)
 
 
 def git(repo, *args, data=None, env=None, check=True):
-    r = subprocess.run(["git", "-C", repo, *args], input=data, capture_output=True, text=True,
-                       encoding="utf-8", env=env)
+    # байты, а не text=True: в текстовом режиме stdin переводит "\n" в os.linesep, и в Windows
+    # в blob учётного файла ушли бы CRLF (§ 3 п. 11: только LF)
+    r = subprocess.run(["git", "-C", repo, *args], capture_output=True, env=env,
+                       input=None if data is None else data.encode("utf-8"))
+    r.stdout = r.stdout.decode("utf-8")
+    r.stderr = r.stderr.decode("utf-8", "replace")
     if check and r.returncode:
         raise RuntimeError(f"git {' '.join(args)}: {r.stderr.strip()}")
     return r
@@ -35,10 +40,16 @@ def add_paragraph(text, line):
     return (body + "\n\n" if body else "") + line.strip("\n") + "\n"
 
 
-def remove_line(text, key):
-    """Новый текст без единственной строки с key; None — такой строки нет; ValueError — их несколько."""
+RECORD = re.compile(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d ")
+RECORD_FILES = ("DISPATCH.md", "CI.md", "BRANCHES.md")
+
+
+def remove_line(text, key, records_only=False):
+    """Новый текст без единственной строки с key; None — такой строки нет; ValueError — их несколько.
+    records_only: искать только среди записей с меткой времени, чтобы ключ не снёс шапку файла."""
     lines = text.split("\n")
-    hits = [i for i, l in enumerate(lines) if key in l]
+    hits = [i for i, l in enumerate(lines)
+            if key in l and (not records_only or RECORD.match(l))]
     if not hits:
         return None
     if len(hits) > 1:
@@ -83,7 +94,7 @@ def attempt(repo, remote, branch, op, relpath, arg, message, sign):
         new = add_paragraph(old.stdout, arg)
         added = len(new.rstrip("\n").split("\n"))
     else:
-        new = remove_line(old.stdout, arg)
+        new = remove_line(old.stdout, arg, os.path.basename(relpath) in RECORD_FILES)
         if new is None:
             print(f"в {relpath} нет строки с {arg!r} — удалять нечего")
             return "noop"

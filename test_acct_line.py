@@ -126,6 +126,22 @@ class RemoveLineTest(unittest.TestCase):
     def test_last_paragraph(self):
         self.assertEqual(acct_line.remove_line("h\n\na\n\nb\n", "b"), "h\n\na\n")
 
+    def test_records_only_spares_header(self):
+        text = "# Захваты — dn\n\n" + LINE.format(1) + "\n"
+        # «dn» есть и в шапке, и в записи: без защиты это была бы неоднозначность, а одна шапка — снесена
+        self.assertEqual(acct_line.remove_line(text, "dn", records_only=True), "# Захваты — dn\n")
+        self.assertIsNone(acct_line.remove_line("# Захваты — dn\n", "dn", records_only=True))
+
+
+class GitBytesTest(unittest.TestCase):
+    def test_blob_keeps_lf(self):
+        # stdin в байтах: "\n" не превращается в os.linesep (CRLF в Windows)
+        with tempfile.TemporaryDirectory() as t:
+            sh(t, "init", "-q", t)
+            blob = acct_line.git(t, "hash-object", "-w", "--stdin", data="а\nб\n").stdout.strip()
+            raw = subprocess.run(["git", "-C", t, "cat-file", "blob", blob], capture_output=True).stdout
+            self.assertEqual(raw, "а\nб\n".encode("utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()
