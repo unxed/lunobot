@@ -958,6 +958,18 @@ def attempts(failed):
     return out
 
 
+def rerun_failed_jobs(repo, run_id):
+    """POST rerun-failed-jobs. Два tick-all одного узла (разные номера Луноботов) шли подряд:
+    проигравший получал 403 «This workflow is already running» и `tick` падал (14-10-2026,
+    поезд unxed/f4#1935: ОШИБКА tick). Перезапуск уже сделан другим — это не сбой."""
+    try:
+        api(f"repos/{repo}/actions/runs/{run_id}/rerun-failed-jobs", "-X", "POST")
+    except SystemExit as e:
+        if "already running" not in str(e):
+            raise
+        print(f"  перезапуск прогона {run_id} уже идёт (другой tick) — пропускаю")
+
+
 def rerun(failed):
     """Перезапуск упавших и отменённых job'ов их прогонов. REST, а не `gh run rerun`: тот в облачной
     сессии не срабатывал (08-10-2026: tick писал «перезапустил», а run_attempt оставался 1)."""
@@ -966,7 +978,7 @@ def rerun(failed):
         m = re.search(r"github\.com/([^/]+/[^/]+)/actions/runs/(\d+)", c.get("detailsUrl") or "")
         if m and m.groups() not in seen:
             seen.add(m.groups())
-            api(f"repos/{m.group(1)}/actions/runs/{m.group(2)}/rerun-failed-jobs", "-X", "POST")
+            rerun_failed_jobs(m.group(1), m.group(2))
 
 
 def covered(repo, sha):
@@ -1001,7 +1013,7 @@ def heal(repo):
     if last.get("run_attempt", 1) < 2:
         # `gh run rerun` молча не срабатывал в облачной сессии Claude Code. Проверяем
         # результат REST-запроса до того, как сообщать, что quick перезапущен.
-        api(f"repos/{repo}/actions/runs/{last['id']}/rerun-failed-jobs", "-X", "POST")
+        rerun_failed_jobs(repo, last['id'])
         print("  перезапустил упавший quick — отсеиваем флейк")
         return 0
     first_red, culprits = red_range(repo, info)
@@ -1118,7 +1130,7 @@ def main_ci(repo):
         jobs = api(f"repos/{repo}/actions/runs/{r['id']}/jobs?per_page=100", check=False) or {}
         bad = [j["name"] for j in jobs.get("jobs", []) if j.get("conclusion") == "failure"]
         if 0 < len(bad) <= MAIN_FLAKE_MAX_JOBS:
-            api(f"repos/{repo}/actions/runs/{r['id']}/rerun-failed-jobs", "-X", "POST")
+            rerun_failed_jobs(repo, r['id'])
             print(f"main {head[:9]}: упал {', '.join(bad)} — перезапустил один раз (флейк?): "
                   f"{r['html_url']}. Красным и после этого — СРОЧНО (§ 5 п. 2)")
             return 0
