@@ -493,6 +493,67 @@ class MainCancelledRunTest(unittest.TestCase):
 
 
 
+class MainRedRunRerunTest(unittest.TestCase):
+    def _fake_api(self, attempt, failed_jobs, calls):
+        def api(path, *args, check=True):
+            calls.append((path, args))
+            if path.endswith("/branches/main"):
+                return {"commit": {"sha": "abc123def"}}
+            if "actions/runs?" in path:
+                return {"workflow_runs": [{"id": 9, "name": "CI", "status": "completed",
+                                           "conclusion": "failure", "run_attempt": attempt,
+                                           "created_at": "2026-10-14T13:40:24Z",
+                                           "html_url": "https://example/runs/9"}]}
+            if path.endswith("/jobs?per_page=100"):
+                return {"jobs": [{"name": f"job{i}", "conclusion": "failure"} for i in range(failed_jobs)]
+                        + [{"name": "ok", "conclusion": "success"}]}
+            return {}
+        return api
+
+    def test_single_failed_job_is_rerun_once(self):
+        calls = []
+        with mock.patch.object(train, "api", side_effect=self._fake_api(1, 1, calls)):
+            self.assertEqual(train.main_ci("o/r"), 0)
+        self.assertIn(("repos/o/r/actions/runs/9/rerun-failed-jobs", ("-X", "POST")), calls)
+
+    def test_many_failed_jobs_stay_red(self):
+        calls = []
+        with mock.patch.object(train, "api", side_effect=self._fake_api(1, 5, calls)):
+            self.assertEqual(train.main_ci("o/r"), 1)
+        self.assertFalse(any(p.endswith("/rerun-failed-jobs") for p, _ in calls))
+
+    def test_running_matrix_with_one_failed_job_waits(self):
+        calls = []
+        api = self._fake_api(1, 1, calls)
+
+        def running(path, *args, check=True):
+            out = api(path, *args, check=check)
+            if out and "workflow_runs" in out:
+                out["workflow_runs"][0].update(status="in_progress", conclusion=None)
+            return out
+        with mock.patch.object(train, "api", side_effect=running):
+            self.assertEqual(train.main_ci("o/r"), 0)
+        self.assertFalse(any(p.endswith("/rerun-failed-jobs") for p, _ in calls))
+
+    def test_running_matrix_with_many_failed_jobs_is_red(self):
+        calls = []
+        api = self._fake_api(1, 5, calls)
+
+        def running(path, *args, check=True):
+            out = api(path, *args, check=check)
+            if out and "workflow_runs" in out:
+                out["workflow_runs"][0].update(status="in_progress", conclusion=None)
+            return out
+        with mock.patch.object(train, "api", side_effect=running):
+            self.assertEqual(train.main_ci("o/r"), 1)
+
+    def test_red_after_rerun_stays_red(self):
+        calls = []
+        with mock.patch.object(train, "api", side_effect=self._fake_api(2, 1, calls)):
+            self.assertEqual(train.main_ci("o/r"), 1)
+        self.assertFalse(any(p.endswith("/rerun-failed-jobs") for p, _ in calls))
+
+
 class RollupRestRerunTest(unittest.TestCase):
     def test_failed_check_from_rest_can_be_rerun(self):
         def api(path, *args, check=True):
