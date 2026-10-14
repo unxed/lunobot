@@ -498,6 +498,14 @@ class TriedSinceTest(unittest.TestCase):
     def test_lowercase_try_after_the_commit_counts(self):
         self.assertTrue(self.check([{"body": "Привет, попробуйте! изменение", "created_at": "2026-10-10T02:00:00Z"}]))
 
+    def test_lowercase_try_from_real_ticket_counts(self):
+        # unxed/f4#1898, 13-10-2026: «@nz256, пробуйте! …» — ложное «нет «Пробуйте!»» в tick-all.
+        self.assertTrue(self.check([{"body": "@nz256, пробуйте! Исправление в main", "created_at": "2026-10-10T02:00:00Z"}]))
+        self.assertTrue(self.check([{"body": "ПРОБУЙТЕ! всё", "created_at": "2026-10-10T02:00:00Z"}]))
+
+    def test_try_without_exclamation_does_not_count(self):
+        self.assertFalse(self.check([{"body": "пробуйте позже", "created_at": "2026-10-10T02:00:00Z"}]))
+
     def test_other_comments_do_not(self):
         self.assertFalse(self.check([{"body": "спасибо", "created_at": "2026-10-10T02:00:00Z"}]))
         self.assertFalse(self.check(None))
