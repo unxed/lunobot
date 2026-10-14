@@ -83,6 +83,41 @@ def route_error(line):
     return None
 
 
+REF_URL = re.compile(r"github\.com/([\w.-]+)/([\w.-]+)/(?:issues|pull)/(\d+)")
+REF_SHORT = re.compile(r"(?<![\w./-])([\w.-]+)/([\w.-]+)#(\d+)")
+PART_ANY = re.compile(r"часть (\d+) из (\d+)")
+
+
+def refs(text):
+    """Ссылки на тикеты/PR в строке: URL github.com/<o>/<r>/(issues|pull)/N и <o>/<r>#N.
+
+    Нормализуются в «o/r#N» (регистр не важен): кастомная задача «влить PR … unxed/dn#33» и
+    захват https://github.com/unxed/dn/issues/33 — одна и та же работа (14-10-2026, два
+    захвата unxed/dn#33 часть 3 из 4 разными сеансами одного узла: ключи разной формы,
+    гейт их не сравнивал)."""
+    found = {f"{o}/{r}#{n}".lower() for o, r, n in REF_URL.findall(text)}
+    found |= {f"{o}/{r}#{n}".lower() for o, r, n in REF_SHORT.findall(text)}
+    return found
+
+
+def ci_refs(path):
+    """Строки CI.md того же проекта (рядом с DISPATCH.md): [(ссылки, часть или None)].
+
+    Часть нужна, чтобы следующая часть многочастного тикета (§ 5.1) не считалась повтором
+    строки CI.md по предыдущей части."""
+    ci = os.path.join(os.path.dirname(os.path.abspath(path)), "CI.md")
+    try:
+        lines = open(ci, encoding="utf-8").read().splitlines()
+    except OSError:
+        return []
+    out = []
+    for line in lines:
+        if r := refs(line):
+            part = PART_ANY.search(line)
+            out.append((r, part.group(0) if part else None))
+    return out
+
+
 def parse(path):
     entries, malformed, no_origin, route = [], [], [], []
     for n, line in enumerate(open(path, encoding="utf-8"), 1):
@@ -117,14 +152,25 @@ def parse(path):
             continue
         # часть не указана — значит единственная
         part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
+        anypart = PART_ANY.search(line)
         entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
-                        "who": who.group(0), "node": who.group("node"), "num": who.group("num"), "verb": verb,
+                        "who": who.group(0), "node": who.group("node"), "num": who.group("num"),
+                        "verb": verb, "refs": refs(line), "text": line,
+                        "part": anypart.group(0) if anypart else None,
+                        "route": (ROUTE_MARKER.search(line) or [None, None])[1],
                         "key": f"{key}#{part_key}",
                         "worker": (re.search(r"воркер\s+([0-9a-f]{6,})", line) or [None, None])[1]})
         if verb == "взял":
             if err := route_error(line):
                 route.append((n, line[:160], err))
     return entries, malformed, no_origin, route
+
+
+def owner_differs(a, b):
+    """Разные владельцы захвата: другой узел, другой номер на том же узле или другой воркер."""
+    if (a["node"], a["num"]) != (b["node"], b["num"]):
+        return True
+    return bool(a["worker"] and b["worker"] and a["worker"] != b["worker"])
 
 
 def check(path, timeout_min, since=None):
@@ -156,8 +202,8 @@ def check(path, timeout_min, since=None):
     for n, text, flags in malformed:
         problems.append(("формат", n, ", ".join(k for k, v in flags.items() if v) + f": {text}"))
 
-    holders = {}
-    for e in entries:
+    holders, live, in_ci = {}, [], ci_refs(path)
+    for e in sorted(entries, key=lambda x: (x["ts"], x["line"])):
         if e["verb"] in CLOSED:
             problems.append(("мусор", e["line"],
                              f"«{e['verb']}» — записей о законченном в файле быть не должно, "
@@ -185,6 +231,32 @@ def check(path, timeout_min, since=None):
                              f"{e['key']} уже взят Луноботом-{prev['num']} этого узла (строка {prev['line']})"))
         if e["verb"] == "работаю" and not prev:
             problems.append(("состояние", e["line"], f"keepalive без захвата: {e['key']}"))
+        if e["verb"] == "взял" and e["refs"]:
+            # пересечение по ссылкам: тот же тикет/PR под ключом другой формы (URL против
+            # кастомного текста) у другого владельца; разные явные части — не пересечение
+            for other in live:
+                if other["key"] == e["key"] or not (other["refs"] & e["refs"]):
+                    continue
+                if not owner_differs(other, e):
+                    continue
+                if other["part"] and e["part"] and other["part"] != e["part"]:
+                    continue
+                problems.append(("пересечение", e["line"],
+                                 f"{', '.join(sorted(other['refs'] & e['refs']))} уже в работе "
+                                 f"у другого владельца (строка {other['line']})"))
+                break
+        dup_ci = set()
+        if e["verb"] == "взял" and e["route"] in ("land", "pr"):
+            for r, part in in_ci:
+                if (r & e["refs"]) and not (part and e["part"] and part != e["part"]):
+                    dup_ci |= r & e["refs"]
+        if dup_ci:
+            problems.append(("уже в CI.md", e["line"],
+                             f"{', '.join(sorted(dup_ci))} уже есть в CI.md проекта "
+                             "(§ 5 п. 5: брать можно только то, чего нет ни в DISPATCH.md, ни в "
+                             "CI.md); доводка строки CI.md — [urgent: по § 5 п. 3 …]"))
+        if e["verb"] in LIVE:
+            live.append(e)
         if not prev or e["ts"] >= prev["ts"]:
             holders[e["key"]] = e
 
