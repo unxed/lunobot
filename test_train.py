@@ -628,6 +628,25 @@ class RollupRestRerunTest(unittest.TestCase):
         api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
+class ApiErrorBodyTest(unittest.TestCase):
+    """Тело ошибки GitHub вместо списка (лимит запросов) не роняет tried_since и transit_warn."""
+
+    error = {"message": "API rate limit exceeded", "documentation_url": "https://docs.github.com"}
+
+    def test_api_list_takes_only_a_list(self):
+        with mock.patch.object(train, "api", return_value=self.error):
+            self.assertEqual(train.api_list("repos/unxed/f4/commits"), [])
+        with mock.patch.object(train, "api", return_value=None):
+            self.assertEqual(train.api_list("repos/unxed/f4/commits"), [])
+        with mock.patch.object(train, "api", return_value=[{"a": 1}]):
+            self.assertEqual(train.api_list("repos/unxed/f4/commits"), [{"a": 1}])
+
+    def test_tried_since_with_an_error_body_is_false(self):
+        commits = [{"commit": {"message": "feat: x\n\nTouch: unxed/f4#7\n", "committer": {"date": "2026-10-10T01:00:00Z"}}}]
+        with mock.patch.object(train, "api", return_value=self.error):
+            self.assertFalse(train.tried_since("unxed/f4", 7, commits))
+
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -154,6 +154,15 @@ def api(path, *args, check=True):
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
+def api_list(path, *args):
+    """Список из ответа API. Тело ошибки GitHub (`{"message": …}`, лимит запросов, 5xx) или пустой
+    ответ — пустой список: `api(..., check=False) or []` пропускает словарь, а перебор словаря
+    даёт строки и роняет круг на `c.get` (14-10-2026 тот же класс ошибки уже ронял `tick-all`
+    в `ensure_quick_on_tip`, KeyError 'commit')."""
+    data = api(path, *args, check=False)
+    return data if isinstance(data, list) else []
+
+
 def push_ref(repo, branch, sha):
     """Создать или продвинуть ветку git push-ем (не force: только вперёд), когда REST
     закрыт для записи ссылок (прокси облачных сессий Claude Code отвечает 403 на
@@ -1325,7 +1334,7 @@ def tried_since(repo, n, commits):
              if n in own_numbers(repo, [c]) and c.get("commit", {}).get("committer", {}).get("date")]
     if not dates:
         return False
-    comments = api(f"repos/{repo}/issues/{n}/comments?since={max(dates)}&per_page=100", check=False) or []
+    comments = api_list(f"repos/{repo}/issues/{n}/comments?since={max(dates)}&per_page=100")
     return any("пробуйте!" in (c.get("body") or "").casefold() and (c.get("created_at") or "") >= max(dates)
                for c in comments)
 
@@ -1342,7 +1351,7 @@ def transit_warn(repo):
     if not transit:
         return
     since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
-    commits = api(f"repos/{repo}/commits?sha=main&since={since}&per_page=100", check=False) or []
+    commits = api_list(f"repos/{repo}/commits?sha=main&since={since}&per_page=100")
     stale = sorted(n for n in transit & own_numbers(repo, commits) if not tried_since(repo, n, commits))
     if stale:
         print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
