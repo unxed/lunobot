@@ -119,6 +119,7 @@ MAX_AUTO_REVERT = 3
 # лежит коммит-починка (cut). Дольше — выход в § 5 п. 2: quick мог не запуститься вовсе
 # (paths-ignore `**.md`/`docs/**` в quick.yml, отмена), и ждать вечно нельзя.
 HEAL_WAIT_MIN = 45
+MAIN_FLAKE_MAX_JOBS = 2  # упало не больше стольких job'ов на первой попытке — один перезапуск
 # main стоит дольше этого при непустом staging — процесс не работает (инцидент 28-09-2026:
 # десять поездов подряд красные, main стоял 9.5 ч, пока флот продолжал приземлять).
 STUCK_HOURS = 2
@@ -1103,6 +1104,18 @@ def main_ci(repo):
     if r["conclusion"] in ("success", "skipped"):
         print(f"main {head[:9]}: {r['conclusion']} — {r['html_url']}")
         return 0
+    if r.get("run_attempt", 1) < 2:
+        # 14-10-2026 main vtui четыре раза за день краснел одним job'ом (macOS/Race) на тесте с
+        # коротким сроком, а тот же sha проходил в PR поезда; каждый раз чинили руками. Падение
+        # одного-двух job'ов на первой попытке — как у поезда (§ 7.2 п. 5.1) — сначала один
+        # перезапуск; настоящая регрессия роняет много job'ов и остаётся красной.
+        jobs = api(f"repos/{repo}/actions/runs/{r['id']}/jobs?per_page=100", check=False) or {}
+        bad = [j["name"] for j in jobs.get("jobs", []) if j.get("conclusion") == "failure"]
+        if 0 < len(bad) <= MAIN_FLAKE_MAX_JOBS:
+            api(f"repos/{repo}/actions/runs/{r['id']}/rerun-failed-jobs", "-X", "POST")
+            print(f"main {head[:9]}: упал {', '.join(bad)} — перезапустил один раз (флейк?): "
+                  f"{r['html_url']}. Красным и после этого — СРОЧНО (§ 5 п. 2)")
+            return 0
     print(f"main {head[:9]}: КРАСНЫЙ — {r['html_url']}. СРОЧНО (§ 5 п. 2): красный main")
     return 1
 
