@@ -199,6 +199,24 @@ def run(*cmd, check=True, cwd=None):
     return p
 
 
+API_RETRIES = 3
+# Обрыв связи посреди ответа (мобильный интернет): `gh` печатает эти тексты в stderr, повтор обычно проходит.
+API_TRANSIENT = ("unexpected end of JSON input", "unexpected EOF", "stream error", "i/o timeout",
+                 "TLS handshake timeout", "connection reset by peer")
+
+
+def api_transient(p):
+    return any(t in (p.stderr or "") for t in API_TRANSIENT)
+
+
+def api_is_read(cmd):
+    """Запрос ничего не меняет: GET без полей (`-f`/`-F`/`--input` делают его POST) — только такой повторяют."""
+    for i, a in enumerate(cmd):
+        if a in ("-X", "--method") and i + 1 < len(cmd):
+            return cmd[i + 1].upper() == "GET"
+    return not any(a in ("-f", "-F", "--field", "--raw-field", "--input") for a in cmd)
+
+
 def api(path, *args, check=True):
     # gh api on Windows does not reliably interpret a slash-containing query value
     # when it is embedded in the endpoint string (for example
@@ -212,7 +230,15 @@ def api(path, *args, check=True):
             cmd[:0] = ["-X", "GET"]
         for key, value in parse_qsl(parsed.query, keep_blank_values=True):
             cmd.extend(["-f", f"{key}={value}"])
-    p = run("gh", "api", parsed.path, *cmd, check=check)
+    argv = ("gh", "api", parsed.path, *cmd)
+    for attempt in range(API_RETRIES):
+        p = run(*argv, check=False)
+        if p.returncode == 0 or not api_transient(p) or not api_is_read(cmd):
+            break
+        if attempt + 1 < API_RETRIES:
+            time.sleep(2 * (attempt + 1))
+    if check and p.returncode:
+        sys.exit(f"{' '.join(argv)}: {p.stderr.strip() or p.stdout.strip()}")
     return json.loads(p.stdout) if p.stdout.strip() else None
 
 
