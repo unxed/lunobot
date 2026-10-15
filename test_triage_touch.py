@@ -29,6 +29,20 @@ class TouchRowTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             triage_touch.touch_row(TABLE, 7, 1, "x")
 
+    def test_new_ticket_with_priority_appended_after_last_row(self):
+        text, changed = triage_touch.touch_row(TABLE, 1960, 0, "2026-10-15T09:00:00Z", None, "3")
+        self.assertTrue(changed)
+        self.assertTrue(text.endswith("| 1729 | 3! | проверяют | 18 | 2026-10-14T23:39:46Z |\n| 1960 | 3 | свободен | 0 | 2026-10-15T09:00:00Z |\n".rstrip("\n") + "\n"))
+        self.assertEqual(text.count("| 1960 |"), 1)
+
+    def test_new_ticket_with_state(self):
+        text, _ = triage_touch.touch_row(TABLE, 1960, 2, "z", "ждёт ответа", "4")
+        self.assertIn("| 1960 | 4 | ждёт ответа | 2 | z |", text)
+
+    def test_existing_ticket_ignores_priority(self):
+        text, _ = triage_touch.touch_row(TABLE, 1729, 19, "z", None, "1")
+        self.assertIn("| 1729 | 3! | проверяют | 19 | z |", text)
+
     def test_header_preserved(self):
         text, _ = triage_touch.touch_row(TABLE, 285, 30, "z")
         self.assertTrue(text.startswith("| тикет |"))
@@ -42,6 +56,11 @@ class ArgumentsTest(unittest.TestCase):
     def test_unknown_option(self):
         with self.assertRaises(ValueError):
             triage_touch.main(["f4", "285", "--foo"])
+
+    def test_bad_priority(self):
+        for bad in (["--priority"], ["--priority", "9"]):
+            with self.assertRaises(ValueError):
+                triage_touch.main(["f4", "285"] + bad)
 
     def test_bad_state(self):
         with self.assertRaises(ValueError):
