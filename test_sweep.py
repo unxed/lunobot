@@ -1,5 +1,7 @@
+import io
 import json
 import unittest
+from contextlib import redirect_stderr
 from types import SimpleNamespace
 from unittest.mock import call, patch
 
@@ -85,13 +87,18 @@ class UnreachableRepoTest(unittest.TestCase):
                 deleted.append(path)
             return None
 
+        err = io.StringIO()
         with patch.object(sweep, "gh_all", side_effect=fake_gh_all), \
                 patch.object(sweep, "gh", side_effect=fake_gh), \
                 patch.object(sweep, "pr_state", return_value="closed"), \
-                patch.object(sweep, "age_of", return_value=sweep.timedelta(hours=25)):
+                patch.object(sweep, "age_of", return_value=sweep.timedelta(hours=25)), \
+                redirect_stderr(err):
             n = sweep.branches(True, set(), ["unxed/keytrans", "unxed/f4"])
             sweep.stale_prs(set(), ["unxed/keytrans"])
         self.assertEqual(n, 1)
+        # Недоступность видна, а не выдаётся за пустой список.
+        self.assertIn("branch unxed/keytrans: список веток недоступен", err.getvalue())
+        self.assertIn("pr     unxed/keytrans: список PR недоступен", err.getvalue())
         self.assertEqual(deleted, ["repos/unxed/f4/git/refs/heads/lunobot/train/f4/261007-2302"])
 
 

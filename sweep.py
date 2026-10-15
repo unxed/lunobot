@@ -199,7 +199,11 @@ def branches(apply, refs, repo_names):
 
 def stale_prs(refs, repo_names):
     for repo in repo_names:
-        for p in gh_all(f"repos/{repo}/pulls?state=open&per_page=100") or []:
+        listed = gh_all(f"repos/{repo}/pulls?state=open&per_page=100")
+        if listed is None:
+            print(f"pr     {repo}: список PR недоступен — пропускаю", file=sys.stderr)
+            continue
+        for p in listed:
             head = p["head"]["ref"]
             upd = datetime.fromisoformat(p["updated_at"].replace("Z", "+00:00"))
             if (head.startswith(OWN_PR) and head not in refs
