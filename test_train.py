@@ -107,6 +107,30 @@ class VendorHashTest(unittest.TestCase):
         self.assertEqual(train.extend_over_vendorhash("green", after), "green")
 
 
+class VendorsyncToRevertTest(unittest.TestCase):
+    """heal откатывает vendorhash-autosync вместе с виновником, правившим go.mod (поезд #1968)."""
+
+    @staticmethod
+    def commit(sha, msg):
+        return {"sha": sha, "commit": {"message": msg}, "parents": [{}]}
+
+    VENDOR = VendorHashTest.VENDOR
+
+    def test_autosync_after_a_reverted_gomod_change_is_reverted_too(self):
+        after = [self.commit("bump", "bump\n\nTouch: #1\n"), self.commit("v1", self.VENDOR),
+                 self.commit("w", "work\n\nTouch: #2\n"), self.commit("v2", self.VENDOR)]
+        self.assertEqual(train.vendorsync_to_revert(after, ["bump"], ["bump"]), ["v2", "v1"])
+
+    def test_nothing_when_no_culprit_touched_gomod(self):
+        after = [self.commit("w", "work\n\nTouch: #2\n"), self.commit("v1", self.VENDOR)]
+        self.assertEqual(train.vendorsync_to_revert(after, ["w"], []), [])
+
+    def test_nothing_when_a_kept_commit_also_changed_gomod(self):
+        after = [self.commit("a", "a\n\nTouch: #1\n"), self.commit("b", "b\n\nTouch: #2\n"),
+                 self.commit("v1", self.VENDOR)]
+        self.assertEqual(train.vendorsync_to_revert(after, ["a"], ["a", "b"]), [])
+
+
 class PickGreenTest(unittest.TestCase):
     """Поезд режется только от зелёного коммита, который уже содержит main."""
 

@@ -330,6 +330,25 @@ def extend_over_vendorhash(cut_sha, after):
     return cut_sha
 
 
+def vendorsync_to_revert(after, culprit_shas, gomod_shas):
+    """Автокоммиты vendorHash (VENDOR_SYNC), которые heal обязан откатить вместе с виновниками.
+    after — коммиты staging начиная с первого виновника, старые первыми; culprit_shas —
+    откатываемые коммиты; gomod_shas — коммиты из after, правившие go.mod/go.sum. Откат
+    виновника, правившего go.mod, возвращает go.mod/go.sum, а vendorHash в flake.nix остаётся
+    от откатанного набора зависимостей: nix-проверки красные (поезд #1968, 15-10-2026).
+    Если после первого виновника go.mod правил ещё кто-то не откатываемый, правильный хэш
+    теперь другой и откатом его не вернуть — тогда пусто (хэш пересчитает автокоммит).
+    Возвращает sha, новые первыми (порядок отката)."""
+    if not set(gomod_shas) & set(culprit_shas):
+        return []
+    if set(gomod_shas) - set(culprit_shas):
+        return []
+    sync = [c["sha"] for c in after
+            if len(c["parents"]) == 1 and VENDOR_SYNC.search(c["commit"]["message"])
+            and c["sha"] not in culprit_shas]
+    return sync[::-1]
+
+
 def who(c):
     msg = c["commit"]["message"]
     keys = [v.strip() for _, v in TRAILER.findall(msg)]
@@ -1110,15 +1129,31 @@ def heal(repo):
             f"https://github.com/{repo}.git", d)
         run("git", "config", "user.name", "unxed", cwd=d)
         run("git", "config", "user.email", "1151423+unxed@users.noreply.github.com", cwd=d)
-        for c in reversed(culprits):
-            r = run("git", "revert", "--no-edit", c["sha"], cwd=d, check=False)
+        culprit_shas = [c["sha"] for c in culprits]
+        # Откатываем и vendorhash-autosync, лежащие после виновника, правившего go.mod/go.sum:
+        # иначе go.mod вернётся, а vendorHash в flake.nix останется от откатанных зависимостей.
+        since = run("git", "log", "--reverse", "--no-merges", "--format=%H%x1f%B%x1e",
+                    f"{culprit_shas[0]}^..HEAD", cwd=d).stdout
+        after = []
+        for rec in since.split("\x1e"):
+            sha, _, body = rec.strip().partition("\x1f")
+            if sha:
+                after.append({"sha": sha, "commit": {"message": body}, "parents": [{}]})
+        gomod = [c["sha"] for c in after
+                 if {"go.mod", "go.sum"} & set(run(
+                     "git", "show", "--name-only", "--format=", c["sha"], cwd=d).stdout.split())]
+        extra = vendorsync_to_revert(after, culprit_shas, gomod)
+        for sha in [*extra, *(c["sha"] for c in reversed(culprits))]:
+            r = run("git", "revert", "--no-edit", sha, cwd=d, check=False)
             if r.returncode:
-                print(f"  откат {c['sha'][:9]} не лёг чисто — СРОЧНО (§ 5 п. 2): «красный "
+                print(f"  откат {sha[:9]} не лёг чисто — СРОЧНО (§ 5 п. 2): «красный "
                       "staging», чинить вперёд, land --fix-staging")
                 return 1
             msg = run("git", "log", "-1", "--format=%B", cwd=d).stdout
             run("git", "commit", "-q", "--amend", "-m",
                 f"{msg.rstrip()}\n\nStaging-Revert: {first_red['html_url']}", cwd=d)
+        if extra:
+            print(f"  вместе с ними откатил автокоммиты vendorHash: {len(extra)}")
         if run("git", "push", "-q", "origin", f"HEAD:{STAGING}", cwd=d, check=False).returncode:
             print("  staging ушёл вперёд во время отката — следующий tick повторит")
             return 0
