@@ -4,5 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 15-10-2026 14:38:26 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/90 (шаг 0, часть 1: красный dn-linux PR unxed/dn#97) [urgent: по § 5 п. 3 — красная строка CI.md]
-
-15-10-2026 14:40:20 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/88 (флейк pty-чека Copy jobs шага 1) [pr]
