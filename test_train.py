@@ -883,3 +883,103 @@ class MainHelpTest(unittest.TestCase):
         land.reset_mock()
         rc, land, _ = self.run_main(["land", "--fix-staging"])
         land.assert_called_once_with(fix=True)
+
+
+class DepsSandboxTest(unittest.TestCase):
+    """Коммит с go.mod/go.sum приземляется только после полного прогона песочницы (§ 7.2)."""
+
+    REPO = "unxed/f4"
+    BODY = "bump vtui\n\nLunobot-Task: vtui-bump\nSandbox-Full: https://github.com/unxed/f4/actions/runs/777\n"
+    GOOD = {"status": "completed", "conclusion": "success", "event": "workflow_dispatch",
+            "path": ".github/workflows/sandbox.yml", "head_sha": "a" * 40}
+
+    def problem(self, body=None, run_json=None, mine="p1", theirs="p1", fetch_rc=0):
+        fetched = mock.Mock(returncode=fetch_rc)
+        with mock.patch.object(train, "api", return_value=run_json), \
+                mock.patch.object(train, "run", return_value=fetched), \
+                mock.patch.object(train, "patch_id", side_effect=[mine, theirs]):
+            return train.deps_sandbox_problem(self.REPO, "b" * 40, body or self.BODY)
+
+    def test_only_root_module_files_count(self):
+        self.assertTrue(train.touches_deps(["go.mod", "x.go"]))
+        self.assertTrue(train.touches_deps(["go.sum"]))
+        self.assertFalse(train.touches_deps(["plugins/android/go.mod", "flake.nix"]))
+        self.assertFalse(train.touches_deps([]))
+
+    def test_missing_trailer_is_refused(self):
+        self.assertIn("Sandbox-Full", self.problem(body="bump\n\nLunobot-Task: x\n"))
+
+    def test_green_run_on_same_patch_passes(self):
+        self.assertIsNone(self.problem(run_json=self.GOOD))
+
+    def test_foreign_repository_is_refused(self):
+        body = self.BODY.replace("unxed/f4", "unxed/vtui")
+        self.assertIn("чужого репозитория", self.problem(body=body, run_json=self.GOOD))
+
+    def test_repository_name_is_case_insensitive(self):
+        body = self.BODY.replace("unxed/f4", "Unxed/F4")
+        self.assertIsNone(self.problem(body=body, run_json=self.GOOD))
+
+    def test_unknown_run_is_refused(self):
+        self.assertIn("не найден", self.problem(run_json={"message": "Not Found"}))
+        self.assertIn("не найден", self.problem(run_json=None))
+
+    def test_not_a_sandbox_dispatch_is_refused(self):
+        quick = dict(self.GOOD, event="push", path=".github/workflows/quick.yml")
+        self.assertIn("не sandbox.yml", self.problem(run_json=quick))
+
+    def test_red_or_running_run_is_refused(self):
+        for conclusion, status in (("failure", "completed"), (None, "in_progress")):
+            run_json = dict(self.GOOD, conclusion=conclusion, status=status)
+            self.assertIn("не зелёный", self.problem(run_json=run_json))
+
+    def test_run_on_other_patch_is_refused(self):
+        self.assertIn("другим патчем", self.problem(run_json=self.GOOD, theirs="p2"))
+        self.assertIn("другим патчем", self.problem(run_json=self.GOOD, mine=None, theirs=None))
+
+    def test_unfetchable_tested_commit_is_refused(self):
+        self.assertIn("не удалось получить", self.problem(run_json=self.GOOD, fetch_rc=1))
+
+
+class PatchIdTest(unittest.TestCase):
+    """patch-id не зависит от сообщения и от базы: так land узнаёт код, прошедший песочницу."""
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.dir, check=True, capture_output=True,
+                              text=True).stdout.strip()
+
+    def test_same_change_on_another_base_and_message(self):
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            self.dir = d
+            self.git("init", "-q", "-b", "main")
+            self.git("config", "user.email", "t@example.com")
+            self.git("config", "user.name", "t")
+            for name in ("a", "go.mod"):
+                with open(os.path.join(d, name), "w") as f:
+                    f.write("one\n")
+            self.git("add", ".")
+            self.git("commit", "-q", "-m", "base")
+            self.git("switch", "-q", "-c", "work")
+            with open(os.path.join(d, "go.mod"), "w", encoding="utf-8") as f:
+                f.write("два Н\n")
+            self.git("commit", "-q", "-am", "bump")
+            tested = self.git("rev-parse", "HEAD")
+            self.git("switch", "-q", "main")
+            with open(os.path.join(d, "a"), "w") as f:
+                f.write("moved\n")
+            self.git("commit", "-q", "-am", "base moved")
+            self.git("cherry-pick", "-x", tested)
+            self.git("commit", "-q", "--amend", "-m", "bump\n\nSandbox-Full: https://x")
+            landed = self.git("rev-parse", "HEAD")
+            self.assertNotEqual(tested, landed)
+            old = os.getcwd()
+            os.chdir(d)
+            try:
+                self.assertIsNotNone(train.patch_id(tested))
+                self.assertEqual(train.patch_id(tested), train.patch_id(landed))
+                self.assertNotEqual(train.patch_id(tested), train.patch_id(self.git("rev-parse", "HEAD~1")))
+                self.assertIsNone(train.patch_id("0" * 40))
+            finally:
+                os.chdir(old)

@@ -10,7 +10,9 @@
     train.py bisect <owner/repo> --os <раннер> --cmd "<команда песочницы>"
     train.py close-train <owner/repo> <PR> [--reason "<текст>"]
 
-land  — при свежей строке «объявляю заморозку land проекта …» в DISPATCH.md учёта (≤ 25 минут,
+land  — коммит, правящий go.mod/go.sum (bump зависимости), приземляется только с трейлером
+        `Sandbox-Full: <ссылка на зелёный прогон sandbox.yml>` на коммите с тем же патчем
+        (полный `go vet ./... && go test ./...`, § 7.2). При свежей строке «объявляю заморозку land проекта …» в DISPATCH.md учёта (≤ 25 минут,
         § 7.2 п. 0) отказывает: коммит паркуется. Иначе переносит твои коммиты (origin/lunobot/staging..HEAD) на вершину staging и пушит,
         с повторами при гонке. PR не открывает никогда. Staging красный (последний
         завершённый quick упал и починки после него нет) — ОТКАЗЫВАЕТ: конвейер стоит, пока
@@ -99,6 +101,66 @@ def check_section_problem(body):
         return ("в «Проверить:» команда, а не текст для автора тикета: напиши 1–3 предложения "
                 "на его языке — что и где проверить в программе (команды тестов — в тело "
                 "коммита выше, не в эту секцию)")
+    return None
+
+
+# Коммит, меняющий зависимости модуля (go.mod/go.sum корня: bump vtui и др.), ломает пакеты,
+# которых автор не трогал: 15-10-2026 f4 `26918fda` (bump vtui v0.1.405) прошёл песочницу с
+# lint и `go test ./cmd/f4/`, а `internal/settings` (TestSettingsSidebarSearchAndContentSurface)
+# покраснел, и staging с `land` стояли весь флот. Такой коммит перед `land` проходит ПОЛНЫЙ
+# `go vet ./... && go test ./...` в песочнице, ссылка на прогон — трейлер `Sandbox-Full:`.
+DEPS_FILES = ("go.mod", "go.sum")
+SANDBOX_FULL = re.compile(
+    r"^Sandbox-Full:\s*https://github\.com/([\w.-]+/[\w.-]+)/actions/runs/(\d+)\s*$", re.M)
+
+
+def touches_deps(files):
+    """Правит ли список файлов зависимости корневого модуля (вложенные модули — свои go.mod)."""
+    return any(f in DEPS_FILES for f in files)
+
+
+def patch_id(sha):
+    """Стабильный patch-id коммита (не зависит от сообщения и от базы после rebase)."""
+    # Байты, а не текст: патч с кириллицей не должен падать на кодировке консоли (Windows), а
+    # diff-tree (plumbing) не знает внешних diff-драйверов, цвета и переименований из конфигурации.
+    show = subprocess.run(["git", "diff-tree", "-p", "--root", sha], capture_output=True)
+    if show.returncode:
+        return None
+    p = subprocess.run(["git", "patch-id", "--stable"], input=show.stdout, capture_output=True)
+    out = p.stdout.decode("ascii", "replace").split()
+    return out[0] if p.returncode == 0 and out else None
+
+
+def deps_sandbox_problem(repo, sha, body):
+    """Почему коммит, правящий go.mod/go.sum, нельзя приземлять, или None.
+
+    Нужен трейлер `Sandbox-Full: <ссылка на прогон sandbox.yml>`: прогон этого репозитория,
+    workflow_dispatch, завершён успешно, на коммите с тем же патчем (patch-id), что и приземляемый.
+    Что именно гонялось в прогоне, API не отдаёт — команда `go vet ./... && go test ./...`
+    закреплена в LUNOBOT.md § 7.2 и проверяется ревью, но чужой или устаревший прогон гейт ловит."""
+    m = SANDBOX_FULL.search(body)
+    if not m:
+        return ("коммит правит go.mod/go.sum: нужен трейлер `Sandbox-Full: <ссылка на прогон "
+                "sandbox.yml>` с полным `go vet ./... && go test ./...` (§ 7.2) — зависимость "
+                "ломает пакеты, которых автор не трогал")
+    run_repo, run_id = m.group(1), m.group(2)
+    if run_repo.lower() != repo.lower():
+        return f"Sandbox-Full: прогон чужого репозитория {run_repo}, нужен {repo}"
+    r = api(f"repos/{repo}/actions/runs/{run_id}", check=False)
+    if not isinstance(r, dict) or "status" not in r:
+        return f"Sandbox-Full: прогон {run_id} не найден"
+    if r.get("event") != "workflow_dispatch" or not str(r.get("path", "")).endswith("sandbox.yml"):
+        return f"Sandbox-Full: прогон {run_id} — не sandbox.yml через workflow_dispatch"
+    if r.get("status") != "completed" or r.get("conclusion") != "success":
+        return (f"Sandbox-Full: прогон {run_id} не зелёный "
+                f"({r.get('status')}/{r.get('conclusion')})")
+    tested = r.get("head_sha") or ""
+    if run("git", "fetch", "-q", "origin", tested, check=False).returncode:
+        return f"Sandbox-Full: не удалось получить коммит {tested[:9]} прогона {run_id}"
+    mine, theirs = patch_id(sha), patch_id(tested)
+    if not mine or mine != theirs:
+        return (f"Sandbox-Full: прогон {run_id} шёл на коммите {tested[:9]} с другим патчем — "
+                "повтори полный прогон на приземляемом коде")
     return None
 
 
@@ -320,11 +382,20 @@ def land(fix=False):
     if bad:
         sys.exit("секция «Проверить:» не годится (§ 7.2 п. 1), поправь (git commit --amend / "
                  "rebase -i):\n  " + "\n  ".join(bad))
+    repo = origin_repo()
+    if repo:
+        bad = []
+        for sha, body in msgs:
+            files = run("git", "diff-tree", "--no-commit-id", "--name-only", "-r", sha).stdout.split()
+            if touches_deps(files) and (why := deps_sandbox_problem(repo, sha, body)):
+                bad.append(f"{sha[:9]}: {why}")
+        if bad:
+            sys.exit("коммит с изменением зависимостей без полного прогона (§ 7.2), поправь:\n  "
+                     + "\n  ".join(bad))
     if fix and not any(re.search(r"^Fixes-Staging:", body, re.M) for _, body in msgs):
         sys.exit("--fix-staging: хотя бы один коммит обязан нести трейлер "
                  "`Fixes-Staging: <ссылка на красный quick>` — по нему остальные поймут, что "
                  "staging лечится, и снова смогут приземлять")
-    repo = origin_repo()
     if repo and not fix:
         frozen = freeze_stamp(repo)
         if frozen:
