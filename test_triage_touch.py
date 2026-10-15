@@ -34,5 +34,19 @@ class TouchRowTest(unittest.TestCase):
         self.assertTrue(text.startswith("| тикет |"))
 
 
+class ArgumentsTest(unittest.TestCase):
+    def test_state_without_value(self):
+        with self.assertRaises(ValueError):
+            triage_touch.main(["f4", "285", "--state"])
+
+    def test_unknown_option(self):
+        with self.assertRaises(ValueError):
+            triage_touch.main(["f4", "285", "--foo"])
+
+    def test_bad_state(self):
+        with self.assertRaises(ValueError):
+            triage_touch.main(["f4", "285", "--state", "foo"])
+
+
 if __name__ == "__main__":
     unittest.main()

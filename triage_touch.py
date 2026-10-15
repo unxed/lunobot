@@ -38,13 +38,18 @@ def touch_row(text, number, comments, updated, state=None):
 
 
 def main(argv):
-    args = [a for a in argv if not a.startswith("--")]
+    args = list(argv)
     state = None
-    if "--state" in argv:
-        state = argv[argv.index("--state") + 1]
-        args.remove(state)
+    if "--state" in args:
+        at = args.index("--state")
+        if at + 1 >= len(args):
+            raise ValueError("после --state нужно состояние: " + ", ".join(STATES))
+        state = args[at + 1]
+        del args[at : at + 2]
         if state not in STATES:
             raise ValueError("состояние должно быть одним из: " + ", ".join(STATES))
+    if any(a.startswith("--") for a in args):
+        raise ValueError("неизвестный параметр: " + next(a for a in args if a.startswith("--")))
     if len(args) != 2 or not args[1].isdigit():
         raise ValueError("использование: triage_touch.py <проект> <номер> [--state <состояние>]")
     project, number = args[0], int(args[1])
