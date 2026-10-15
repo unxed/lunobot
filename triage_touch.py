@@ -28,14 +28,17 @@ STATES = ("свободен", "ждёт ответа", "спор", "в пути"
 def touch_row(text, number, comments, updated, state=None, priority=None):
     """Вернуть (новый_текст, изменилась_ли_строка); строки других тикетов не меняются.
 
-    Тикета нет в таблице: с `priority` строка добавляется после последней строки данных,
-    без него - ошибка."""
+    Тикета нет в таблице: с `priority` строка добавляется после последней строки данных
+    (в пустой таблице - после шапки), без него - ошибка."""
     lines = text.split("\n")
     last = -1
+    head = -1
     for i, line in enumerate(lines):
         match = check_triage.ROW.match(line)
         if match:
             last = i
+        elif line.startswith("|"):
+            head = i
         if not match or int(match.group("number")) != number:
             continue
         new = "| {} | {} | {} | {} | {} |".format(
@@ -43,6 +46,8 @@ def touch_row(text, number, comments, updated, state=None, priority=None):
         )
         lines[i] = new
         return "\n".join(lines), new != line
+    if last < 0:
+        last = head
     if priority is None or last < 0:
         raise ValueError(f"в TRIAGE нет строки тикета #{number}" + ("" if priority is not None else " (новая строка: --priority N)"))
     lines.insert(last + 1, f"| {number} | {priority} | {state or 'свободен'} | {comments} | {updated} |")

@@ -32,8 +32,16 @@ class TouchRowTest(unittest.TestCase):
     def test_new_ticket_with_priority_appended_after_last_row(self):
         text, changed = triage_touch.touch_row(TABLE, 1960, 0, "2026-10-15T09:00:00Z", None, "3")
         self.assertTrue(changed)
-        self.assertTrue(text.endswith("| 1729 | 3! | проверяют | 18 | 2026-10-14T23:39:46Z |\n| 1960 | 3 | свободен | 0 | 2026-10-15T09:00:00Z |\n".rstrip("\n") + "\n"))
+        self.assertTrue(text.endswith("| 1729 | 3! | проверяют | 18 | 2026-10-14T23:39:46Z |\n| 1960 | 3 | свободен | 0 | 2026-10-15T09:00:00Z |\n"))
         self.assertEqual(text.count("| 1960 |"), 1)
+
+    def test_new_ticket_in_empty_table_goes_after_header(self):
+        empty = "# TRIAGE\n\n" + TABLE.split("| 285")[0]
+        text, changed = triage_touch.touch_row(empty, 80, 0, "z", None, "5")
+        self.assertTrue(changed)
+        self.assertEqual(text, empty + "| 80 | 5 | свободен | 0 | z |\n")
+        with self.assertRaises(ValueError):
+            triage_touch.touch_row(empty, 80, 0, "z")
 
     def test_new_ticket_with_state(self):
         text, _ = triage_touch.touch_row(TABLE, 1960, 2, "z", "ждёт ответа", "4")
