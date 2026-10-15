@@ -51,6 +51,12 @@ GATE_MESSAGE = ("Текст для GitHub пишется файлом в UTF-8 �
                 "только через gh_post.py (LUNOBOT.md § 2).")
 
 
+# Буквальный `\n` вместо перевода строки. Часть пути Windows (`\\?\nul\`, `C:\new`, `dir\\name`) им
+# не является: сразу перед ним обратная косая черта, `\\?` или `X:` (ложные срабатывания
+# janitor на unxed/f4#1966 и unxed/f4#1969, 15-10-2026).
+LITERAL_NEWLINE = re.compile(r"(?<!\\)(?<!\\\\\?)(?<![A-Za-z]:)\\n")
+
+
 def prose(text):
     """Текст без блоков и вставок кода: в коде «???» и `\\n` — законное содержимое."""
     return INLINE_CODE.sub(" ", CODE_BLOCK.sub(" ", text))
@@ -63,7 +69,7 @@ def check_text(text):
     if "�" in text:
         return "в тексте символ замены U+FFFD: кодировка испорчена ещё до отправки"
     body = prose(text)
-    if "\\n" in body:
+    if LITERAL_NEWLINE.search(body):
         return "в тексте буквальные \\n вместо переводов строк"
     if QUESTION_RUN.search(body) or QUESTION_WORDS.search(body):
         return "в тексте подряд идущие «?» на месте букв: кодировка испорчена"

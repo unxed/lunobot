@@ -37,6 +37,14 @@ class CheckTextTest(unittest.TestCase):
         self.assertIn("U+FFFD", gh_post.check_text("Текст � сломан"))
         self.assertIn("\\n", gh_post.check_text("Первая строка\\nвторая строка"))
 
+    def test_windows_paths_with_backslash_n_are_not_newlines(self):
+        for text in (r"Сейчас при копировании в \\?\nul\ выдаёт ошибку.", r"Файл C:\new\a.txt не найден.",
+                     r"Скопируйте на \\?\nul\, /dev/null."):
+            with self.subTest(text=text[:30]):
+                self.assertEqual(gh_post.check_text(text), "")
+        self.assertIn("\\n", gh_post.check_text("Готово.\\nДальше."))
+        self.assertIn("\\n", gh_post.check_text("Список:\\n- один\\n- два"))
+
     def test_share_of_question_marks(self):
         self.assertTrue(gh_post.check_text("a? b? c? d? e? f?"))
 
