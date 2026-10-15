@@ -49,14 +49,32 @@ class TriageStateRepoMatchTest(unittest.TestCase):
             tv = projects / "tv"
             tv3.mkdir(parents=True)
             tv.mkdir()
-            (tv3 / "PROJECT.md").write_text("Код: https://github.com/unxed/tv3\n")
+            (tv3 / "PROJECT.md").write_text("- Код: https://github.com/unxed/tv3\n")
             (tv3 / "TRIAGE.md").write_text("| 1 | 5 | свободен | 1 | 2026-10-15T00:00:00Z |\n")
-            (tv / "PROJECT.md").write_text("Код: https://github.com/unxed/tv\n")
+            (tv / "PROJECT.md").write_text("- Код: https://github.com/unxed/tv\n")
             (tv / "TRIAGE.md").write_text("| 1 | 5 | ждёт ответа | 5 | 2026-10-15T23:28:02Z |\n")
 
             with patch.object(oq, "ROOT", root), patch.object(
                     Path, "glob", return_value=[tv3 / "PROJECT.md", tv / "PROJECT.md"]):
                 self.assertEqual(oq.triage_state("unxed/tv", 1), "ждёт ответа")
+
+
+    def test_mention_in_other_passport_text_is_not_a_match(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            dn = root / "projects" / "dn"
+            tv3 = root / "projects" / "tv3"
+            dn.mkdir(parents=True)
+            tv3.mkdir()
+            (dn / "PROJECT.md").write_text(
+                "- Код: https://github.com/unxed/dn\n- Зависимости: submodule [unxed/tv3](https://github.com/unxed/tv3);\n")
+            (dn / "TRIAGE.md").write_text("| 1 | 5 | проверяют | 1 | 2026-10-15T00:00:00Z |\n")
+            (tv3 / "PROJECT.md").write_text("- Код: https://github.com/unxed/tv3 (Free Pascal)\n")
+            (tv3 / "TRIAGE.md").write_text("| 1 | 5 | ждёт ответа | 5 | 2026-10-15T23:28:02Z |\n")
+
+            with patch.object(oq, "ROOT", root), patch.object(
+                    Path, "glob", return_value=[dn / "PROJECT.md", tv3 / "PROJECT.md"]):
+                self.assertEqual(oq.triage_state("unxed/tv3", 1), "ждёт ответа")
 
 
 class GateTest(unittest.TestCase):

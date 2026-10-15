@@ -196,8 +196,9 @@ def triage_state(target_repo, num):
     """Состояние строки TRIAGE.md проекта, чей репозиторий target_repo; None — строки нет."""
     for project in (ROOT / "projects").glob("*/PROJECT.md"):
         passport = project.read_text(encoding="utf-8", errors="ignore")
-        repo_url = rf"https://github\.com/{re.escape(target_repo)}(?=[\s/)\]]|$)"
-        if not re.search(repo_url, passport):
+        # Только строка «- Код:» паспорта: упоминание чужого репозитория в тексте (dn → tv3) не в счёт.
+        repo_url = rf"^- Код: https://github\.com/{re.escape(target_repo)}(?=[\s/)\]]|$)"
+        if not re.search(repo_url, passport, re.M):
             continue
         triage = project.parent / "TRIAGE.md"
         if not triage.exists():
