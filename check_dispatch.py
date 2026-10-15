@@ -19,6 +19,8 @@ lunobot/batch/<проект>/<N>]`, замененном на `[land]` 27-09-202
     python3 check_dispatch.py projects/f4/DISPATCH.md --added-only [--base <коммит>]
 
 `--added-only` оставляет только претензии к строкам, добавленным последним коммитом.
+Добавленная строка, которая не захват, не keepalive, не запись о завершении или заморозке
+и не шапка, тоже даёт претензию «формат» (`stray_lines`); полный режим её не ищет.
 Так проверка отвечает на вопрос «правильно ли записал именно ты», а не «какое сейчас
 состояние флота»: состояние почти всегда ненулевое, и гейт из него горел бы всегда.
 
@@ -40,6 +42,15 @@ FINAL = ("считаю цель", "прекращаю работу", "объяв
 # для keepalive («работаю»). Ровно один из трёх видов, ничего четвёртого.
 ROUTE_MARKER = re.compile(r"\[(land|pr|urgent)(?::\s*(.+?))?\]\s*$")
 BARE_URGENT = {"срочно", "срочная", "срочная работа", "срочно!", "urgent"}
+
+
+def is_record_line(line):
+    """Строка записи учёта начинается с метки времени ДД-ММ-ГГГГ ЧЧ:ММ:СС и пробела.
+
+    Общий предикат: им же `acct_line.py add` отказывает строке без метки (DISPATCH.md, CI.md,
+    BRANCHES.md), а гейт `--added-only` ищет вписанный мимо него текст.
+    """
+    return bool(re.match(TS + r"\s", line))
 
 
 def route_error(line):
@@ -310,6 +321,33 @@ def added_lines(path, base=None):
     return lines
 
 
+# Стандартное описание под заголовком шапки: законный текст, не запись.
+HEADER_TEXT = ("Файл содержит только действующие захваты", "Закончил шаг — удали свои строки")
+
+
+def stray_lines(path):
+    """Строки, которые не захват, не keepalive, не запись о завершении/заморозке и не шапка.
+
+    Только для режима --added-only: полный разбор файла шапку и такой текст не трогает.
+    Строка с «Лунобот» разбирается в parse() и даёт претензию там; строка без него и без
+    признаков записи (looks_like_record) в parse() молча пропускается. Так
+    «красный main 72bdcb32», дописанный руками мимо acct_line.py, провисел два часа.
+    Возвращает {номер строки: текст}.
+    """
+    out = {}
+    with open(path, encoding="utf-8") as f:
+        for n, raw in enumerate(f, 1):
+            text = raw.rstrip()
+            if not text.strip() or text.lstrip().startswith("#"):
+                continue
+            if any(x in text for x in FINAL) or text.startswith(HEADER_TEXT):
+                continue
+            if "Лунобот" in text or looks_like_record(text):
+                continue
+            out[n] = text
+    return out
+
+
 def wrong_place(path):
     """Проверяет, что файл учёта — тот самый, а не одноимённый в чужом репозитории.
 
@@ -357,6 +395,9 @@ def main():
         if added is not None:
             # протухшие захваты — состояние, а не ошибка записи: в гейт не попадают
             problems = [p for p in problems if p[1] in added and p[0] != "протух"]
+            for n, text in sorted(stray_lines(path).items()):
+                if n in added:
+                    problems.append(("формат", n, f"лишний текст в DISPATCH.md — используй acct_line.py: «{text[:80]}»"))
     print(f"действующих записей разобрано: {len(entries)}")
     if not problems:
         print("нарушений нет")
