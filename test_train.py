@@ -8,6 +8,50 @@ from unittest import mock
 import train
 
 
+def _proc(code=0, out="", err=""):
+    return subprocess.CompletedProcess([], code, out, err)
+
+
+class ApiRetryTest(unittest.TestCase):
+    """Обрыв связи посреди ответа не должен ронять круг: 15-10-2026 `tick-all` остановил vtui на
+    `unexpected end of JSON input` от `gh api compare`, второй запуск прошёл."""
+
+    def test_transient_read_error_is_retried(self):
+        runs = [_proc(1, "", "unexpected end of JSON input"), _proc(0, '{"a": 1}')]
+        with mock.patch.object(train, "run", side_effect=runs) as run, mock.patch.object(train.time, "sleep"):
+            self.assertEqual(train.api("repos/o/r/compare/a...b"), {"a": 1})
+        self.assertEqual(run.call_count, 2)
+
+    def test_gives_up_after_the_limit_and_reports_the_error(self):
+        err = _proc(1, "", "stream error: INTERNAL_ERROR")
+        with mock.patch.object(train, "run", return_value=err) as run, mock.patch.object(train.time, "sleep"):
+            with self.assertRaises(SystemExit) as cm:
+                train.api("repos/o/r/compare/a...b")
+        self.assertEqual(run.call_count, train.API_RETRIES)
+        self.assertIn("stream error", str(cm.exception))
+
+    def test_other_errors_are_not_retried(self):
+        with mock.patch.object(train, "run", return_value=_proc(1, "", "HTTP 404: Not Found")) as run:
+            with self.assertRaises(SystemExit):
+                train.api("repos/o/r/git/ref/heads/x")
+        self.assertEqual(run.call_count, 1)
+
+    def test_check_false_returns_the_body_without_exit(self):
+        with mock.patch.object(train, "run", return_value=_proc(1, '{"message": "Not Found"}', "HTTP 404")):
+            self.assertEqual(train.api("repos/o/r/x", check=False), {"message": "Not Found"})
+
+    def test_writes_are_never_repeated(self):
+        err = _proc(1, "", "unexpected end of JSON input")
+        for args in (("-X", "POST"), ("-X", "PUT"), ("-f", "ref=refs/heads/x")):
+            with mock.patch.object(train, "run", return_value=err) as run:
+                with self.assertRaises(SystemExit):
+                    train.api("repos/o/r/git/refs", *args)
+            self.assertEqual(run.call_count, 1, args)
+
+    def test_query_fields_keep_the_request_a_read(self):
+        self.assertTrue(train.api_is_read(["-X", "GET", "-f", "branch=lunobot/staging"]))
+
+
 class ExistingRefTest(unittest.TestCase):
     def test_404_json_is_not_a_ref(self):
         # `gh api` prints the 404 body to stdout; api() parses it into a dict.
