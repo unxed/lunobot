@@ -15,6 +15,22 @@ def line(ts, num, verb="взял", suffix="; LNX", node=NODE, tail=" [pr]"):
     return f"{ts} Я Лунобот-{num} (node {node}{suffix}), {verb} задачу {URL}{tail}"
 
 
+class MalformedMessageTest(unittest.TestCase):
+    def problems(self, text):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "DISPATCH.md")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("# DISPATCH\n\n" + text + "\n")
+            return check_dispatch.check(path, 45)[1]
+
+    def test_model_name_in_id_names_the_cause_and_not_the_part(self):
+        # 15-10-2026: the id with a model name was rejected as "id не по формату, не указана часть"; the part is optional
+        found = self.problems(f"15-10-2026 05:00:54 Я Лунобот-1 (node {NODE}; LNX; Claude Sonnet 5.5), взял задачу {URL} [pr]")
+        self.assertEqual([p[0] for p in found], ["формат"])
+        self.assertIn("без имени модели", found[0][2])
+        self.assertNotIn("не указана часть", found[0][2])
+
+
 class SameNodeDuplicateTest(unittest.TestCase):
     def problems(self, *lines):
         with tempfile.TemporaryDirectory() as d:
