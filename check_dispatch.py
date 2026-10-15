@@ -159,10 +159,9 @@ def parse(path):
         if not (ts and who and verb and key):
             malformed.append((n, line[:110], {
                 "нет метки времени": not ts,
-                "id не по формату": not who,
+                "id не по формату (нужно «Я Лунобот-N (node <hex>; ПЛАТФОРМА)», без имени модели)": not who,
                 "нет глагола состояния": not verb,
                 "нет ключа задачи": not key,
-                "не указана часть": not part,
             }))
             continue
         # часть не указана — значит единственная
