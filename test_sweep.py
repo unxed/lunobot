@@ -102,5 +102,26 @@ class UnreachableRepoTest(unittest.TestCase):
         self.assertEqual(deleted, ["repos/unxed/f4/git/refs/heads/lunobot/train/f4/261007-2302"])
 
 
+class PrStateTest(unittest.TestCase):
+    def test_unreadable_pr_list_is_unknown_not_none(self):
+        with patch.object(sweep, "gh", return_value=None):
+            self.assertEqual(sweep.pr_state("unxed/f4", "tmp/19d3/x"), "unknown")
+
+    def test_temp_branch_with_unreadable_pr_list_is_not_deleted(self):
+        deleted = []
+        temp = [{"name": "tmp/19d3/probe", "commit": {"sha": "abc"}}]
+
+        def fake_gh(path, *args):
+            if args[:1] == ("-X",):
+                deleted.append(path)
+            return None
+
+        with patch.object(sweep, "gh_all", return_value=temp), \
+                patch.object(sweep, "gh", side_effect=fake_gh), \
+                patch.object(sweep, "age_of", return_value=sweep.timedelta(hours=48)):
+            n = sweep.branches(True, set(), ["unxed/f4"])
+        self.assertEqual((n, deleted), (0, []))
+
+
 if __name__ == "__main__":
     unittest.main()

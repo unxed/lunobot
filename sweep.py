@@ -147,7 +147,10 @@ def age_of(repo, sha):
 
 def pr_state(repo, branch):
     owner = repo.split("/")[0]
-    prs = gh(f"repos/{repo}/pulls?state=all&head={owner}:{branch}&per_page=5") or []
+    prs = gh(f"repos/{repo}/pulls?state=all&head={owner}:{branch}&per_page=5")
+    if prs is None:
+        # Отказ API — не «PR нет»: иначе --apply удалил бы временную ветку с открытым PR.
+        return "unknown"
     if any(p["state"] == "open" for p in prs):
         return "open"
     return "closed" if prs else "none"
