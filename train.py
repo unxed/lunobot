@@ -1697,4 +1697,7 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    # Вывод в файл/канал (фоновый запуск, § 13.2) без построчной буферизации приходит
+    # только в конце проекта, и идущий tick-all выглядит зависшим.
+    sys.stdout.reconfigure(line_buffering=True)
     sys.exit(main(sys.argv[1:]))
