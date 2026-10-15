@@ -163,5 +163,38 @@ class CiTest(unittest.TestCase):
         self.assertNotIn("уже в CI.md", found)
 
 
+class StrayAddedLineTest(unittest.TestCase):
+    def stray(self, text):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "DISPATCH.md")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(text)
+            return check_dispatch.stray_lines(path)
+
+    def test_loose_text_is_stray(self):
+        # 15-10-2026 33247407: «красный main 72bdcb32» вписан руками мимо acct_line.py
+        found = self.stray("# DISPATCH — f4\n\n" + line("15-10-2026 10:55:00", 2, tail=" [land]") + "\n\nкрасный main 72bdcb32\n")
+        self.assertEqual(list(found.values()), ["красный main 72bdcb32"])
+
+    def test_legal_content_is_not_stray(self):
+        text = ("# DISPATCH — f4\n\n"
+                "Файл содержит только действующие захваты. Формат — § 8 инструкции.\n"
+                "Закончил шаг — удали свои строки, а не дописывай отчёт.\n\n"
+                + line("15-10-2026 10:55:00", 2, tail=" [land]") + "\n\n"
+                + line("15-10-2026 11:05:00", 2, verb="работаю", tail="") + "\n\n"
+                f"15-10-2026 11:10:00 Я Лунобот-2 (node {NODE}; LNX), объявляю заморозку land проекта f4 до нарезки поезда\n\n"
+                f"15-10-2026 11:20:00 Я Лунобот-2 (node {NODE}; LNX), прекращаю работу: команда владельца\n")
+        self.assertEqual(self.stray(text), {})
+
+    def test_only_added_mode_reports_it(self):
+        # полный режим (main без --added-only) этих строк не ищет: он вызывает только check()
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "DISPATCH.md")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("# DISPATCH — f4\n\nкрасный main 72bdcb32\n")
+            self.assertEqual(check_dispatch.check(path, 45)[1], [])
+            self.assertEqual(list(check_dispatch.stray_lines(path)), [3])
+
+
 if __name__ == "__main__":
     unittest.main()

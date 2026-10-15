@@ -92,6 +92,12 @@ def attempt(repo, remote, branch, op, relpath, arg, message, sign, remove_all=Fa
         raise RuntimeError(f"{relpath} нет в {remote}/{branch}")
     added = None
     if op == "add":
+        if os.path.basename(relpath) in RECORD_FILES:
+            import check_dispatch
+            if "\n" in arg.strip("\n") or not check_dispatch.is_record_line(arg.strip("\n")):
+                print(f"ОТКАЗ: запись {os.path.basename(relpath)} — ровно одна строка, начинающаяся с метки времени "
+                      f"ДД-ММ-ГГГГ ЧЧ:ММ:СС (§ 8); получено: {arg[:80]!r}. Ключ или обрывок текста сюда не пишут.")
+                return "gate"
         new = add_paragraph(old.stdout, arg)
         added = len(new.rstrip("\n").split("\n"))
     else:
