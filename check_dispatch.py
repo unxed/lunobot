@@ -97,6 +97,9 @@ def route_error(line):
 REF_URL = re.compile(r"github\.com/([\w.-]+)/([\w.-]+)/(?:issues|pull)/(\d+)")
 REF_SHORT = re.compile(r"(?<![\w./-])([\w.-]+)/([\w.-]+)#(\d+)")
 PART_ANY = re.compile(r"часть (\d+) из (\d+)")
+# Инцидент без тикета: «красный поезд #1968», «красный main d5f1ef202» (§ 5 п. 2) — у него нет ссылки
+# на тикет, а чинить его одновременно двум сеансам незачем.
+INCIDENT = re.compile(r"красн\w*\s+(?:поезд\s*#(\d+)|main\s+([0-9a-f]{7,40})\b)", re.I)
 
 
 def refs(text):
@@ -105,9 +108,13 @@ def refs(text):
     Нормализуются в «o/r#N» (регистр не важен): кастомная задача «влить PR … unxed/dn#33» и
     захват https://github.com/unxed/dn/issues/33 — одна и та же работа (14-10-2026, два
     захвата unxed/dn#33 часть 3 из 4 разными сеансами одного узла: ключи разной формы,
-    гейт их не сравнивал)."""
+    гейт их не сравнивал). Инцидент без тикета («красный поезд #N», «красный main <sha>»)
+    нормализуется в «поезд#N» / «main@<sha7>»: 15-10-2026 красный поезд #1968 взяли два
+    сеанса одного узла с разным текстом задачи, за минуту, и оба чинили одно и то же."""
     found = {f"{o}/{r}#{n}".lower() for o, r, n in REF_URL.findall(text)}
     found |= {f"{o}/{r}#{n}".lower() for o, r, n in REF_SHORT.findall(text)}
+    for train, sha in INCIDENT.findall(text):
+        found.add(f"поезд#{train}" if train else f"main@{sha[:7].lower()}")
     return found
 
 

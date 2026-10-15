@@ -122,6 +122,24 @@ class OverlapTest(unittest.TestCase):
             "https://github.com/unxed/dn/issues/33 (часть 3 из 4) [pr]"])
         self.assertIn("пересечение", found)
 
+    def test_same_red_train_taken_twice_overlaps(self):
+        # 15-10-2026: красный поезд #1968 взяли Лунобот-1 и Лунобот-2 одного узла с разным текстом задачи
+        found = kinds([
+            f"15-10-2026 19:52:19 Я Лунобот-1 (node {NODE}; LNX), взял кастомную задачу "
+            "«красный поезд #1968: vendorHash после Staging-Revert» по § 5 п. 2 "
+            "[urgent: по § 5 п. 2 — красный поезд]",
+            f"15-10-2026 19:53:17 Я Лунобот-2 (node {NODE}; LNX), взял кастомную задачу "
+            "«красный поезд #1968» по § 5 п. 2 [urgent: по § 5 п. 2 — красный поезд]"])
+        self.assertIn("пересечение", found)
+
+    def test_red_main_of_different_commits_does_not_overlap(self):
+        found = kinds([
+            f"15-10-2026 19:21:20 Я Лунобот-2 (node {NODE}; LNX), взял кастомную задачу "
+            "«красный main d5f1ef202» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]",
+            f"15-10-2026 19:53:17 Я Лунобот-1 (node {NODE}; LNX), взял кастомную задачу "
+            "«красный main 68c27d1» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]"])
+        self.assertNotIn("пересечение", found)
+
     def test_different_explicit_parts_do_not_overlap(self):
         found = kinds([
             f"14-10-2026 08:37:22 Я Лунобот-2 (node {OTHER}; LNX), взял кастомную задачу "
