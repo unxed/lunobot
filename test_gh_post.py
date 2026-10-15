@@ -44,6 +44,8 @@ class CheckTextTest(unittest.TestCase):
                 self.assertEqual(gh_post.check_text(text), "")
         self.assertIn("\\n", gh_post.check_text("Готово.\\nДальше."))
         self.assertIn("\\n", gh_post.check_text("Список:\\n- один\\n- два"))
+        self.assertIn("\\n", gh_post.check_text("Files:\\n- a.go"))
+        self.assertIn("\\n", gh_post.check_text("На диске C:\\new всё ok:\\nдальше"))
 
     def test_share_of_question_marks(self):
         self.assertTrue(gh_post.check_text("a? b? c? d? e? f?"))
