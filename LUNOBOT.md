@@ -14,6 +14,8 @@ https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md
 
 Всё, что зависит от агентной среды (Claude Code, Codex и другие), собрано в § 13.
 
+Истории инцидентов, из-за которых появились правила, вынесены в [INCIDENTS.md](INCIDENTS.md) (ссылки вида «история: INCIDENTS.md, «…»»); правила остаются здесь, читать историю нужно только при сомнении в причине правила.
+
 ---
 
 ## 1. Кто ты
