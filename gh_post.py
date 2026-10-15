@@ -218,6 +218,24 @@ def issue_body(repo, number, path):
     return verify_body(repo, "issues", number, text, path)
 
 
+def parse_issue_args(args):
+    """`<owner/repo> <файл> [--label <метка>]...` → (repo, path, labels) или None, если разбор не удался.
+
+    Лишний или неизвестный аргумент, `--label` без значения — отказ, а не тихий пропуск:
+    иначе тикет молча создаётся без метки, которую просили.
+    """
+    if len(args) < 2:
+        return None
+    labels = []
+    rest = args[2:]
+    while rest:
+        if rest[0] != "--label" or len(rest) < 2 or not rest[1].strip() or rest[1].startswith("--"):
+            return None
+        labels.append(rest[1])
+        rest = rest[2:]
+    return args[0], args[1], labels
+
+
 def create_issue(repo, path, labels):
     text = gate(path)
     title, _, body = text.partition("\n")
@@ -238,6 +256,15 @@ def create_issue(repo, path, labels):
     if normalize(issue.get("title", "")) != normalize(title):
         print(f"ошибка: заголовок тикета {issue.get('html_url')} не совпал с файлом", file=sys.stderr)
         return 1
+    stored = {(item.get("name") or "").casefold() for item in issue.get("labels") or [] if isinstance(item, dict)}
+    missing = [label for label in labels if label.casefold() not in stored]
+    if missing:
+        print(f"ошибка: у тикета {issue.get('html_url')} нет меток {', '.join(missing)}: "
+              "проверь кодировку среды (UTF-8) и поставь метки вручную.", file=sys.stderr)
+        return 1
+    if not body.strip():
+        # Пустое тело нечем сверять (same_text отвергает пустой текст): заголовок уже сверен.
+        return 0
     return verify_body(repo, "issues", issue["number"], body.lstrip("\n"), body_path)
 
 
@@ -304,9 +331,12 @@ def main(argv):
         return pr_body(*args)
     if cmd == "issue-body" and len(args) == 3:
         return issue_body(*args)
-    if cmd == "issue" and len(args) >= 2:
-        labels = [args[i + 1] for i, a in enumerate(args[:-1]) if a == "--label"]
-        return create_issue(args[0], args[1], labels)
+    if cmd == "issue":
+        parsed = parse_issue_args(args)
+        if parsed is None:
+            print(__doc__)
+            return 2
+        return create_issue(*parsed)
     if cmd == "pr" and len(args) == 4:
         return create_pr(*args)
     if cmd == "scan" and args:

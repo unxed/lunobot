@@ -104,7 +104,8 @@ class CreateIssueTest(unittest.TestCase):
         def fake_api(path, *args, check=True):
             calls.append((path, args))
             if args:
-                return {"number": 7, "title": "Заголовок", "body": "Тело\n", "html_url": "u"}
+                return {"number": 7, "title": "Заголовок", "body": "Тело\n", "html_url": "u",
+                        "labels": [{"name": "Enhancement"}]}
             return {"body": "Тело\n", "html_url": "u"}
 
         with TemporaryDirectory() as directory:
@@ -124,6 +125,42 @@ class CreateIssueTest(unittest.TestCase):
                 with self.assertRaises(SystemExit) as raised:
                     gh_post.main(["issue", "o/r", str(f)])
         self.assertEqual(raised.exception.code, 2)
+        api.assert_not_called()
+
+    def test_title_only_issue_is_not_reported_as_body_mismatch(self):
+        calls = []
+
+        def fake_api(path, *args, check=True):
+            calls.append((path, args))
+            return {"number": 7, "title": "Только заголовок", "body": None, "html_url": "u", "labels": []}
+
+        with TemporaryDirectory() as directory:
+            f = Path(directory) / "i.md"
+            f.write_text("Только заголовок\n", encoding="utf-8")
+            with patch.object(gh_post, "api", fake_api):
+                self.assertEqual(gh_post.main(["issue", "o/r", str(f)]), 0)
+        self.assertEqual(len(calls), 1)
+
+    def test_label_missing_in_response_is_an_error(self):
+        def fake_api(path, *args, check=True):
+            return {"number": 7, "title": "Заголовок", "body": "Тело\n", "html_url": "u", "labels": []}
+
+        with TemporaryDirectory() as directory:
+            f = Path(directory) / "i.md"
+            f.write_text("Заголовок\nТело\n", encoding="utf-8")
+            with patch.object(gh_post, "api", fake_api):
+                self.assertEqual(gh_post.main(["issue", "o/r", str(f), "--label", "bug"]), 1)
+
+    def test_bad_arguments_create_nothing(self):
+        for extra in (["--label"], ["--labels", "bug"], ["--label", "bug", "лишнее"], ["--label", "--label"]):
+            with self.subTest(extra=extra), TemporaryDirectory() as directory:
+                f = Path(directory) / "i.md"
+                f.write_text("Заголовок\nТело\n", encoding="utf-8")
+                with patch.object(gh_post, "api") as api:
+                    self.assertEqual(gh_post.main(["issue", "o/r", str(f), *extra]), 2)
+                api.assert_not_called()
+        with patch.object(gh_post, "api") as api:
+            self.assertEqual(gh_post.main(["issue", "o/r"]), 2)
         api.assert_not_called()
 
 
