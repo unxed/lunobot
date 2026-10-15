@@ -1,0 +1,19 @@
+# bp
+
+- Код: https://github.com/unxed/bp
+- Что это: Better Pascal — диалект FPC с безопасной моделью памяти (концепции Rust и Go); в каталоге `fpide/` — Free Pascal IDE,
+  перенесённая на tv3 (submodule `fpide/tv` -> unxed/tv3, `fpide/tve` -> unxed/tve)
+- Задачи: тикеты и PR этого же репозитория (и языка, и fpide)
+- PR: туда же, ветка -> PR -> мерж в `main`
+- Зависимости: submodule unxed/tv3 (правки его кода — по паспорту `tv3`) и unxed/tve; submodule не двигать без отдельной задачи
+- Язык общения: по языку автора тикета
+- Режим публикации: PR
+- Отладка GitHub CI: да
+- Диагностические workflow: `ci.yml`, `fpide.yml`, `fpide-accept.yml`; отдельного `sandbox.yml` нет
+- Обязательная проверка: `ci.yml` на SHA PR; при изменениях в `fpide/**` — ещё `fpide.yml` и `fpide-accept.yml`
+- Особенности: лицензионные правила `CLAUDE.md` репозитория важнее всего остального (код IDE остаётся под GPL; tve и tv3 —
+  без GPL/RIT кода). Для fpide есть правила в `.cursor/rules/fpide-full-port.mdc`. Сводный план работ — `docs/HANDOFF.md`
+  в unxed/dn.
+
+Этот паспорт — то место, где живут отличия проекта от остальных. Не хватает ответа
+на вопрос, который встал в работе, — дополни паспорт вместе с правкой по задаче.
