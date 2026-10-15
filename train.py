@@ -999,7 +999,7 @@ def covered(repo, sha):
         cmp = api(f"repos/{repo}/compare/{sha}...{r['head_sha']}", check=False)
         if cmp and cmp.get("status") in ("ahead", "identical"):
             verdict = "зелёный" if r["conclusion"] == "success" else "КРАСНЫЙ"
-            print(f"{verdict}: {r['html_url']} (прогон на {r['head_sha'][:9]})")
+            print(f"{verdict} для {sha[:9]}: {r['html_url']} (прогон на {r['head_sha'][:9]})")
             return 0 if r["conclusion"] == "success" else 1
     print("ещё едет: завершённого quick на этом коммите или его потомке пока нет")
     return 0

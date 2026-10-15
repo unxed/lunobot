@@ -25,6 +25,26 @@ class ExistingRefTest(unittest.TestCase):
             self.assertEqual(train.existing_ref("repos/o/r/git/ref/heads/x"), ref)
 
 
+class CoveredTest(unittest.TestCase):
+    def test_verdict_names_the_requested_commit_and_covering_run(self):
+        sha = "0123456789abcdef"
+        run = {
+            "status": "completed",
+            "conclusion": "failure",
+            "created_at": "2026-10-15T00:00:00Z",
+            "head_sha": "fedcba9876543210",
+            "html_url": "https://github.com/o/r/actions/runs/1",
+        }
+        output = io.StringIO()
+        with mock.patch.object(train, "api", side_effect=[
+            {"workflow_runs": [run]}, {"status": "ahead"},
+        ]), \
+                contextlib.redirect_stdout(output):
+            self.assertEqual(train.covered("o/r", sha), 1)
+        self.assertIn("КРАСНЫЙ для 012345678: https://github.com/o/r/actions/runs/1", output.getvalue())
+        self.assertIn("прогон на fedcba9", output.getvalue())
+
+
 class RefCreatedTest(unittest.TestCase):
     def test_422_json_is_not_success(self):
         body = {"message": "Reference already exists", "status": "422"}
