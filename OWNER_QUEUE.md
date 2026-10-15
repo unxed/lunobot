@@ -71,3 +71,14 @@ https://github.com/blue-panels/mcommander
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 13-10-2026 11:10:29 UTC
 Доп. проверка 15-10-2026 07:25 UTC: 139 тестов `test_train`, `test_sweep`, `test_owner_questions`, `test_status`, `test_gh_post` прошли; `check_triage.py f4` подтвердил 134 тикета. `tick-all` отправил поезд f4, vtui зелёный. `status.py f4` вновь вывел два HTTP 404; облачный Claude Code proxy в этой среде недоступен, live-критерий #46 не подтверждён. Отчёт: https://github.com/unxed/lunobot/issues/46#issuecomment-6186820032. Поручение остаётся открытым.
 Доп. проверка 15-10-2026 09:52 UTC: `test_train test_sweep test_owner_questions test_status test_gh_post` — 143 теста прошли; остались ResourceWarning в `check_dispatch.py`. `check_triage.py f4` подтвердил 134/134 открытых тикета. `tick-all` прошёл для f4 и vtui; оба staging зелёные, main vtui успешен, у f4 идёт полная матрица. `sweep.py --number 2 --apply` удалил один устаревший каталог шага; `owner_questions.py sweep` оставил 2 нерешённых вопроса. Live-проверка Claude Code proxy этой средой не поддерживается.
+
+--
+
+Заметка владельца (15-10-2026, передано через Claude Code): Pascal-линейка tv / tv3 / dn / fpide.
+Где что: tv — https://github.com/unxed/tv, tv3 — https://github.com/unxed/tv3, dn — https://github.com/unxed/dn, fpide — каталог `fpide/` в https://github.com/unxed/bp (там же Better Pascal). tv, tv3 и bp пока не заведены в projects/INDEX.md — при необходимости заведи паспорта по образцу dn.
+1. Зафиксировать стабильные версии tv, tv3, dn и fpide — как минимум как проходящий тесты результат нейротранспиляции (тег/релиз на зелёном CI, в README — что это за срез).
+2. Потом в отдельных ветках (и по готовности — в main) перевести tv3, dn и fpide на Better Pascal: его safe-модель, его корутины и асинхронную архитектуру, по аналогии с unxed/f4.
+3. В dn: фоновое копирование, если его ещё нет.
+4. В dn, архивы: пока сделать обвязку вокруг консольных архиваторов по аналогии с multiarc из far2l, но без копирования кода (справочную информацию — команды архиваторов, форматы вывода списков — брать можно).
+5. В dn: убедиться, что FTP и SFTP нормально поддерживаются и что можно пользоваться удалённым шеллом; поддержать тот же набор сетевых протоколов, что у mc (FTP, SFTP, FISH/shell и т.д.). Серверные скрипты FISH можно взять из unxed/f4 — он под BSD-3, это позволено.
+На все это заведи тикет(ы) в репозиториях затрагиваемых проектов (dn, tv3, bp, tv) и актуализируй их в процессе работы.
