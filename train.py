@@ -121,12 +121,14 @@ def touches_deps(files):
 
 def patch_id(sha):
     """Стабильный patch-id коммита (не зависит от сообщения и от базы после rebase)."""
-    show = run("git", "show", "--format=", "--patch", sha, check=False)
+    # Байты, а не текст: патч с кириллицей не должен падать на кодировке консоли (Windows), а
+    # diff-tree (plumbing) не знает внешних diff-драйверов, цвета и переименований из конфигурации.
+    show = subprocess.run(["git", "diff-tree", "-p", "--root", sha], capture_output=True)
     if show.returncode:
         return None
-    p = subprocess.run(["git", "patch-id", "--stable"], input=show.stdout,
-                       capture_output=True, text=True)
-    return p.stdout.split()[0] if p.returncode == 0 and p.stdout.split() else None
+    p = subprocess.run(["git", "patch-id", "--stable"], input=show.stdout, capture_output=True)
+    out = p.stdout.decode("ascii", "replace").split()
+    return out[0] if p.returncode == 0 and out else None
 
 
 def deps_sandbox_problem(repo, sha, body):
@@ -142,7 +144,7 @@ def deps_sandbox_problem(repo, sha, body):
                 "sandbox.yml>` с полным `go vet ./... && go test ./...` (§ 7.2) — зависимость "
                 "ломает пакеты, которых автор не трогал")
     run_repo, run_id = m.group(1), m.group(2)
-    if run_repo != repo:
+    if run_repo.lower() != repo.lower():
         return f"Sandbox-Full: прогон чужого репозитория {run_repo}, нужен {repo}"
     r = api(f"repos/{repo}/actions/runs/{run_id}", check=False)
     if not isinstance(r, dict) or "status" not in r:

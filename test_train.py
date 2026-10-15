@@ -916,6 +916,10 @@ class DepsSandboxTest(unittest.TestCase):
         body = self.BODY.replace("unxed/f4", "unxed/vtui")
         self.assertIn("чужого репозитория", self.problem(body=body, run_json=self.GOOD))
 
+    def test_repository_name_is_case_insensitive(self):
+        body = self.BODY.replace("unxed/f4", "Unxed/F4")
+        self.assertIsNone(self.problem(body=body, run_json=self.GOOD))
+
     def test_unknown_run_is_refused(self):
         self.assertIn("не найден", self.problem(run_json={"message": "Not Found"}))
         self.assertIn("не найден", self.problem(run_json=None))
@@ -958,8 +962,8 @@ class PatchIdTest(unittest.TestCase):
             self.git("add", ".")
             self.git("commit", "-q", "-m", "base")
             self.git("switch", "-q", "-c", "work")
-            with open(os.path.join(d, "go.mod"), "w") as f:
-                f.write("two\n")
+            with open(os.path.join(d, "go.mod"), "w", encoding="utf-8") as f:
+                f.write("два Н\n")
             self.git("commit", "-q", "-am", "bump")
             tested = self.git("rev-parse", "HEAD")
             self.git("switch", "-q", "main")
