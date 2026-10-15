@@ -24,10 +24,13 @@ class ApiRetryTest(unittest.TestCase):
 
     def test_gives_up_after_the_limit_and_reports_the_error(self):
         err = _proc(1, "", "stream error: INTERNAL_ERROR")
-        with mock.patch.object(train, "run", return_value=err) as run, mock.patch.object(train.time, "sleep"):
+        with mock.patch.object(train, "run", return_value=err) as run, \
+                mock.patch.object(train.time, "sleep") as sleep:
             with self.assertRaises(SystemExit) as cm:
                 train.api("repos/o/r/compare/a...b")
         self.assertEqual(run.call_count, train.API_RETRIES)
+        # Паузы только между попытками (2 и 4 с), после последней не спим.
+        self.assertEqual([c.args[0] for c in sleep.call_args_list], [2, 4])
         self.assertIn("stream error", str(cm.exception))
 
     def test_other_errors_are_not_retried(self):
