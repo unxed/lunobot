@@ -107,7 +107,8 @@ def ci_refs(path):
     строки CI.md по предыдущей части."""
     ci = os.path.join(os.path.dirname(os.path.abspath(path)), "CI.md")
     try:
-        lines = open(ci, encoding="utf-8").read().splitlines()
+        with open(ci, encoding="utf-8") as f:
+            lines = f.read().splitlines()
     except OSError:
         return []
     out = []
@@ -128,55 +129,56 @@ def looks_like_record(line):
 
 def parse(path):
     entries, malformed, no_origin, route = [], [], [], []
-    for n, line in enumerate(open(path, encoding="utf-8"), 1):
-        line = line.rstrip()
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        if any(f in line for f in FINAL):
-            continue  # записи о завершении сессии — законное исключение
-        if "Лунобот" not in line:
-            # шапка файла («Файл содержит только действующие захваты…») — законный текст;
-            # строка без id, похожая на запись (глагол состояния, ссылка, метка маршрута,
-            # дата в начале), — испорченный захват, который иначе молча пропускался бы
-            if looks_like_record(line):
-                malformed.append((n, line[:110], {"нет id Лунобота": True}))
-            continue
-        ts, who = re.match(TS, line), re.search(ID, line)
-        verb = next((v for v in LIVE + CLOSED if v in line), None)
-        body = re.sub(r"\]\(https?://[^)]+\)", "]", line)
-        key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", body)
-        if key:
-            key = key.group(0)
-        else:
-            # «взял кастомную задачу «X»» и «работаю над кастомной задачей «X»» — один шаг
-            custom = re.search(r"кастомн\w+ задач\w+\s*«([^»]+)»", body)
-            if not custom:
-                custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
-            key = custom.group(1).strip() if custom else None
-            if key and "взял" in line and "по §" not in body:
-                no_origin.append((n, line[:110]))
-        part = re.search(r"\(часть (\d+) из (\d+)\)", line)
-        if not (ts and who and verb and key):
-            malformed.append((n, line[:110], {
-                "нет метки времени": not ts,
-                "id не по формату (нужно «Я Лунобот-N (node <hex>; ПЛАТФОРМА)», без имени модели)": not who,
-                "нет глагола состояния": not verb,
-                "нет ключа задачи": not key,
-            }))
-            continue
-        # часть не указана — значит единственная
-        part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
-        anypart = PART_ANY.search(line)
-        entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
-                        "who": who.group(0), "node": who.group("node"), "num": who.group("num"),
-                        "verb": verb, "refs": refs(line), "text": line,
-                        "part": anypart.group(0) if anypart else None,
-                        "route": (ROUTE_MARKER.search(line) or [None, None])[1],
-                        "key": f"{key}#{part_key}",
-                        "worker": (re.search(r"воркер\s+([0-9a-f]{6,})", line) or [None, None])[1]})
-        if verb == "взял":
-            if err := route_error(line):
-                route.append((n, line[:160], err))
+    with open(path, encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            line = line.rstrip()
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            if any(f in line for f in FINAL):
+                continue  # записи о завершении сессии — законное исключение
+            if "Лунобот" not in line:
+                # шапка файла («Файл содержит только действующие захваты…») — законный текст;
+                # строка без id, похожая на запись (глагол состояния, ссылка, метка маршрута,
+                # дата в начале), — испорченный захват, который иначе молча пропускался бы
+                if looks_like_record(line):
+                    malformed.append((n, line[:110], {"нет id Лунобота": True}))
+                continue
+            ts, who = re.match(TS, line), re.search(ID, line)
+            verb = next((v for v in LIVE + CLOSED if v in line), None)
+            body = re.sub(r"\]\(https?://[^)]+\)", "]", line)
+            key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", body)
+            if key:
+                key = key.group(0)
+            else:
+                # «взял кастомную задачу «X»» и «работаю над кастомной задачей «X»» — один шаг
+                custom = re.search(r"кастомн\w+ задач\w+\s*«([^»]+)»", body)
+                if not custom:
+                    custom = re.search(r"кастомную задачу,\s*([^(]+)", body)
+                key = custom.group(1).strip() if custom else None
+                if key and "взял" in line and "по §" not in body:
+                    no_origin.append((n, line[:110]))
+            part = re.search(r"\(часть (\d+) из (\d+)\)", line)
+            if not (ts and who and verb and key):
+                malformed.append((n, line[:110], {
+                    "нет метки времени": not ts,
+                    "id не по формату (нужно «Я Лунобот-N (node <hex>; ПЛАТФОРМА)», без имени модели)": not who,
+                    "нет глагола состояния": not verb,
+                    "нет ключа задачи": not key,
+                }))
+                continue
+            # часть не указана — значит единственная
+            part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
+            anypart = PART_ANY.search(line)
+            entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
+                            "who": who.group(0), "node": who.group("node"), "num": who.group("num"),
+                            "verb": verb, "refs": refs(line), "text": line,
+                            "part": anypart.group(0) if anypart else None,
+                            "route": (ROUTE_MARKER.search(line) or [None, None])[1],
+                            "key": f"{key}#{part_key}",
+                            "worker": (re.search(r"воркер\s+([0-9a-f]{6,})", line) or [None, None])[1]})
+            if verb == "взял":
+                if err := route_error(line):
+                    route.append((n, line[:160], err))
     return entries, malformed, no_origin, route
 
 
@@ -205,14 +207,15 @@ def check(path, timeout_min, since=None):
         problems.append(("нет повода", n,
                          "кастомная задача без указания, откуда взялась "
                          f"(нужно «по § …»): {text}"))
-    for n, line in enumerate(open(path, encoding="utf-8"), 1):
-        if len(re.findall(TS, line)) > 1:
-            if since:
-                m = re.match(r"(\d{2}-\d{2}-\d{4})", line)
-                if m and datetime.strptime(m.group(1), "%d-%m-%Y") < since:
-                    continue
-            problems.append(("слиплось", n,
-                             "в одной строке несколько записей — между ними нужна пустая строка"))
+    with open(path, encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            if len(re.findall(TS, line)) > 1:
+                if since:
+                    m = re.match(r"(\d{2}-\d{2}-\d{4})", line)
+                    if m and datetime.strptime(m.group(1), "%d-%m-%Y") < since:
+                        continue
+                problems.append(("слиплось", n,
+                                 "в одной строке несколько записей — между ними нужна пустая строка"))
     for n, text, flags in malformed:
         problems.append(("формат", n, ", ".join(k for k, v in flags.items() if v) + f": {text}"))
 
