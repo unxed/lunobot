@@ -156,7 +156,12 @@ def pr_state(repo, branch):
 def branches(apply, refs, repo_names):
     n = 0
     for repo in repo_names:
-        for b in gh_all(f"repos/{repo}/branches?per_page=100"):
+        listed = gh_all(f"repos/{repo}/branches?per_page=100")
+        if listed is None:
+            # Сессия без доступа к одному проекту не должна оставлять неубранными все следующие.
+            print(f"branch {repo}: список веток недоступен — пропускаю", file=sys.stderr)
+            continue
+        for b in listed:
             name, sha = b["name"], b["commit"]["sha"]
             reason = None
             if name in ("main", "master", "lunobot/staging"):
@@ -194,7 +199,11 @@ def branches(apply, refs, repo_names):
 
 def stale_prs(refs, repo_names):
     for repo in repo_names:
-        for p in gh_all(f"repos/{repo}/pulls?state=open&per_page=100"):
+        listed = gh_all(f"repos/{repo}/pulls?state=open&per_page=100")
+        if listed is None:
+            print(f"pr     {repo}: список PR недоступен — пропускаю", file=sys.stderr)
+            continue
+        for p in listed:
             head = p["head"]["ref"]
             upd = datetime.fromisoformat(p["updated_at"].replace("Z", "+00:00"))
             if (head.startswith(OWN_PR) and head not in refs
