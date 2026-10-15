@@ -61,6 +61,8 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 13-10-2026 11:10:29 UTC
 Доп. проверка 15-10-2026 07:25 UTC: 139 тестов `test_train`, `test_sweep`, `test_owner_questions`, `test_status`, `test_gh_post` прошли; `check_triage.py f4` подтвердил 134 тикета. `tick-all` отправил поезд f4, vtui зелёный. `status.py f4` вновь вывел два HTTP 404; облачный Claude Code proxy в этой среде недоступен, live-критерий #46 не подтверждён. Отчёт: https://github.com/unxed/lunobot/issues/46#issuecomment-6186820032. Поручение остаётся открытым.
 Доп. проверка 15-10-2026 09:52 UTC: `test_train test_sweep test_owner_questions test_status test_gh_post` — 143 теста прошли; остались ResourceWarning в `check_dispatch.py`. `check_triage.py f4` подтвердил 134/134 открытых тикета. `tick-all` прошёл для f4 и vtui; оба staging зелёные, main vtui успешен, у f4 идёт полная матрица. `sweep.py --number 2 --apply` удалил один устаревший каталог шага; `owner_questions.py sweep` оставил 2 нерешённых вопроса. Live-проверка Claude Code proxy этой средой не поддерживается.
+Доп. проверка 15-10-2026 19:07 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): tv3#4 — сверены standalone `ci.yml`, Windows unit и DN Windows workflow. Существующий DN cross-build + ConPTY smoke не подтверждает отдельную сборку tv3 на Windows; факт и критерий следующего шага записаны в unxed/tv3#4 и projects/tv/status/4.md. Шаг 1 пока не объявлен завершённым. dn#19/#20 не взяты: пересекаются с поручением Лунобота-1 по dn#41; bp#3 сложный, активен Лунобот-1; в dn#87 и tv#1 уже есть планы с конкретными следующими шагами.
+
 
 --
 
