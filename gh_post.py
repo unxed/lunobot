@@ -18,6 +18,7 @@
     python3 gh_post.py edit <owner/repo> <id комментария> <файл>
     python3 gh_post.py pr-body <owner/repo> <номер PR> <файл>
     python3 gh_post.py issue-body <owner/repo> <номер тикета> <файл>
+    python3 gh_post.py issue <owner/repo> <файл> [--label <метка>]   # первая строка — заголовок, дальше тело
     python3 gh_post.py pr <owner/repo> <head> <base> <файл>   # первая строка — заголовок, дальше тело
     python3 gh_post.py scan <owner/repo> [--days 3]           # найти уже испорченные комментарии
 
@@ -217,6 +218,29 @@ def issue_body(repo, number, path):
     return verify_body(repo, "issues", number, text, path)
 
 
+def create_issue(repo, path, labels):
+    text = gate(path)
+    title, _, body = text.partition("\n")
+    title = title.strip()
+    if not title:
+        raise SystemExit("первая строка файла — заголовок тикета — пуста")
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".md", delete=False) as f:
+        f.write(body.lstrip("\n"))
+        body_path = f.name
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", delete=False) as f:
+        f.write(title)
+        title_path = f.name
+    extra = [x for label in labels for x in ("-f", f"labels[]={label}")]
+    issue = api(f"repos/{repo}/issues", "-F", f"title=@{title_path}", "-F", f"body=@{body_path}", *extra)
+    if not issue:
+        raise SystemExit("тикет не создан")
+    print(issue.get("html_url", ""))
+    if normalize(issue.get("title", "")) != normalize(title):
+        print(f"ошибка: заголовок тикета {issue.get('html_url')} не совпал с файлом", file=sys.stderr)
+        return 1
+    return verify_body(repo, "issues", issue["number"], body.lstrip("\n"), body_path)
+
+
 def create_pr(repo, head, base, path):
     text = gate(path)
     title, _, body = text.partition("\n")
@@ -280,6 +304,9 @@ def main(argv):
         return pr_body(*args)
     if cmd == "issue-body" and len(args) == 3:
         return issue_body(*args)
+    if cmd == "issue" and len(args) >= 2:
+        labels = [args[i + 1] for i, a in enumerate(args[:-1]) if a == "--label"]
+        return create_issue(args[0], args[1], labels)
     if cmd == "pr" and len(args) == 4:
         return create_pr(*args)
     if cmd == "scan" and args:

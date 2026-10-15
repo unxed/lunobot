@@ -204,13 +204,14 @@ shell развернёт их как подстановку команды, и �
 хотя проверять кодировку глазами инструкция уже требовала). Где-то по дороге (кодовая страница
 консоли, локаль `C`/`POSIX` в shell, аргумент командной строки, инструмент записи файлов
 среды) не-ASCII символы заменились на «?», и исходный текст потерян. Поэтому комментарии,
-правки комментариев, описания PR и тел тикетов и создание PR боты отправляют **только** так:
+правки комментариев, описания PR, тела тикетов, создание PR и тикетов боты отправляют **только** так:
 
 ```
 python3 /tmp/lunobot-<номер>/accounting/gh_post.py comment <owner/repo> <номер> <файл>
 python3 /tmp/lunobot-<номер>/accounting/gh_post.py edit    <owner/repo> <id комментария> <файл>
 python3 /tmp/lunobot-<номер>/accounting/gh_post.py pr-body <owner/repo> <номер PR> <файл>
 python3 /tmp/lunobot-<номер>/accounting/gh_post.py issue-body <owner/repo> <номер тикета> <файл>
+python3 /tmp/lunobot-<номер>/accounting/gh_post.py issue   <owner/repo> <файл> [--label <метка>]  # 1-я строка — заголовок
 python3 /tmp/lunobot-<номер>/accounting/gh_post.py pr      <owner/repo> <head> <base> <файл>  # 1-я строка — заголовок
 ```
 
