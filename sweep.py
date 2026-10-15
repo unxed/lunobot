@@ -13,7 +13,8 @@
   ветки     — в репозиториях проектов из INDEX.md и в учётном: временные по имени
               (tmp/*, а также старые образцы probe/*, sandbox*, *-sandbox, tmp-*,
               lunobot/*-probe-*) старше 24 ч без открытого PR; bisect/<n>/* закрытого поезда;
-              complaint/*, lunobot/urgent/* и lunobot/pr/* с закрытым или влитым PR. Прочие
+              complaint/*, lunobot/urgent/* и lunobot/pr/* с закрытым или влитым PR;
+              lunobot/train/* влитого или закрытого поезда старше 24 ч. Прочие
               ветки (claude/*, человеческие) не трогает — только перечисляет.
   PR        — не закрывает; перечисляет открытые lunobot/urgent/* и lunobot/pr/* без захвата
               старше 24 ч (их берут по § 5 п. 3).
@@ -158,7 +159,7 @@ def branches(apply, refs, repo_names):
         for b in gh_all(f"repos/{repo}/branches?per_page=100"):
             name, sha = b["name"], b["commit"]["sha"]
             reason = None
-            if name in ("main", "master", "lunobot/staging") or name.startswith("lunobot/train/"):
+            if name in ("main", "master", "lunobot/staging"):
                 continue
             if name in refs:
                 continue
@@ -170,6 +171,11 @@ def branches(apply, refs, repo_names):
             elif name.startswith(("complaint/",) + OWN_PR):
                 if pr_state(repo, name) == "closed":
                     reason = "PR закрыт или влит"
+            elif name.startswith("lunobot/train/"):
+                # fast-forward-мерж поезда ветку не удаляет: без этого их копились десятки (15-10-2026: 76 в f4).
+                # Ветка без PR — поезд режется прямо сейчас, открытый PR — в пути: обе остаются.
+                if pr_state(repo, name) == "closed" and age_of(repo, sha) > BRANCH_AGE:
+                    reason = "поезд влит или закрыт, старше 24 ч"
             elif TEMP.match(name):
                 if age_of(repo, sha) > BRANCH_AGE and pr_state(repo, name) == "none":
                     reason = "временная, старше 24 ч, PR нет"

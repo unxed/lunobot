@@ -42,5 +42,35 @@ class GhAllTest(unittest.TestCase):
             self.assertIsNone(sweep.gh_all("repos/example/project/branches?per_page=100"))
 
 
+class TrainBranchesTest(unittest.TestCase):
+    def sweep_train(self, state, age_hours):
+        deleted = []
+        branch = [{"name": "lunobot/train/f4/261007-2302", "commit": {"sha": "abc"}}]
+
+        def fake_gh(path, *args):
+            if args[:1] == ("-X",):
+                deleted.append(path)
+            return None
+
+        with patch.object(sweep, "gh_all", return_value=branch), \
+                patch.object(sweep, "gh", side_effect=fake_gh), \
+                patch.object(sweep, "pr_state", return_value=state), \
+                patch.object(sweep, "age_of", return_value=sweep.timedelta(hours=age_hours)):
+            n = sweep.branches(True, set(), ["unxed/f4"])
+        return n, deleted
+
+    def test_merged_train_older_than_a_day_is_deleted(self):
+        n, deleted = self.sweep_train("closed", 25)
+        self.assertEqual(n, 1)
+        self.assertEqual(deleted, ["repos/unxed/f4/git/refs/heads/lunobot/train/f4/261007-2302"])
+
+    def test_train_in_flight_or_being_cut_stays(self):
+        for state in ("open", "none"):
+            self.assertEqual(self.sweep_train(state, 48), (0, []))
+
+    def test_fresh_merged_train_stays(self):
+        self.assertEqual(self.sweep_train("closed", 2), (0, []))
+
+
 if __name__ == "__main__":
     unittest.main()
