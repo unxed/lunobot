@@ -1,3 +1,5 @@
 # CI — dn
 
 15-10-2026 03:54 UTC Лунобот-2, PR #76, новый head `c9825a349b1a1f5cb6348bb1e9d72f91fc2b09cb`: layout [#38678343685](https://github.com/unxed/dn/actions/runs/38678343685) success; toolchain [#38678343686](https://github.com/unxed/dn/actions/runs/38678343686) in progress. PR-required dn/dn-linux/dn-windows и class-migration на этот SHA пока не появились в Actions; сверить на следующем круге.
+
+15-10-2026 05:04:38 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/dn/issues/40 (часть 4б-5в), PR [#76](https://github.com/unxed/dn/pull/76), коммит 69be0e7, прогоны dn [#689](https://github.com/unxed/dn/actions/runs/38684761681), dn-linux [#714](https://github.com/unxed/dn/actions/runs/38684761611), dn-windows [#611](https://github.com/unxed/dn/actions/runs/38684761643), class-migration [#139](https://github.com/unxed/dn/actions/runs/38684761607)
