@@ -2,6 +2,7 @@
 """Сверка журнала веток с GitHub.
 
 Ветка под lunobot/ без записи в BRANCHES.md — утечка: кто-то завёл её мимо § 8.
+`lunobot/staging` и `lunobot/train/*` в журнал не заносятся (их ведёт train.py, § 8) и утечкой не считаются.
 Запись без ветки — незавершённая уборка. Ветки, названные иначе, заводит человек,
 их проверка не касается.
 
@@ -33,6 +34,10 @@ def gh_json(path):
         return json.loads(r.read())
 
 
+def is_managed(name):
+    return name == "lunobot/staging" or name.startswith("lunobot/train/")
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     project = args[0] if args else "f4"
@@ -50,7 +55,7 @@ def main():
     journal = (d / "BRANCHES.md").read_text(encoding="utf-8") if (d / "BRANCHES.md").exists() else ""
     recorded = set(re.findall(r"`([^`]+)`", journal))
     real = {b["name"] for b in gh_json(f"/repos/{repo}/branches?per_page=100")
-            if b["name"].startswith("lunobot/")}
+            if b["name"].startswith("lunobot/") and not is_managed(b["name"])}
 
     # ветка с открытым PR — не мусор: её доводят вместе с PR (§ 6)
     try:
