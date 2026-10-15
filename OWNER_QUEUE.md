@@ -69,12 +69,3 @@ https://github.com/blue-panels/mcommander
 Доп. проверка 14-10-2026: `python3 -m unittest test_train test_sweep test_owner_questions test_status test_gh_post` — 134 теста прошли; PR #66 влит. Проверки `train.py health`: f4 staging зелёный, main успешен; vtui main успешен, staging без коммитов впереди main (quick pending). Отчёт: https://github.com/unxed/lunobot/issues/46#issuecomment-6177248772. Live-проверка в Claude Code proxy недоступна в этой среде; поручение остаётся незавершённым.
 Доп. проверка 14-10-2026 23:23 UTC: `python3 -m unittest test_train test_sweep test_owner_questions test_status test_gh_post` — 139 тестов прошли; ResourceWarning о незакрытых файлах в `check_dispatch.py` остаются. Отчёт: https://github.com/unxed/lunobot/issues/46#issuecomment-6180692374. Live-проверка в Claude Code cloud недоступна в этой среде; поручение остаётся незавершённым.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 13-10-2026 11:10:29 UTC
-
---
-
-## account-47
-Заметка владельца: https://github.com/unxed/lunobot/issues/47
-Проект: учёт
-Поручение: Исправить gh_post.py: убрать хвостовые подписи Claude Code перед сверкой текста, добавить регрессионные тесты и указание в LUNOBOT.md § 13.2.
-Критерий: `python3 -m unittest test_gh_post` проходит; отчёт оставлен в issue #47 через gh_post.py.
-Состояние: ждёт владельца — live-проверка переписывания подвала доступна только в Claude Code cloud session; код и 13 тестов в be09a573, отчёт: https://github.com/unxed/lunobot/issues/47#issuecomment-6144687065; 13-10-2026 11:38:31 UTC
