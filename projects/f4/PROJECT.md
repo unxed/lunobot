@@ -39,7 +39,7 @@
   - Отдельные модули `plugins/android`, `plugins/cloudfox`, `plugins/ios` не входят в `go vet ./...` из
     корня и не гоняются в `quick`; их `go.sum` неполон без `go mod tidy` (15-10-2026 первый прогон упал
     на `missing go.sum entry`). Проверка модуля в песочнице одной командой (теги — как в `build.yml`,
-    для android `lite`): `test -z "$(gofmt -s -l plugins/android)" && cd plugins/android && for a in 1 2 3 4; do go mod tidy && break; sleep 20; done && go vet -tags lite ./... && go test -tags lite ./... 2>&1 | tail -n 60`
+    для android `lite`; `set -o pipefail` обязателен — без него `| tail` скрывает падение `go test`, и красный прогон выглядит зелёным): `set -o pipefail && test -z "$(gofmt -s -l plugins/android)" && cd plugins/android && for a in 1 2 3 4; do go mod tidy && break; sleep 20; done && go vet -tags lite ./... && go test -tags lite ./... 2>&1 | tail -n 60`
 - Замер покрытия (28-09-2026 10:48 UTC, Лунобот-3, по § 7.4, свежее прошлого замера
   10:08 UTC — сам агрегат по main опять не сдвинулся: между замерами появился только
   один новый «complete»-отчёт, `eb113ef4`, но у него `sessions=2` — частичный прогон,
