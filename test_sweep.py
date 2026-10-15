@@ -72,5 +72,28 @@ class TrainBranchesTest(unittest.TestCase):
         self.assertEqual(self.sweep_train("closed", 2), (0, []))
 
 
+class UnreachableRepoTest(unittest.TestCase):
+    def test_unreachable_repo_is_skipped_and_the_next_one_is_swept(self):
+        deleted = []
+        trains = [{"name": "lunobot/train/f4/261007-2302", "commit": {"sha": "abc"}}]
+
+        def fake_gh_all(path):
+            return None if path.startswith("repos/unxed/keytrans/") else trains
+
+        def fake_gh(path, *args):
+            if args[:1] == ("-X",):
+                deleted.append(path)
+            return None
+
+        with patch.object(sweep, "gh_all", side_effect=fake_gh_all), \
+                patch.object(sweep, "gh", side_effect=fake_gh), \
+                patch.object(sweep, "pr_state", return_value="closed"), \
+                patch.object(sweep, "age_of", return_value=sweep.timedelta(hours=25)):
+            n = sweep.branches(True, set(), ["unxed/keytrans", "unxed/f4"])
+            sweep.stale_prs(set(), ["unxed/keytrans"])
+        self.assertEqual(n, 1)
+        self.assertEqual(deleted, ["repos/unxed/f4/git/refs/heads/lunobot/train/f4/261007-2302"])
+
+
 if __name__ == "__main__":
     unittest.main()
