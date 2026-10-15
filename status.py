@@ -218,6 +218,38 @@ def brief(text, limit=120):
     return text if len(text) <= limit else text[:limit - 1].rstrip() + "…"
 
 
+TOPICS = {}
+REF_IN_TITLE = re.compile(r"\s*\((?:[\w.-]+/)?[\w.-]*#\d+\)|^(?:[\w.-]+/)?[\w.-]*#\d+\s*[:—-]?\s*")
+
+
+def clean_title(title, limit=60):
+    """Заголовок тикета или PR без ссылок на номера — короткая сводка «о чём»."""
+    return brief(REF_IN_TITLE.sub("", title or "").strip(), limit)
+
+
+def topic(repo, number, limit=60):
+    """В двух словах, о чём тикет или PR: его заголовок. Пусто, если GitHub не ответил."""
+    key = (repo, str(number))
+    if key not in TOPICS:
+        data = gh_json(f"/repos/{repo}/issues/{number}") if repo else None
+        TOPICS[key] = (data or {}).get("title") or "" if isinstance(data, dict) else ""
+    return clean_title(TOPICS[key], limit)
+
+
+def with_topic(link, repo, number, limit=60):
+    """Ссылка на тикет или PR и сразу за ней — о чём он (§ 4, «Пульт»)."""
+    t = topic(repo, number, limit)
+    return f"{link} «{t}»" if t else link
+
+
+def key_with_topic(key, repo):
+    """Ключ захвата: ссылку на тикет/PR дополняет его сводкой."""
+    m = re.fullmatch(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:issues|pull)/(\d+)", key)
+    if not m:
+        return shorten(key, repo)
+    return with_topic(shorten(key, m.group(1)), m.group(1), m.group(2))
+
+
 ACTOR = re.compile(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]{6,}); ([A-Z]{3})\)")
 
 
@@ -345,7 +377,8 @@ def ci_line(raw, repo, now=None):
                       shorten(raw, repo)) + abandoned
     run_id = (run.group(1) or run.group(2)) if run else None
     parts = [time.group(1) if time else "",
-             f"[PR #{pr.group(1)}](https://github.com/{repo}/pull/{pr.group(1)})"]
+             with_topic(f"[PR #{pr.group(1)}](https://github.com/{repo}/pull/{pr.group(1)})",
+                        repo, pr.group(1))]
     if sha:
         parts.append(f"[`{sha.group(1)[:7]}`](https://github.com/{repo}/commit/{sha.group(1)})")
     parts.append(shorten(f"run {run_id}", repo) if run_id
@@ -366,7 +399,7 @@ def report(name, repo, d, hours):
         for _full, stamp, who, origin, part_txt, key in sorted(claims, key=lambda c: c[1]):
             age = int((now - stamp).total_seconds() // 60)
             mark = "  ⚠ протух" if age > STALE_MIN else ""
-            head = " · ".join(x for x in (shorten(key, repo), part_txt, origin) if x)
+            head = " · ".join(x for x in (key_with_topic(key, repo), part_txt, origin) if x)
             items.append(f"{head} — {who}, {age} мин{mark}")
     stale = [i for i in items if "протух" in i]
     blocks.append(("В работе", items,
@@ -403,7 +436,7 @@ def report(name, repo, d, hours):
             # попадают шестнадцатеричные цвета вида #044289 из описания PR
             found = re.findall(r"#([1-9]\d{0,4})\b", pr["title"] + " " + (pr.get("body") or "")[:400])
             issues = [n for n in dict.fromkeys(found) if n != str(pr["number"])]
-            entry = (pr["number"], pr["html_url"], pr["title"][:70])
+            entry = (pr["number"], pr["html_url"], clean_title(pr["title"]))
             if issues:
                 groups.setdefault(issues[0], []).append(entry)
             else:
@@ -413,17 +446,16 @@ def report(name, repo, d, hours):
     # ключ строки — тикет, по нему и сортируем: от новых номеров к старым
     for issue, prs in sorted(groups.items(), key=lambda g: -int(g[0])):
         prs.sort(key=lambda p: -p[0])
-        head = f"[#{issue}](https://github.com/{repo}/issues/{issue})"
-        # номер тикета уже стоит слева — из заголовка PR его убираем
-        title = re.sub(rf"\s*\(#{issue}\)|^#{issue}\s+", "", prs[0][2]).strip()
-        first = f"[PR #{prs[0][0]}]({prs[0][1]}) {title}"
+        # у каждого номера — в двух словах, о чём он: тикет по его заголовку, PR по своему
+        head = with_topic(f"[#{issue}](https://github.com/{repo}/issues/{issue})", repo, issue)
+        first = f"[PR #{prs[0][0]}]({prs[0][1]}) «{prs[0][2]}»"
         line = f"{head} → {first}"
         if len(prs) > 1:
-            rest = ", ".join(f"[PR #{n}]({u})" for n, u, _ in prs[1:])
+            rest = ", ".join(f"[PR #{n}]({u}) «{brief(t, 40)}»" for n, u, t in prs[1:])
             line += f" · ещё: {rest}"
         items.append(line)
     for n, u, t in sorted(loose, key=lambda p: -p[0]):
-        items.append(f"[PR #{n}]({u}) {t}")
+        items.append(f"[PR #{n}]({u}) «{t}»")
     if hidden:
         items.append(f"скрыто служебных записей бота: {hidden}")
     if done is None:
@@ -448,7 +480,7 @@ def report(name, repo, d, hours):
             mins = next((m for n, m in silent.items() if node.startswith(n.rstrip("…"))), None)
             if mins is None and node:
                 continue
-            orphan.append(f"[PR #{p['number']}]({p['html_url']}) {p['title'][:60]}"
+            orphan.append(f"[PR #{p['number']}]({p['html_url']}) «{clean_title(p['title'])}»"
                           + (f" — владелец молчит {mins} мин" if mins else " — владельца не определить"))
         if orphan:
             blocks.append((f"PR без владельца: {len(orphan)}", orphan,

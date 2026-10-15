@@ -129,6 +129,18 @@ class GitHubRestFallbackTest(unittest.TestCase):
         self.assertEqual(count, 5)
         self.assertTrue(any("/repos/example/project/pulls?state=open" in c for c in calls))
 
+    def test_numbers_come_with_topic(self):
+        status.TOPICS.clear()
+        with patch.object(status, "gh_json", return_value={"title": "dn#80: hoist DoIt (unxed/dn#80)"}):
+            line = status.with_topic("[#80](u)", "unxed/dn", 80)
+            claim = status.key_with_topic("https://github.com/unxed/dn/issues/80", "unxed/dn")
+        self.assertEqual(line, "[#80](u) «hoist DoIt»")
+        self.assertIn("«hoist DoIt»", claim)
+        status.TOPICS.clear()
+        with patch.object(status, "gh_json", return_value=None):
+            self.assertEqual(status.with_topic("[#1](u)", "unxed/dn", 1), "[#1](u)")
+        status.TOPICS.clear()
+
     def test_report_surfaces_rest_failures_instead_of_empty_data(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
