@@ -4,3 +4,5 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 15-10-2026 13:31:46 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/87 [pr]
+
+15-10-2026 13:39:52 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял https://github.com/unxed/dn/issues/80 (часть 3: macro.pas) по § 5 п. 5 [pr]
