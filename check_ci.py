@@ -30,6 +30,9 @@ markdown-заголовков и списков — см. ниже), а не с�
    не список.
 5. Между двумя записями данных обязана быть пустая строка (иначе они «слиплись» —
    как в check_dispatch.py).
+6. В ссылке на PR или прогон есть номер: `[#](…/actions/runs/)` и `…/pull/)` — это
+   команда `gh`, упавшая по сети внутри подстановки `$(…)` (15-10-2026, unxed/dn: строка
+   ушла в `main` учёта с пустым прогоном, а гейт её пропустил).
 
 Использование:
     python3 check_ci.py <проект>
@@ -45,6 +48,7 @@ ROOT = Path(__file__).resolve().parent
 TS = re.compile(r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\b")
 HEADER = re.compile(r"^#{1,6}\s")
 BULLET = re.compile(r"^\s*[-*]\s")
+EMPTY_LINK = re.compile(r"\[#?\]\(|/(?:runs|pull|issues)/\)")
 
 
 def resolve_path(arg):
@@ -104,6 +108,10 @@ def check(path):
                                  f"(ДД-ММ-ГГГГ ЧЧ:ММ:СС): {line!r}"))
             # до первой валидной записи — это преамбула/пояснение под заголовком, не ошибка
             continue
+
+        if EMPTY_LINK.search(line):
+            problems.append(("пустая ссылка", n,
+                             f"в ссылке на PR или прогон нет номера (команда gh упала?): {line!r}"))
 
         # валидная строка данных
         if in_data and n >= 2 and lines[n - 2].strip():
