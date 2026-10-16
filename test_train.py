@@ -1219,3 +1219,49 @@ class SeededBisectCommandTest(unittest.TestCase):
                 (), 1, "", "HTTP 404")) as r:
             self.assertIsNone(train.job_log("o/r", "5"))
         self.assertEqual(r.call_count, 1)
+
+
+# Строка шага «Run Tests» f4 из начала лога job'а 117021805635 (сырой лог REST, escape-цвета как есть).
+STEP_LINE = ("2026-10-16T14:25:01.5307820Z \x1b[36;1mgo test \"${cover_args[@]}\" -shuffle=\"$TEST_SHUFFLE\" "
+             "-timeout 15m -skip '^TestAllDialogs_LayoutValidation$' \"${run_args[@]}\" \"${targets[@]}\"\x1b[0m\n")
+RACE_LINE = ("2026-10-16T14:25:01.5307820Z go test -race -shuffle=on -timeout 15m "
+             "-skip '^TestSeedSweep$' \"${packages[@]}\"\n")
+
+
+class LogTestFlagsTest(unittest.TestCase):
+    def test_timeout_and_skip_of_the_ci_step(self):
+        self.assertEqual(train.log_test_flags(STEP_LINE + MEDIA_LOG),
+                         "-timeout 15m -skip '^TestAllDialogs_LayoutValidation$'")
+        self.assertEqual(train.log_test_flags(RACE_LINE), "-timeout 15m -skip '^TestSeedSweep$'")
+
+    def test_cli_prefix(self):
+        cli = "".join(f"Test (x)\tUNKNOWN STEP\t{line}\n" for line in STEP_LINE.splitlines())
+        self.assertEqual(train.log_test_flags(cli),
+                         "-timeout 15m -skip '^TestAllDialogs_LayoutValidation$'")
+
+    def test_only_the_shuffled_go_test_line_counts(self):
+        # отдельный прогон `go test -v -run …` в том же скрипте без -shuffle — не тот
+        other = "go test -v -count=1 -timeout 5m -skip 'x' -run '^T$' ./internal/app\n"
+        self.assertEqual(train.log_test_flags(other + MEDIA_LOG), "")
+
+    def test_unsafe_regex_is_dropped(self):
+        for rx in ("a b", "a*", "a[0-9]", "a;b"):
+            line = f"go test -shuffle=on -skip '{rx}' ./...\n"
+            self.assertNotIn("-skip", train.log_test_flags(line), rx)
+
+    def test_seeded_command_carries_the_flags(self):
+        self.assertEqual(
+            train.seeded_cmd("Run Tests", [("./internal/app", "7", "-timeout 15m -skip '^T$'")]),
+            "go test -count=1 -timeout 15m -skip '^T$' -shuffle=7 ./internal/app")
+        self.assertEqual(train.seeded_cmd("Run Tests", [("./a", "7")]),
+                         "go test -count=1 -shuffle=7 ./a")
+
+    def test_bisect_seeds_adds_the_flags_from_the_log(self):
+        job = "Test (darwin/arm64 rest)"
+        failed = [{"name": job, "detailsUrl": SeededBisectCommandTest.URL}]
+        with mock.patch.object(train, "job_log", return_value=STEP_LINE + MEDIA_LOG):
+            seeds = train.bisect_seeds("unxed/f4", failed, [(job, "Run Tests")])
+        self.assertEqual(
+            train.pick_target_steps([(job, "Run Tests")], seeds),
+            ("macos-latest", "go test -count=1 -timeout 15m -skip '^TestAllDialogs_LayoutValidation$' "
+                             "-shuffle=1792160756767382000 ./internal/media"))

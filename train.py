@@ -912,6 +912,32 @@ def failed_seeds(log, repo):
     return out
 
 
+_TEST_SKIP = re.compile(r"-skip '([\w^$|.()-]+)'")
+_TEST_TIMEOUT = re.compile(r"-timeout (\d+[smh])\b")
+
+
+def log_test_flags(log):
+    """Флаги `-timeout`/`-skip` из строки `go test … -shuffle=…`, которую шаг печатает в начале
+    лога (`run:` скрипт). Seed выбирает перестановку ВСЕХ тестов пакета, а `-skip` лишь не даёт
+    части из них выполниться: без него песочница запустила бы тест, который CI сознательно
+    исключает (f4: `TestAllDialogs_LayoutValidation` гоняется отдельно с GOMAXPROCS=1, у него
+    чужая гонка; `TestSeedSweep` в race), и бисект поймал бы не то падение. Берутся только
+    безопасные для shell (в т. ч. при замене пробелов на ${IFS} в старом sandbox.yml) значения.
+    Строки нет — пусто."""
+    for raw in log.splitlines():
+        line = _ANSI.sub("", _LOG_PREFIX.sub("", raw, count=1))
+        if "go test" in line and "-shuffle=" in line:
+            flags = []
+            t = _TEST_TIMEOUT.search(line)
+            if t:
+                flags.append(f"-timeout {t.group(1)}")
+            k = _TEST_SKIP.search(line)
+            if k:
+                flags.append(f"-skip '{k.group(1)}'")
+            return " ".join(flags)
+    return ""
+
+
 def job_log(repo, job_id):
     """Сырой лог job'а (REST, без префиксов `gh run view --log`) либо None. Свежий `gh api`
     отказывается печатать ответ с управляющими последовательностями терминала без
@@ -937,17 +963,19 @@ def bisect_seeds(repo, failed, steps):
         log = job_log(m.group(1), m.group(2)) if m else None
         pairs = failed_seeds(log, repo) if log else []
         if pairs:
-            out[job] = pairs
+            extra = log_test_flags(log)
+            out[job] = [(pkg, seed, extra) if extra else (pkg, seed) for pkg, seed in pairs]
     return out
 
 
 def seeded_cmd(step, pairs):
-    """`go test -count=1 -shuffle=<seed> <пакет>` по команде на упавший пакет (seed у них разные);
+    """`go test -count=1 [-timeout …] [-skip …] -shuffle=<seed> <пакет>` по команде на упавший пакет (seed у них разные);
     None, если шаг не из SEEDED_STEPS."""
     base = next((c for rx, c in SEEDED_STEPS.items() if re.search(rx, step or "")), None)
     if not base:
         return None
-    return " && ".join(f"{base} -shuffle={seed} {pkg}" for pkg, seed in pairs)
+    # пара — (пакет, seed) либо (пакет, seed, доп. флаги CI-шага из log_test_flags)
+    return " && ".join(" ".join([base, *p[2:], f"-shuffle={p[1]}", p[0]]) for p in pairs)
 
 
 def pick_target_steps(steps, seeds=None):
