@@ -355,6 +355,19 @@ class CancelRunTest(unittest.TestCase):
             train.cancel_run("o/r", 42)
         api.assert_called_once_with("repos/o/r/actions/runs/42/cancel", "-X", "POST")
 
+    def test_completed_run_race_is_not_a_tick_failure(self):
+        error = SystemExit("gh api: Cannot cancel a workflow run that is completed. (HTTP 409)")
+        with mock.patch.object(train, "api", side_effect=error), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertIsNone(train.cancel_run("o/r", 42))
+        self.assertIn("#42 уже завершён", output.getvalue())
+
+    def test_unexpected_cancel_error_still_fails(self):
+        error = SystemExit("gh api: Resource not accessible by integration (HTTP 403)")
+        with mock.patch.object(train, "api", side_effect=error):
+            with self.assertRaises(SystemExit):
+                train.cancel_run("o/r", 42)
+
 
 class BisectDispatchTest(unittest.TestCase):
     COMMITS = [{"sha": "a" * 40}, {"sha": "b" * 40}]
