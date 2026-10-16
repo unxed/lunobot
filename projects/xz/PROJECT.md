@@ -10,7 +10,15 @@
 - PR: туда же, ветка -> PR -> мерж в main
 - Режим публикации: PR (простой маршрут, `lunobot/staging`/`quick.yml` нет)
 - Отладка GitHub CI: да (компилируемый Go-проект; локально — только
-  `gofmt -l`, тестирование/vet/бенчмарк — через `sandbox.yml`, § 7.5)
+  `gofmt -l`, тестирование/vet/бенчмарк — через песочницу, § 7.5). В самом
+  unxed/xz `sandbox.yml` нет: гоняй песочницу `unxed/f4`
+  (`gh workflow run sandbox.yml -R unxed/f4 --ref main -f os=ubuntu-latest -f command='…'`),
+  в команде `git clone https://github.com/unxed/xz /tmp/xz`, переход на
+  временную ветку `tmp/<узел>/<слаг>` (пуш в unxed/xz) и `go vet`/`go test`/
+  бенчмарк. A/B бенчмарка: собери два тестовых бинарника (`go test -c`, до и
+  после правки `git checkout origin/master -- <файл>`) и чередуй их запуск
+  6 раз, затем `go run golang.org/x/perf/cmd/benchstat@latest old new`
+  (пример — unxed/f4#1731, часть 2б; корпус — `XZ_BENCH_CORPUS`)
 - Зависимости: нет (сама является зависимостью tar/zip/zipper)
 - Покрытие: не проверялось, уточнить прежде чем брать задачи по покрытию
 - Язык общения: английский (upstream-стиль репозитория)
