@@ -29,7 +29,8 @@ tick  — идемпотентный шаг проводника; запуска
         Поезд в пути: зелёный — вливает (fast-forward main, иначе merge-коммит; прогон main после
         fast-forward отменяет, кроме PRESERVE_MAIN и f4 при устаревшем nightly) и, если tick
         запущен из учётного клона, сам правит в TRIAGE.md `в пути` → `проверяют` по `Touch:`
-        коммитов поезда (коммит+пуш с `Lunobot-Instance:`); красный — бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
+        коммитов поезда (коммит+пуш с `Lunobot-Instance:`), кроме тикетов, чей `Touch:`-коммит
+        ещё в staging впереди влитой головы (они остаются `в пути`, tick их называет); красный — бисект и выкидывание; поезда нет — режет новый поезд ТОЛЬКО до последнего коммита
         staging с зелёным quick и не режет, пока после него в staging есть коммит-починка
         (Fixes-Staging:/Staging-Revert:) — ждёт зелёного quick вершины. Печатает, сколько часов main не двигался; больше двух —
         ИНЦИДЕНТ ПРОЦЕССА, код 1.
@@ -1531,14 +1532,46 @@ def triage_path(repo):
     return os.path.join(ACCOUNTING, "projects", repo.split("/")[1], "TRIAGE.md")
 
 
-def mark_checking(repo, nums, sign):
+def staging_pending_numbers(repo, head):
+    """Номера тикетов самого repo, чьи `Touch:`-коммиты ещё лежат в lunobot/staging впереди
+    только что влитой головы main (`head`): часть тикета не доехала. Вернёт set() и молча, если
+    в repo нет ветки lunobot/staging; None — список staging получить не удалось (ошибка API:
+    вызывающий предупреждает и ведёт себя как раньше, а не падает: api(check=False), не compare())."""
+    cmp = api(f"repos/{repo}/compare/{head}...{STAGING}", check=False)
+    if isinstance(cmp, dict) and isinstance(cmp.get("commits"), list):
+        return own_numbers(repo, cmp["commits"])
+    br = api(f"repos/{repo}/branches/{STAGING}", check=False)
+    if isinstance(br, dict) and not br.get("commit") and br.get("message") in ("Not Found", "Branch not found"):
+        return set()
+    return None
+
+
+def mark_checking(repo, nums, sign, head=None):
     """После вливания поезда: `в пути` → `проверяют` в TRIAGE.md учётного клона (§ 5.1).
     Раньше tick это только печатал, и без ручной правки тикеты висели `в пути` вечно
     (28-09-2026: f4 #659, #1604, #1606). Нет клона/файла, не main, любые незакоммиченные правки в клоне, нет id в
-    --sign — только сообщение: правь руками. В коммит идёт только TRIAGE.md (по имени). Комментарии и updatedAt не трогаются."""
+    --sign — только сообщение: правь руками. В коммит идёт только TRIAGE.md (по имени). Комментарии и updatedAt не трогаются.
+    Тикет, у которого в lunobot/staging впереди влитой головы `head` остался коммит с `Touch:` на
+    него (многочастный тикет: часть 3 влита, часть 4 ещё едет — 16-10-2026 f4#1998), остаётся
+    `в пути`; tick печатает такие номера. Не удалось получить staging (ошибка API) — предупреждение
+    и прежнее поведение (все `nums` → `проверяют`). `head` не передан — staging не смотрим."""
     path = triage_path(repo)
     if not nums:
         return
+    if head:
+        pending = staging_pending_numbers(repo, head)
+        if pending is None:
+            print(f"ПРЕДУПРЕЖДЕНИЕ: список {STAGING} получить не удалось (ошибка API) — "
+                  "тикеты, часть которых ещё в staging, не отличаю: `в пути` → `проверяют` как обычно; "
+                  "такой тикет верни `в пути` руками")
+        else:
+            held = sorted(set(nums) & pending)
+            if held:
+                print("TRIAGE: остаются `в пути` (часть ещё в staging): "
+                      + ", ".join(f"#{n}" for n in held))
+                nums = set(nums) - set(held)
+                if not nums:
+                    return
     if not os.path.isdir(os.path.join(ACCOUNTING, ".git")) or not os.path.exists(path):
         print("TRIAGE не правлю (нет учётного клона проекта рядом с train.py): "
               "`в пути` → `проверяют` руками")
@@ -1685,7 +1718,7 @@ def train_step(repo, sign):
         if not texts and "#" in key:
             print("(текста «Проверить:» нет — напиши «Пробуйте!» сам по «Проблема:»/"
                   "«Исправление:» коммитов, понятно автору тикета)")
-    mark_checking(repo, own_numbers(repo, commits), sign)
+    mark_checking(repo, own_numbers(repo, commits), sign, head)
     return 0
 
 
