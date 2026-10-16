@@ -26,8 +26,12 @@ from gh_post import check_text
 
 ROOT = Path(__file__).resolve().parent
 SILENT_MIN = 90
+# Строка захвата, которую никто не продлевал дольше этого срока, снимается и на живом узле:
+# живость узла (ниже) не отличает бота от воркера, умершего давно (16-10-2026: четыре строки
+# 3–6 часов висели, пока на узле работал другой бот).
+HARD_SILENT_MIN = 240
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
-WHO = r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]+); ([A-Z]{3})\)"
+WHO = r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]+); ([A-Z]{3})(?:; [^)]*)?\)"
 DRY = "--dry-run" in sys.argv
 
 
@@ -138,6 +142,31 @@ def blocks(text):
     return [b for b in re.split(r"\n\s*\n", text) if b.strip()]
 
 
+def row_key(block):
+    """Ключ захвата: ссылка на тикет/PR либо описание кастомной задачи в «ёлочках»."""
+    m = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", block) or \
+        re.search(r"«[^»]+»", block)
+    return m.group(0) if m else None
+
+
+def hard_stale(blocks_, now):
+    """Блоки захватов, чей ключ не продлевался дольше HARD_SILENT_MIN минут (метки — UTC, § 8).
+    Продление — любая более поздняя строка с тем же ключом (keepalive «работаю над …»)."""
+    latest = {}
+    for b in blocks_:
+        ts_m = re.match(TS, b.strip())
+        key = row_key(b)
+        if not ts_m or not key:
+            continue
+        ts = datetime.strptime(ts_m.group(1), "%d-%m-%Y %H:%M:%S").replace(
+            tzinfo=timezone.utc).timestamp()
+        latest[key] = max(latest.get(key, 0), ts)
+    # строка с припаркованным коммитом (§ 1) живёт, пока коммит не приземлят
+    return [b for b in blocks_
+            if re.search(WHO, b) and "припаркован" not in b and row_key(b) in latest
+            and (now - latest[row_key(b)]) / 60 > HARD_SILENT_MIN]
+
+
 def save(path, kept, removed, what):
     if not removed:
         return 0
@@ -178,10 +207,15 @@ def main():
         f = d / "DISPATCH.md"
         if f.exists():
             kept, gone = [], []
-            for b in blocks(f.read_text(encoding="utf-8")):
+            all_blocks = blocks(f.read_text(encoding="utf-8"))
+            stale = hard_stale(all_blocks, now)
+            for b in all_blocks:
                 m = re.search(WHO, b)
                 if not m or not re.match(TS, b.strip()):
                     kept.append(b)
+                    continue
+                if any(b is s_ for s_ in stale):
+                    gone.append(b)
                     continue
                 # живость — по узлу, а не по номеру: при смене номера (= смене модели, § 4)
                 # захваты узла переписываются под новый id, и старый номер не значит «мёртв»
@@ -189,7 +223,8 @@ def main():
                          default=None)
                 silent = (now - ts) / 60 if ts else SILENT_MIN + 1
                 (gone if silent > SILENT_MIN else kept).append(b)
-            total += save(f, kept, gone, f"владелец молчит дольше {SILENT_MIN} мин")
+            total += save(f, kept, gone, f"владелец молчит дольше {SILENT_MIN} мин или строку не "
+                          f"продлевали дольше {HARD_SILENT_MIN} мин")
 
         # 2. очередь CI: PR уже влит или закрыт
         f = d / "CI.md"
