@@ -6,3 +6,5 @@
 16-10-2026 22:40:48 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял кастомную задачу «красный main 7e411f9f0: TestDriveMenuWatchRebuildsTheOpenMenu (linux/amd64)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
 
 16-10-2026 22:49:12 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1761 (часть 4: диагностика низкой скорости чтения Android) [urgent: по § 5 п. 4 — учётный шаг без ветки и PR]
+
+16-10-2026 22:51:28 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1959 (ответ автора: Intelligent mode ConEmu перехватывает двойной щелчок; документировать обход) [land]
