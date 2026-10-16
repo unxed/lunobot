@@ -12,8 +12,9 @@ def comment(login, day, kind="User"):
 
 
 class CandidatesTest(unittest.TestCase):
-    def run_one(self, labels, comments):
-        issue = {"labels": [{"name": n} for n in labels]}
+    def run_one(self, labels, comments, author="unxed"):
+        issue = {"labels": [{"name": n} for n in labels], "user": {"login": author, "type": "User"},
+                 "created_at": "2026-09-01T10:00:00Z"}
         rows = [{"number": "7", "state": "проверяют"}]
         with mock.patch.object(cc, "api_issue", return_value=issue), \
                 mock.patch.object(cc, "api", return_value=comments):
@@ -26,10 +27,18 @@ class CandidatesTest(unittest.TestCase):
 
     def test_bug_without_recent_human_comment(self):
         out, _ = self.run_one(["bug"], [comment("someone", 1), comment("unxed", 15), comment("bot", 15, "Bot")])
-        self.assertEqual([n for n, _, _ in out], [7])
+        self.assertEqual([o[0] for o in out], [7])
 
     def test_recent_human_comment_blocks(self):
         out, skipped = self.run_one(["bug"], [comment("someone", 10)])
+        self.assertEqual(out, [])
+        self.assertIn("моложе", skipped[0][1])
+
+    def test_ticket_body_of_a_human_is_a_message(self):
+        issue_young = {"labels": [{"name": "bug"}], "user": {"login": "someone", "type": "User"},
+                       "created_at": "2026-10-10T10:00:00Z"}
+        with mock.patch.object(cc, "api_issue", return_value=issue_young), mock.patch.object(cc, "api", return_value=[]):
+            out, skipped = cc.candidates([{"number": "7", "state": "проверяют"}], "unxed/f4", 14, now=NOW)
         self.assertEqual(out, [])
         self.assertIn("моложе", skipped[0][1])
 

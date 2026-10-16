@@ -77,7 +77,12 @@ def candidates(rows, repo, days, now=None):
             skipped.append((n, "нет метки bug: " + (",".join(sorted(labels)) or "без меток")))
             continue
         last_human = None
+        author = issue["user"]
+        if author["type"] != "Bot" and author["login"].lower() != owner:
+            last_human = parse_time(issue["created_at"])  # текст тикета от человека — тоже сообщение
+        last_any = parse_time(issue["created_at"])
         for c in api(f"repos/{repo}/issues/{n}/comments"):
+            last_any = max(last_any, parse_time(c["created_at"]))
             user = c["user"]
             if user["type"] == "Bot" or user["login"].lower() == owner:
                 continue
@@ -87,7 +92,7 @@ def candidates(rows, repo, days, now=None):
         if last_human is not None and (now - last_human).days < days:
             skipped.append((n, f"комментарий человека {last_human:%d-%m-%Y} моложе {days} суток"))
             continue
-        out.append((n, row["state"], last_human))
+        out.append((n, row["state"], last_human, last_any))
     return out, skipped
 
 
@@ -112,9 +117,10 @@ def main(argv=None):
         return 2
     for n, why in skipped:
         print(f"пропущен {repo}#{n}: {why}")
-    for n, state, last in out:
-        since = f"последний комментарий человека {last:%d-%m-%Y}" if last else "комментариев человека нет"
-        print(f"кандидат {repo}#{n} ({state}): {since}; проверь, что работа завершена")
+    for n, state, last, last_any in out:
+        since = f"последнее сообщение человека {last:%d-%m-%Y}" if last else "сообщений человека нет"
+        print(f"кандидат {repo}#{n} ({state}): {since}, последний комментарий любого автора {last_any:%d-%m-%Y}; "
+              "проверь, что работа завершена (итог «Пробуйте!» не моложе 14 суток — не закрывай)")
     print(f"итого кандидатов: {len(out)}")
     return 0
 
