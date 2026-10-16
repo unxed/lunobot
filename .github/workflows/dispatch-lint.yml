@@ -28,3 +28,6 @@ jobs:
       - name: Ссылки на разделы инструкции в шапках
         if: always()
         run: python3 check_refs.py
+      - name: Формат OWNER_QUEUE.md
+        if: always()
+        run: python3 check_owner_queue.py
