@@ -11,7 +11,7 @@ def comment(login, day, kind="User", body=""):
     return {"user": {"login": login, "type": kind}, "created_at": f"2026-10-{day:02d}T10:00:00Z", "body": body}
 
 
-TRY = comment("unxed", 2, body="Исправлено.\n\n— Пробуйте!\n\n*Лунобот-1*")
+TRY = comment("unxed", 1, body="Исправлено.\n\n— Пробуйте!\n\n*Лунобот-1*")
 
 
 class CandidatesTest(unittest.TestCase):
@@ -60,6 +60,13 @@ class CandidatesTest(unittest.TestCase):
         out, skipped = self.run_one(["bug"], [comment("unxed", 1, body="Свой тикет держим открытым для мониторинга.")])
         self.assertEqual(out, [])
         self.assertIn("«Пробуйте!»", skipped[0][1])
+
+    def test_fresh_try_blocks_even_if_reporter_is_old(self):
+        # f4#1792: «Пробуйте!» вышло только что, а сообщение автора старше 14 суток — автор не успел проверить.
+        fresh = comment("unxed", 15, body="Исправлено.\n\n— Пробуйте!")
+        out, skipped = self.run_one(["bug"], [fresh], author="someone")
+        self.assertEqual(out, [])
+        self.assertIn("не успел проверить", skipped[0][1])
 
     def test_quoted_try_promise_is_not_evidence(self):
         promise = comment("unxed", 1, body="войдёт в main со следующим поездом; «Пробуйте!» будет отдельным")
