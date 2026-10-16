@@ -764,6 +764,108 @@ class ApiErrorBodyTest(unittest.TestCase):
             self.assertFalse(train.tried_since("unxed/f4", 7, commits))
 
 
+class MarkCheckingStagingPartTest(unittest.TestCase):
+    """16-10-2026, поезд f4 #2006: часть 3 тикета #1998 влита, часть 4 (cba20e7f45, `Touch: #1998`)
+    ещё в staging, а tick перевёл #1998 `в пути` → `проверяют`. Теперь такой тикет остаётся `в пути`."""
+
+    REPO = "unxed/f4"
+    SIGN = "Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; Claude Sonnet 5.5; субагент)"
+    TRIAGE = ("| тикет | приоритет | состояние | комментариев | updatedAt |\n"
+              "| 1998 | 3 | в пути | 7 | 2026-10-16T01:00:00Z |\n"
+              "| 2001 | 4 | в пути | 2 | 2026-10-16T01:00:00Z |\n")
+
+    def setUp(self):
+        import os
+        import tempfile
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        origin = os.path.join(self.tmp.name, "origin.git")
+        self.clone = os.path.join(self.tmp.name, "acc")
+        sh = lambda *a, cwd=None: subprocess.run(a, cwd=cwd, check=True, capture_output=True)
+        sh("git", "init", "-q", "--bare", "-b", "main", origin)
+        sh("git", "clone", "-q", origin, self.clone)
+        self.path = os.path.join(self.clone, "TRIAGE.md")
+        with open(self.path, "w", encoding="utf-8") as f:
+            f.write(self.TRIAGE)
+        for a in (("add", "TRIAGE.md"),
+                  ("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "init"),
+                  ("push", "-q", "origin", "HEAD:main")):
+            sh("git", *a, cwd=self.clone)
+        for patch in (mock.patch.object(train, "ACCOUNTING", self.clone),
+                      mock.patch.object(train, "triage_path", lambda repo: self.path)):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    @staticmethod
+    def commit(msg):
+        return {"commit": {"message": msg}, "parents": [{}]}
+
+    def mark(self, compare_resp, nums=(1998, 2001), branch_resp=None):
+        def fake_api(path, *a, **kw):
+            self.assertIs(kw.get("check"), False)  # ошибка API не должна ронять tick
+            return compare_resp if "/compare/" in path else branch_resp
+        out = io.StringIO()
+        with mock.patch.object(train, "api", side_effect=fake_api), contextlib.redirect_stdout(out):
+            train.mark_checking(self.REPO, set(nums), self.SIGN, "abc123")
+        with open(self.path, encoding="utf-8") as f:
+            return out.getvalue(), f.read()
+
+    def test_ticket_with_a_part_in_staging_stays_in_transit(self):
+        out, text = self.mark({"commits": [self.commit("fix: part 4\n\nTouch: #1998\n")]})
+        self.assertIn("TRIAGE: остаются `в пути` (часть ещё в staging): #1998", out)
+        self.assertIn("| 1998 | 3 | в пути |", text)
+        self.assertIn("| 2001 | 4 | проверяют |", text)  # остальные тикеты поезда — как раньше
+        self.assertIn("проверяют для #2001", out)
+
+    def test_foreign_repo_touch_in_staging_does_not_hold(self):
+        _, text = self.mark({"commits": [self.commit("x\n\nTouch: unxed/vtui#1998\n")]})
+        self.assertIn("| 1998 | 3 | проверяют |", text)
+
+    def test_all_held_makes_no_commit(self):
+        before = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.clone, capture_output=True, text=True).stdout
+        out, text = self.mark({"commits": [self.commit("a\n\nTouch: #1998\n"),
+                                           self.commit("b\n\nTouch: #2001\n")]})
+        self.assertIn("#1998, #2001", out)
+        self.assertEqual(text, self.TRIAGE)
+        after = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.clone, capture_output=True, text=True).stdout
+        self.assertEqual(before, after)
+
+    def test_empty_staging_marks_all_checking(self):
+        out, text = self.mark({"commits": []})
+        self.assertNotIn("остаются", out)
+        self.assertNotIn("в пути |", text)
+
+    def test_no_staging_branch_behaves_as_before_without_warning(self):
+        for msg in ("Not Found", "Branch not found"):  # второй текст — реальный ответ GitHub (16-10-2026)
+            with self.subTest(msg=msg):
+                self.setUp()
+                out, text = self.mark({"message": "Not Found"}, branch_resp={"message": msg})
+                self.assertNotIn("ПРЕДУПРЕЖДЕНИЕ", out)
+                self.assertNotIn("в пути |", text)
+
+    def test_api_error_warns_and_marks_checking(self):
+        for resp in ({"message": "API rate limit exceeded"}, None):
+            with self.subTest(resp=resp):
+                self.setUp()  # свежий клон для каждого прогона
+                out, text = self.mark(resp, branch_resp=resp)
+                self.assertIn("ПРЕДУПРЕЖДЕНИЕ", out)
+                self.assertIn("| 1998 | 3 | проверяют |", text)
+                self.assertIn("| 2001 | 4 | проверяют |", text)
+
+    def test_train_step_passes_the_merged_head(self):
+        with mock.patch.object(train, "mark_checking") as mc, \
+             mock.patch.object(train, "compare", return_value={"commits": [self.commit("x\n\nTouch: #5\n")]}), \
+             mock.patch.object(train, "train_pr", return_value={"number": 9, "head": {"sha": "H", "ref": "t"},
+                                                                  "base": {"sha": "B"}}), \
+             mock.patch.object(train, "rollup", return_value=([1], [], [], [])), \
+             mock.patch.object(train, "run", return_value=_proc()), \
+             mock.patch.object(train, "api"), \
+             mock.patch.object(train, "should_cancel_main_run", return_value=False), \
+             contextlib.redirect_stdout(io.StringIO()):
+            train.train_step(self.REPO, self.SIGN)
+        mc.assert_called_once_with(self.REPO, {5}, self.SIGN, "H")
+
+
 if __name__ == "__main__":
     unittest.main()
 
