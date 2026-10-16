@@ -4,9 +4,12 @@
 Отбор делает скрипт по данным GitHub, а не воркер по памяти: берёт строки TRIAGE.md в
 состоянии «проверяют»/«решён» и оставляет тикеты с меткой `bug`, у которых нет ни
 одного комментария человека (не бот-аккаунт, не владелец репозитория) за последние
-14 суток. Запросы-возможности (`enhancement`) и тикеты без метки `bug` не выводятся
-никогда. Вывод — только список «может быть завершён»: завершена ли работа (итог
-«Пробуйте!», влитый PR, нет незавершённых частей), решает читающий тикет.
+14 суток и есть комментарий с «Пробуйте!»/«Try it»/«Итог:» (условие (а) п. 2а: без него
+работа не объявлена завершённой — тикет-заметка владельца вроде «держим открытым для
+мониторинга» иначе попадал в список на каждом круге). Запросы-возможности
+(`enhancement`) и тикеты без метки `bug` не выводятся никогда. Вывод — только список
+«может быть завершён»: завершена ли работа (влитый PR, нет незавершённых частей),
+решает читающий тикет.
 
 Использование:
     python3 close_candidates.py f4 [--repo unxed/f4] [--days 14]
@@ -20,6 +23,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+import check_try
 
 ROOT = Path(__file__).resolve().parent
 ROW = re.compile(
@@ -81,12 +86,13 @@ def candidates(rows, repo, days, now=None, bug_issues=None):
         if "bug" not in labels:
             skipped.append((n, "нет метки bug: " + (",".join(sorted(labels)) or "без меток")))
             continue
+        comments = api(f"repos/{repo}/issues/{n}/comments")
         last_human = None
         author = issue["user"]
         if author["type"] != "Bot" and author["login"].lower() != owner:
             last_human = parse_time(issue["created_at"])  # текст тикета от человека — тоже сообщение
         last_any = parse_time(issue["created_at"])
-        for c in api(f"repos/{repo}/issues/{n}/comments"):
+        for c in comments:
             last_any = max(last_any, parse_time(c["created_at"]))
             user = c["user"]
             if user["type"] == "Bot" or user["login"].lower() == owner:
@@ -96,6 +102,9 @@ def candidates(rows, repo, days, now=None, bug_issues=None):
                 last_human = t
         if last_human is not None and (now - last_human).days < days:
             skipped.append((n, f"комментарий человека {last_human:%d-%m-%Y} моложе {days} суток"))
+            continue
+        if not any(check_try.TRY.search(c.get("body") or "") for c in comments):
+            skipped.append((n, "нет «Пробуйте!»/«Итог:»: завершение работы не подтверждено"))
             continue
         out.append((n, row["state"], last_human, last_any))
     return out, skipped
