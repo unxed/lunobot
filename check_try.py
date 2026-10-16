@@ -19,7 +19,12 @@ import sys
 
 import check_triage
 
-TRY = re.compile(r"пробуйте|проверяем!|try it", re.IGNORECASE)
+# «Пробуйте!» (не в кавычках «…»: так он назван в комментарии «войдёт в main со следующим
+# поездом; «Пробуйте!» будет отдельным», § 9 — это обещание, а не разнос), английские
+# «Try it»/«Please try …» (язык комментария — язык автора, § 9) и «Итог:» — итог вместо
+# «Пробуйте!», который § 4 п. 2а считает завершением работы.
+TRY = re.compile(r"(?<![«\"])пробуйте!|проверяем!|\btry it\b|\bplease try\b|^\s*итог:",
+                 re.IGNORECASE | re.MULTILINE)
 
 
 def tickets_without_try(rows, fetch_comments):
