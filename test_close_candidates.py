@@ -42,6 +42,16 @@ class CandidatesTest(unittest.TestCase):
         self.assertEqual(out, [])
         self.assertIn("моложе", skipped[0][1])
 
+    def test_bulk_list_skips_without_per_issue_request(self):
+        bug = {"labels": [{"name": "bug"}], "user": {"login": "unxed", "type": "User"},
+               "created_at": "2026-09-01T10:00:00Z"}
+        rows = [{"number": "7", "state": "проверяют"}, {"number": "8", "state": "проверяют"}]
+        with mock.patch.object(cc, "api_issue", side_effect=AssertionError("per-issue request")), \
+                mock.patch.object(cc, "api", return_value=[]):
+            out, skipped = cc.candidates(rows, "unxed/f4", 14, now=NOW, bug_issues={7: bug})
+        self.assertEqual([o[0] for o in out], [7])
+        self.assertEqual([s[0] for s in skipped], [8])
+
     def test_unlabelled_is_skipped(self):
         out, skipped = self.run_one([], [])
         self.assertEqual(out, [])
