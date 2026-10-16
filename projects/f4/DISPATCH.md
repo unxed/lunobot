@@ -6,3 +6,5 @@
 16-10-2026 21:07:54 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1731 (часть 2б шаг 6: sevenzip пул ридера папки) [pr]
 
 16-10-2026 21:09:48 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/issues/2005 (размер файлов = только файлы в быстром просмотре) [land]
+
+16-10-2026 21:10:36 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/566 (часть 3, шаг 1 из 2) [land]
