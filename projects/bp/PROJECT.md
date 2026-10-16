@@ -14,6 +14,7 @@
 - Особенности: лицензионные правила `CLAUDE.md` репозитория важнее всего остального (код IDE остаётся под GPL; tve и tv3 —
   без GPL/RIT кода). Для fpide есть правила в `.cursor/rules/fpide-full-port.mdc`. Сводный план работ — `docs/HANDOFF.md`
   в unxed/dn.
+- Safe в модуле: `uses Safe` прячет в этом модуле `FreeAndNil`, `.Free`, `New`, `Dispose`, `Move`, `FillChar`, `GetMem` и т. п. (`safe/poison.intf.inc`). Прежде чем коммитить модуль с новым `Safe`, прогрепай его: `grep -nE '\.Free\b|FreeAndNil\(|\b(New|Dispose|Move|FillChar|GetMem|FreeMem)\(' <файл>` — каждое место переведи на `TOwned`/`Reset` либо на `SysUtils.FreeAndNil(...)` с `// UNSAFE:` строкой выше (`safe/SPEC.md`, раздел UNSAFE). Иначе первая же сборка падает (unxed/bp#10, 16-10-2026: `Illegal type conversion ... to "TSafeForbidden"`). Логи job'ов с цветом читать: `gh api --allow-escape-sequences repos/unxed/bp/actions/jobs/<id>/logs`.
 
 Этот паспорт — то место, где живут отличия проекта от остальных. Не хватает ответа
 на вопрос, который встал в работе, — дополни паспорт вместе с правкой по задаче.
