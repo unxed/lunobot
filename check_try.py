@@ -10,9 +10,17 @@
 Использование:
     python3 check_try.py <проект> [--repo owner/repo]
 
-Коды возврата: 0 — у каждого тикета `проверяют` есть «Пробуйте!», 1 — есть
-тикеты без него (список в выводе), 2 — не удалось проверить.
+Вторая проверка — «Пробуйте!», обещанное раньше времени: в комментарии названа
+ссылка или sha коммита, которого нет в `main` (поезд не влит) или нет вовсе. 16-10-2026
+на f4#1976 «Пробуйте!» вышло на коммит из staging с чужим sha (`9effe76` — это другая
+правка): автор проверил сборку без исправления и ответил, что не работает. Смотрятся
+тикеты, обновлённые за последние трое суток, в любом состоянии, кроме `в пути`
+(именно в него тикет и возвращают).
+
+Коды возврата: 0 — всё в порядке, 1 — есть тикеты `проверяют` без «Пробуйте!» или
+«Пробуйте!» на коммит вне `main` (список в выводе), 2 — не удалось проверить.
 """
+import datetime
 import json
 import re
 import sys
@@ -38,6 +46,70 @@ def tickets_without_try(rows, fetch_comments):
     return missing
 
 
+# sha коммита в тексте — только ссылка …/commit/<sha>: так бот называет коммит с исправлением.
+# Голые hex-слова и sha в обратных кавычках не берём: id узла в подписи (24 hex), версия сборки
+# автора («Version: 44c61e9») и числа дали бы ложные срабатывания на реальных тикетах.
+COMMIT_REF = re.compile(r"/commit/([0-9a-f]{7,40})\b")
+RECENT_DAYS = 3
+
+
+def commit_refs(body):
+    """sha коммитов, названных в тексте комментария."""
+    return COMMIT_REF.findall(body or "")
+
+
+def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RECENT_DAYS):
+    """[(номер, sha, причина)]: «Пробуйте!» последних дней на коммит, который не тот или не в `main`.
+
+    in_main(sha) -> True / False / None (None — такого коммита в репозитории нет);
+    about(sha, номер) -> True / False: в сообщении коммита назван этот тикет.
+    """
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    found = []
+    for number in sorted(rows):
+        updated = datetime.datetime.fromisoformat(rows[number]["updated"].replace("Z", "+00:00"))
+        if now - updated > datetime.timedelta(days=days) or rows[number]["state"] == "в пути":
+            continue  # `в пути` — уже исправленное состояние: «Пробуйте!» ждёт влития поезда
+        tries = [c for c in fetch_comments(number) if TRY.search(c.get("body") or "")]
+        if not tries:
+            continue
+        for sha in dict.fromkeys(commit_refs(tries[-1].get("body"))):
+            state = in_main(sha)
+            if state is None:
+                found.append((number, sha, "такого коммита нет в репозитории"))
+            elif not state:
+                found.append((number, sha, "коммит ещё не в main"))
+            elif about is not None and not about(sha, number):
+                found.append((number, sha, "в сообщении коммита нет этого тикета (чужой коммит?)"))
+    return found
+
+
+def commit_mentions_ticket(message, repo, number):
+    """В сообщении коммита назван тикет: `Touch: #N`, `owner/repo#N`, `#N` или ссылка …/issues/N."""
+    pattern = rf"(?<![\w/]){re.escape(repo)}#{number}\b|(?<![\w/])#{number}\b|/issues/{number}\b"
+    return bool(re.search(pattern, message or ""))
+
+
+def commit_in_main(repo, sha):
+    """True — коммит достижим из main или его PR влит в main, False — нет, None — коммита нет (404).
+
+    Проекты со squash/rebase-мержем (dn, tv3, bp) не содержат head-sha влитого PR среди предков
+    main, поэтому «не предок» проверяется ещё и влитым в main PR этого коммита.
+    """
+    try:
+        data = check_triage.gh_one(f"/repos/{repo}/compare/{sha}...main")
+    except RuntimeError as error:
+        if "404" in str(error) or "No commit found" in str(error) or "Not Found" in str(error):
+            return None
+        raise
+    # compare/<sha>...main описывает main относительно sha: «ahead» — main впереди, то есть
+    # sha — предок main.
+    if data.get("status") in ("ahead", "identical"):
+        return True
+    pulls = check_triage.gh_one(f"/repos/{repo}/commits/{sha}/pulls")
+    return any(p.get("merged_at") and p.get("base", {}).get("ref") == "main" for p in pulls)
+
+
 def main():
     positional = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
     project = positional[0] if positional else "f4"
@@ -49,7 +121,15 @@ def main():
     print(f"{project}: тикетов `проверяют` {sum(1 for r in rows.values() if r['state'] == 'проверяют')}, без «Пробуйте!» {len(missing)}")
     for number in missing:
         print(f"[нет «Пробуйте!»] {repo}#{number}: исправлено ли в main? да — разнеси «Пробуйте!» (§ 7.2 п. 4); нет — верни `свободен`")
-    return 1 if missing else 0
+    premature = premature_tries(
+        rows, lambda n: check_triage.gh_pages(f"/repos/{repo}/issues/{n}/comments?per_page=100"),
+        lambda sha: commit_in_main(repo, sha),
+        lambda sha, number: commit_mentions_ticket(
+            check_triage.gh_one(f"/repos/{repo}/commits/{sha}")["commit"]["message"], repo, number))
+    for number, sha, reason in premature:
+        print(f"[преждевременное «Пробуйте!»] {repo}#{number}: коммит {sha} — {reason}; "
+              "верни `в пути` и поправь комментарий (§ 9), «Пробуйте!» — только когда исправление уже в main")
+    return 1 if missing or premature else 0
 
 
 if __name__ == "__main__":

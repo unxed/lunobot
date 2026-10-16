@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 import check_try
@@ -43,6 +44,69 @@ class TicketsWithoutTryTest(unittest.TestCase):
         def fail(number):
             raise AssertionError("комментарии не должны запрашиваться")
         self.assertEqual(check_try.tickets_without_try({6: {"state": "ждёт ответа"}}, fail), [])
+
+
+class PrematureTryTest(unittest.TestCase):
+    NOW = datetime.datetime(2026, 10, 16, 12, 0, tzinfo=datetime.timezone.utc)
+
+    def run_check(self, rows, comments, in_main, about=None):
+        return check_try.premature_tries(rows, lambda n: comments[n], in_main, about, now=self.NOW)
+
+    def row(self, updated="2026-10-16T09:00:00Z"):
+        return {"state": "свободен", "updated": updated}
+
+    def test_commit_not_in_main_is_premature(self):
+        body = "Исправление в main: https://github.com/unxed/f4/commit/9effe76\n\n— Пробуйте!"
+        got = self.run_check({1: self.row()}, {1: [{"body": body}]}, lambda sha: False)
+        self.assertEqual(got, [(1, "9effe76", "коммит ещё не в main")])
+
+    def test_unknown_commit_is_reported(self):
+        body = "Исправлено: https://github.com/unxed/f4/commit/abc1234f. Пробуйте!"
+        got = self.run_check({1: self.row()}, {1: [{"body": body}]}, lambda sha: None)
+        self.assertEqual(got, [(1, "abc1234f", "такого коммита нет в репозитории")])
+
+    def test_commit_in_main_is_fine(self):
+        body = "Исправлено: https://github.com/unxed/f4/commit/0e58229b — Пробуйте!"
+        self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": body}]}, lambda sha: True), [])
+
+    def test_commit_about_another_ticket_is_reported(self):
+        body = "Исправление: https://github.com/unxed/f4/commit/9effe76 — Пробуйте!"
+        got = self.run_check({1976: self.row()}, {1976: [{"body": body}]}, lambda sha: True,
+                             lambda sha, number: False)
+        self.assertEqual(got, [(1976, "9effe76", "в сообщении коммита нет этого тикета (чужой коммит?)")])
+
+    def test_ticket_already_returned_to_in_transit_is_quiet(self):
+        body = "Исправление: https://github.com/unxed/f4/commit/9effe76 — Пробуйте!"
+        row = {"state": "в пути", "updated": "2026-10-16T09:00:00Z"}
+        self.assertEqual(self.run_check({1: row}, {1: [{"body": body}]}, lambda sha: False), [])
+
+    def test_mentions_ticket_forms(self):
+        yes = ["fix\n\nTouch: #1976", "x (unxed/f4#1976)", "see https://github.com/unxed/f4/issues/1976"]
+        no = ["Touch: #19760", "Touch: #1931", "unxed/f4#1976x", "other/repo#1976"]
+        for message in yes:
+            self.assertTrue(check_try.commit_mentions_ticket(message, "unxed/f4", 1976), message)
+        for message in no:
+            self.assertFalse(check_try.commit_mentions_ticket(message, "unxed/f4", 1976), message)
+
+    def test_old_ticket_is_not_fetched(self):
+        def fail(number):
+            raise AssertionError("старый тикет не запрашивается")
+        got = check_try.premature_tries({1: self.row("2026-10-01T00:00:00Z")}, fail, lambda sha: False, now=self.NOW)
+        self.assertEqual(got, [])
+
+    def test_only_the_last_try_counts(self):
+        comments = {1: [{"body": "Было: commit/aaaaaaa1 Пробуйте!"}, {"body": "Теперь commit/bbbbbbb2 Пробуйте!"}]}
+        got = self.run_check({1: self.row()}, comments, lambda sha: sha == "bbbbbbb2")
+        self.assertEqual(got, [])
+
+    def test_node_ids_versions_and_numbers_are_not_commits(self):
+        body = ("Ваша сборка 44c61e9 старше. deadbeef 12345678\n\n"
+                "*Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; Claude Sonnet 5.5)* — Пробуйте!")
+        self.assertEqual(check_try.commit_refs(body), [])
+
+    def test_comment_without_try_is_ignored(self):
+        body = "Исправление лежит в commit/aaaaaaa1, войдёт в main поездом."
+        self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": body}]}, lambda sha: False), [])
 
 
 if __name__ == "__main__":
