@@ -4,5 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 16-10-2026 19:24:34 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/566 (часть 2б, шаг C2: подключить Backend в Windows) [land]
-
-16-10-2026 19:46:10 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1959 (часть 1: проследить обработку Win32 mouse events) [land]
