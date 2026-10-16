@@ -39,6 +39,15 @@ class EmptyLinkTest(unittest.TestCase):
         bad = OK.replace("\u043a\u043e\u043c\u043c\u0438\u0442 7f58055,", "\u043a\u043e\u043c\u043c\u0438\u0442 ,")
         self.assertEqual(kinds(bad), ["\u043f\u0443\u0441\u0442\u043e\u0439 \u043a\u043e\u043c\u043c\u0438\u0442"])
 
+    def test_empty_commit_in_backticks_is_a_problem(self):
+        bad = OK.replace("\u043a\u043e\u043c\u043c\u0438\u0442 7f58055,", "\u043a\u043e\u043c\u043c\u0438\u0442 ``,")
+        self.assertEqual(kinds(bad), ["\u043f\u0443\u0441\u0442\u043e\u0439 \u043a\u043e\u043c\u043c\u0438\u0442"])
+
+    def test_legal_commit_forms_and_missing_field_are_fine(self):
+        for ok in (OK.replace("7f58055", "`7f58055`"),
+                   OK.replace("\u043a\u043e\u043c\u043c\u0438\u0442 7f58055, ", "")):
+            self.assertEqual(kinds(ok), [])
+
 
 if __name__ == "__main__":
     unittest.main()
