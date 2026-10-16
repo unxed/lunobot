@@ -1080,3 +1080,142 @@ class PatchIdTest(unittest.TestCase):
                 self.assertIsNone(train.patch_id("0" * 40))
             finally:
                 os.chdir(old)
+
+
+# Фрагменты РЕАЛЬНЫХ логов упавших job'ов `Test (darwin/arm64 rest)` unxed/f4 (сырой лог REST
+# `actions/jobs/<id>/logs`, 16-10-2026): job 117021805635 (поезд unxed/f4#1996, internal/media)
+# и job 117003963953 (поезд unxed/f4#1995, internal/app; вывод теста с управляющими
+# последовательностями терминала).
+MEDIA_LOG = """\
+2026-10-16T14:27:19.3866400Z ok  \tgithub.com/unxed/f4/internal/keymap\t0.313s\tcoverage: 0.7% of statements in ./...
+2026-10-16T14:27:19.3870070Z ok  \tgithub.com/unxed/f4/internal/macro\t2.635s\tcoverage: 1.5% of statements in ./...
+2026-10-16T14:27:19.3872710Z -test.shuffle 1792160756767382000
+2026-10-16T14:27:19.3873430Z --- FAIL: TestImageViewRequestThumbGivesUpWhenDecodeFails (0.02s)
+2026-10-16T14:27:19.3875490Z     image_gallery_coverage_test.go:266: a failed decode must not post a tile to the UI thread
+2026-10-16T14:27:19.3897730Z FAIL
+2026-10-16T14:27:19.3898280Z coverage: 1.8% of statements in ./...
+2026-10-16T14:27:19.3899090Z FAIL\tgithub.com/unxed/f4/internal/media\t1.218s
+2026-10-16T14:27:19.3902520Z ok  \tgithub.com/unxed/f4/internal/menuhotkeys\t0.432s\tcoverage: 0.1% of statements in ./...
+2026-10-16T14:27:56.4454340Z FAIL
+2026-10-16T14:27:56.8564990Z ##[error]Process completed with exit code 1.
+"""
+APP_LOG = """\
+2026-10-16T13:47:06.8663470Z ok  \tgithub.com/unxed/f4/cmd/f4\t6.893s\tcoverage: 0.7% of statements in ./...
+2026-10-16T13:47:06.8764930Z \tgithub.com/unxed/f4/cmd/f4-gui-launcher\t\tok  \tgithub.com/unxed/f4/internal/action\t0.252s\tcoverage: 0.0% of statements in ./... [no tests to run]
+2026-10-16T13:49:02.2967360Z -test.shuffle 1792158441088954000
+2026-10-16T13:49:02.2984870Z \x1b[?1049h\x1b[2J\x1b[H\x1b[?1049l\x1b[?1049h\x1b[2J\x1b[H--- FAIL: TestEditorCtrlOAfterCtrlTabStillRestoresPanels (0.01s)
+2026-10-16T13:49:02.2987370Z     editor_actions_test.go:363: second Ctrl+O from the editor: workspace 1, ShowPanels=true
+2026-10-16T13:49:02.2991630Z \x1b[?1049h\x1b[2J\x1b[H\x1b[?7l\x1b[8l\x1b[1 k\x1b[?1049lFAIL
+2026-10-16T13:49:02.2993190Z coverage: 23.4% of statements in ./...
+2026-10-16T13:49:02.2995180Z FAIL\tgithub.com/unxed/f4/internal/app\t101.405s
+2026-10-16T13:49:02.2996500Z ?   \tgithub.com/unxed/f4/internal/appcmd\t[no test files]
+"""
+
+
+class FailedSeedsTest(unittest.TestCase):
+    def test_package_and_seed_of_failed_package(self):
+        self.assertEqual(train.failed_seeds(MEDIA_LOG, "unxed/f4"),
+                         [("./internal/media", "1792160756767382000")])
+
+    def test_terminal_escapes_and_interleaved_lines(self):
+        self.assertEqual(train.failed_seeds(APP_LOG, "unxed/f4"),
+                         [("./internal/app", "1792158441088954000")])
+
+    def test_gh_run_view_log_prefix(self):
+        cli = "".join(f"Test (darwin/arm64 rest)\tUNKNOWN STEP\t{line}\n"
+                      for line in MEDIA_LOG.splitlines())
+        self.assertEqual(train.failed_seeds(cli, "unxed/f4"),
+                         [("./internal/media", "1792160756767382000")])
+
+    def test_log_without_timestamps(self):
+        bare = "ok  \tgithub.com/o/r/a\t0.1s\n-test.shuffle 7\n--- FAIL: TestX (0s)\nFAIL\nFAIL\tgithub.com/o/r/b\t0.2s\n"
+        self.assertEqual(train.failed_seeds(bare, "o/r"), [("./b", "7")])
+
+    def test_several_failed_packages_get_their_own_seeds(self):
+        log = ("-test.shuffle 1\nFAIL\nFAIL\tgithub.com/o/r/a\t1s\n"
+               "ok  \tgithub.com/o/r/b\t1s\n"
+               "-test.shuffle 2\nFAIL\nFAIL\tgithub.com/o/r/c/d\t1s\n"
+               "-test.shuffle 3\nFAIL\nFAIL\tgithub.com/o/r\t1s\n")
+        self.assertEqual(train.failed_seeds(log, "o/r"),
+                         [("./a", "1"), ("./c/d", "2"), (".", "3")])
+
+    def test_seed_of_green_package_does_not_leak_to_next_failure(self):
+        # `go test -v`: зелёный пакет тоже печатает seed; у упавшего без seed (сборка) его нет.
+        log = "-test.shuffle 5\nok  \tgithub.com/o/r/a\t1s\nFAIL\tgithub.com/o/r/b [build failed]\n"
+        self.assertEqual(train.failed_seeds(log, "o/r"), [])
+
+    def test_no_seed_or_foreign_package_means_no_seeds(self):
+        self.assertEqual(train.failed_seeds("FAIL\tgithub.com/o/r/a\t1s\n", "o/r"), [])
+        self.assertEqual(
+            train.failed_seeds("-test.shuffle 5\nFAIL\tgithub.com/other/mod/a\t1s\n", "o/r"), [])
+        self.assertEqual(
+            train.failed_seeds("-test.shuffle 5\nFAIL\tgithub.com/o/rx/a\t1s\n", "o/r"), [])
+
+    def test_green_log(self):
+        self.assertEqual(train.failed_seeds("ok  \tgithub.com/o/r/a\t1s\n", "o/r"), [])
+
+
+class SeededBisectCommandTest(unittest.TestCase):
+    JOB = "Test (darwin/arm64 rest)"
+    URL = "https://github.com/unxed/f4/actions/runs/38913158596/job/117021805635"
+
+    def test_run_tests_uses_the_seed_of_the_failed_package(self):
+        steps = [(self.JOB, "Run Tests")]
+        seeds = {self.JOB: [("./internal/media", "1792160756767382000")]}
+        self.assertEqual(
+            train.pick_target_steps(steps, seeds),
+            ("macos-latest", "go test -count=1 -shuffle=1792160756767382000 ./internal/media"))
+
+    def test_race_detector_keeps_race_and_one_command_per_package(self):
+        steps = [("Race", "Run race detector")]
+        seeds = {"Race": [("./a", "1"), ("./b", "2")]}
+        self.assertEqual(
+            train.pick_target_steps(steps, seeds),
+            ("ubuntu-latest",
+             "go test -race -count=1 -shuffle=1 ./a && go test -race -count=1 -shuffle=2 ./b"))
+
+    def test_without_seeds_the_old_command(self):
+        steps = [(self.JOB, "Run Tests")]
+        self.assertEqual(train.pick_target_steps(steps),
+                         ("macos-latest", "go test -count=1 ./..."))
+        self.assertEqual(train.pick_target_steps(steps, {}),
+                         ("macos-latest", "go test -count=1 ./..."))
+
+    def test_seeds_do_not_touch_other_steps_or_unknown_steps(self):
+        seeds = {"Test (x)": [("./a", "1")]}
+        self.assertEqual(train.pick_target_steps([("Test (x)", "Test")], seeds),
+                         ("ubuntu-latest", "go test -count=1 -timeout 4m ./..."))
+        self.assertIsNone(train.pick_target_steps([("Test (x)", "Unknown step")], seeds))
+
+    def test_seeds_are_read_from_the_log_of_the_failed_job_only(self):
+        failed = [{"name": self.JOB, "detailsUrl": self.URL},
+                  {"name": "Lint", "detailsUrl": self.URL.replace("117021805635", "1")}]
+        steps = [(self.JOB, "Run Tests"), ("Lint", "Check formatting")]
+        with mock.patch.object(train, "job_log", return_value=MEDIA_LOG) as log:
+            seeds = train.bisect_seeds("unxed/f4", failed, steps)
+        log.assert_called_once_with("unxed/f4", "117021805635")
+        self.assertEqual(seeds, {self.JOB: [("./internal/media", "1792160756767382000")]})
+
+    def test_no_log_means_no_seeds(self):
+        failed = [{"name": self.JOB, "detailsUrl": self.URL}]
+        with mock.patch.object(train, "job_log", return_value=None):
+            self.assertEqual(train.bisect_seeds("unxed/f4", failed, [(self.JOB, "Run Tests")]), {})
+
+    def test_job_log_retries_without_flag_on_old_gh(self):
+        calls = []
+
+        def run(*args, **kwargs):
+            calls.append(args)
+            if "--allow-escape-sequences" in args:
+                return subprocess.CompletedProcess(args, 1, "", "unknown flag: --allow-escape-sequences")
+            return subprocess.CompletedProcess(args, 0, "LOG", "")
+
+        with mock.patch.object(train, "run", side_effect=run):
+            self.assertEqual(train.job_log("o/r", "5"), "LOG")
+        self.assertEqual(calls[-1], ("gh", "api", "repos/o/r/actions/jobs/5/logs"))
+
+    def test_job_log_gives_up_on_other_errors(self):
+        with mock.patch.object(train, "run", return_value=subprocess.CompletedProcess(
+                (), 1, "", "HTTP 404")) as r:
+            self.assertIsNone(train.job_log("o/r", "5"))
+        self.assertEqual(r.call_count, 1)

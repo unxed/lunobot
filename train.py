@@ -34,7 +34,7 @@ tick  — идемпотентный шаг проводника; запуска
         (Fixes-Staging:/Staging-Revert:) — ждёт зелёного quick вершины. Печатает, сколько часов main не двигался; больше двух —
         ИНЦИДЕНТ ПРОЦЕССА, код 1.
 bisect — вручную, когда падение платформенное/узкое и автоматический бисект (команда по ИМЕНИ
-        упавшего шага упавшего job'а, таблица STEP_CMDS; неизвестный шаг — бисекта нет, сразу
+        упавшего шага упавшего job'а, таблица STEP_CMDS; для тестов f4 — с seed и пакетом из лога; неизвестный шаг — бисекта нет, сразу
         § 5 п. 2 с диагностикой) его не ловит: свой раннер и своя команда. Результат разбирает tick.
 close-train — закрыть поезд БЕЗ выброса коммитов (база красная, fix-forward не вошёл, безнадёжный
         поезд): закрывает PR, удаляет ветку поезда и bisect/<N>/*, отменяет идущие прогоны.
@@ -851,6 +851,15 @@ STEP_CMDS = [
     (r"^Test$", "go test -count=1 -timeout 4m ./..."),
     (r"^Run go test -race\b", "go test -race -count=1 -timeout 15m ./..."),
 ]
+# Шаги тестов f4 гоняют `-shuffle=on`: падение зависит от порядка тестов, а seed у каждого прогона
+# новый, поэтому `go test ./...` в бисекте его не воспроизводит (16-10-2026: unxed/f4#1995 и
+# unxed/f4#1996, семь зелёных прогонов песочницы на ровно том коде, что упал). Для этих шагов
+# команда строится из лога упавшего job'а: seed и пакет (см. failed_seeds). vtui без shuffle —
+# в логе seed нет, команда остаётся из STEP_CMDS.
+SEEDED_STEPS = {
+    r"^Run Tests$": "go test -count=1",
+    r"^Run race detector$": "go test -race -count=1",
+}
 # Job'ы, чей упавший шаг ОДНОЙ командой на одной ОС не воспроизвести: `Vet (<цели>)` f4 гоняет
 # go vet под несколькими GOOS/GOARCH (freebsd, illumos...), песочница проверила бы не то.
 UNREPRODUCIBLE_JOBS = re.compile(r"^Vet \(")
@@ -871,14 +880,87 @@ def failed_steps(failed):
     return out
 
 
-def pick_target_steps(steps):
+_LOG_PREFIX = re.compile(r"^(?:[^\t]*\t[^\t]*\t(?=\d{4}-\d\d-\d\dT))?(?:\d{4}-\d\d-\d\dT[\d:.]+Z )?")
+_ANSI = re.compile(r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07]*\x07)")
+
+
+def failed_seeds(log, repo):
+    """[(путь пакета относительно модуля, seed)] по логу упавшего job'а тестов, либо [], если
+    хоть у одного упавшего пакета seed или путь не найден (тогда команда остаётся прежней).
+    go test при -shuffle печатает `-test.shuffle <seed>` в вывод пакета, а вывод пакета выходит
+    в лог целиком только у упавшего (у зелёного — одна строка `ok`), поэтому seed — последняя
+    такая строка после результата предыдущего пакета (`ok`/`?`/`FAIL\t<пакет>`), до `FAIL\t<пакет>`.
+    Формат — сырой лог API (`<метка времени>Z <текст>`); префикс `gh run view --log`
+    (`<job>\t<шаг>\t<метка времени>Z …`) и управляющие последовательности терминала снимаются."""
+    prefix = f"github.com/{repo}"
+    out, seed = [], None
+    for raw in log.splitlines():
+        line = _ANSI.sub("", _LOG_PREFIX.sub("", raw, count=1)).rstrip()
+        m = re.match(r"-test\.shuffle (\d+)$", line)
+        if m:
+            seed = m.group(1)
+            continue
+        m = re.match(r"(ok|FAIL|\?)\s*\t(\S+)", line)
+        if not m:
+            continue
+        if m.group(1) == "FAIL":
+            pkg = m.group(2)
+            if seed is None or not (pkg == prefix or pkg.startswith(prefix + "/")):
+                return []
+            out.append(("." if pkg == prefix else "./" + pkg[len(prefix) + 1:], seed))
+        seed = None
+    return out
+
+
+def job_log(repo, job_id):
+    """Сырой лог job'а (REST, без префиксов `gh run view --log`) либо None. Свежий `gh api`
+    отказывается печатать ответ с управляющими последовательностями терминала без
+    `--allow-escape-sequences`, старый такого флага не знает — пробуем оба."""
+    for flags in (["--allow-escape-sequences"], []):
+        p = run("gh", "api", *flags, f"repos/{repo}/actions/jobs/{job_id}/logs", check=False)
+        if p.returncode == 0:
+            return p.stdout
+        if "escape" not in (p.stderr or "") and "unknown flag" not in (p.stderr or ""):
+            break
+    return None
+
+
+def bisect_seeds(repo, failed, steps):
+    """{имя job'а: [(пакет, seed)]} для упавших шагов из SEEDED_STEPS: лог job'а читается только
+    у них. Нет лога, seed или пакета — job в словарь не попадает, бисект идёт прежней командой."""
+    out = {}
+    for c, (job, step) in zip(failed, steps):
+        if not step or not any(re.search(rx, step) for rx in SEEDED_STEPS):
+            continue
+        m = re.search(r"github\.com/([^/]+/[^/]+)/actions/runs/\d+/job/(\d+)",
+                      c.get("detailsUrl") or "")
+        log = job_log(m.group(1), m.group(2)) if m else None
+        pairs = failed_seeds(log, repo) if log else []
+        if pairs:
+            out[job] = pairs
+    return out
+
+
+def seeded_cmd(step, pairs):
+    """`go test -count=1 -shuffle=<seed> <пакет>` по команде на упавший пакет (seed у них разные);
+    None, если шаг не из SEEDED_STEPS."""
+    base = next((c for rx, c in SEEDED_STEPS.items() if re.search(rx, step or "")), None)
+    if not base:
+        return None
+    return " && ".join(f"{base} -shuffle={seed} {pkg}" for pkg, seed in pairs)
+
+
+def pick_target_steps(steps, seeds=None):
     """(ОС, команда) для бисекта по упавшим шагам, либо None, если хоть один шаг неизвестен:
     бисект чужой командой даёт ложный «зелёный на всех префиксах» и перезапуски по кругу.
     Команды одной ОС склеиваются через &&; несколько ОС — берётся первая не-linux (остальное
-    вскроет следующий поезд после выброса)."""
+    вскроет следующий поезд после выброса). seeds — {job: [(пакет, seed)]} из bisect_seeds:
+    тест, зависящий от порядка, воспроизводится только тем же seed (STEP_CMDS даёт `./...`)."""
     per_os = {}
     for job, step in steps:
         cmd = next((c for rx, c in STEP_CMDS if step and re.search(rx, step)), None)
+        if cmd and (seeds or {}).get(job):
+            cmd = seeded_cmd(step, seeds[job]) or cmd
         if UNREPRODUCIBLE_JOBS.search(job or ""):
             cmd = None
         if not cmd:
@@ -1037,7 +1119,7 @@ def red(repo, pr, failed):
             if i_bad - i_good > 1:
                 drop_bisect(repo, refs)
                 print(f"бисект: падает с префикса {i_bad}, зелёный до {i_good} — сужаю окно")
-                target = pick_target_steps(steps)
+                target = pick_target_steps(steps, bisect_seeds(repo, failed, steps))
                 if not target:
                     return unknown_step(repo, pr, steps)
                 bisect(repo, pr, *target, good=i_good, bad=i_bad)
@@ -1061,7 +1143,7 @@ def red(repo, pr, failed):
         rerun(failed)
         print("первый перезапуск упавших job'ов — отсеиваем флейк")
         return 0
-    target = pick_target_steps(steps)
+    target = pick_target_steps(steps, bisect_seeds(repo, failed, steps))
     if not target:
         return unknown_step(repo, pr, steps)
     bisect(repo, pr, *target)
