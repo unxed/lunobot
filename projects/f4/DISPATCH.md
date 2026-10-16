@@ -8,3 +8,5 @@
 16-10-2026 18:36:56 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2007 (часть 2: причина в goclip на macOS) [land]
 
 16-10-2026 18:41:59 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/issues/2002 (часть 3 из 6: тома заданного размера) [land]
+
+16-10-2026 18:48:59 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер ac09f7f4), взял кастомную задачу «review жалобы unxed/lunobot#138 (tick и часть тикета в staging)» по § 12 [urgent: по § 12 — review жалобы перед вливанием]
