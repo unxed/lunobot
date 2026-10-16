@@ -1281,10 +1281,16 @@ PR Лунобота задачей не является никогда, кро�
    сборка у человека, а не ожидание чужого прогона: шаг не закончен, пока его код не
    компилируется. Поломать staging дороже — он останавливает весь флот. Песочница f4 исполняет команду настоящим shell (`bash -c`, на Windows — pwsh 7): пиши обычной строкой, например (версию бери из `.github/workflows/quick.yml` проекта, сейчас
    `v2.13.1` в `unxed/f4`; команды lint — как в `quick.yml` проекта):
-   `git fetch -q origin main && go vet ./internal/foo/ && go test ./internal/foo/ && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./internal/foo/ && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --config .golangci-strict.yml ./internal/foo/`.
+   `git fetch -q origin main && go vet ./internal/foo/ && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./internal/foo/ && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --config .golangci-strict.yml ./internal/foo/ && go test ./internal/foo/`.
    (история: INCIDENTS.md, «§ 7.2 п. 0 — песочница, 14-10-2026») Старая версия
    `sandbox.yml` (на ветках, отрезанных раньше) shell не разбирала — там нужен был один
    токен `bash -c go${IFS}vet${IFS}./internal/foo/`; `train.py` сам выбирает форму по ветке.
+   Оба lint идут ДО `go test`: цепочка `&&` останавливается на первой ошибке, lint кончает за полторы
+   минуты, а тесты пакетов `internal/app`/`internal/panel` — за пять, и дешёвая находка (`errcheck`,
+   `gofmt`) иначе стоит второго полного прогона песочницы. Перенос или вынесение кода в новую функцию
+   (`QuitNow` из `HandleCommand`, 16-10-2026) для `--new-from-rev` — новый код: `pty.Close()` без `_ =`,
+   сходивший годами, красит инкрементальный профиль. Переносишь блок — проверь возвращаемые значения и
+   в нём (история: INCIDENTS.md, «§ 7.2 п. 0 — песочница, 16-10-2026»).
    В проекте с `Отладка GitHub CI: да` локально — только gofmt/langfmt, никаких
    go build/vet/test и golangci-lint; менеджер не вправе дать воркеру исключение.
    **Коммит, правящий `go.mod`/`go.sum` корня (bump `vtui` и других зависимостей), проходит
