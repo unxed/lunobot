@@ -653,6 +653,19 @@ class MainRedRunRerunTest(unittest.TestCase):
             self.assertEqual(train.main_ci("o/r"), 0)
         self.assertFalse(any(p.endswith("/rerun-failed-jobs") for p, _ in calls))
 
+    def test_running_retry_with_failed_job_waits_for_retry_result(self):
+        calls = []
+        api = self._fake_api(2, 1, calls)
+
+        def running(path, *args, check=True):
+            out = api(path, *args, check=check)
+            if out and "workflow_runs" in out:
+                out["workflow_runs"][0].update(status="in_progress", conclusion=None)
+            return out
+        with mock.patch.object(train, "api", side_effect=running):
+            self.assertEqual(train.main_ci("o/r"), 0)
+        self.assertFalse(any(p.endswith("/rerun-failed-jobs") for p, _ in calls))
+
     def test_running_matrix_with_many_failed_jobs_is_red(self):
         calls = []
         api = self._fake_api(1, 5, calls)
