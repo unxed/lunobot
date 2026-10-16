@@ -4,5 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 16-10-2026 19:24:34 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/566 (часть 2б, шаг C2: подключить Backend в Windows) [land]
-
-16-10-2026 20:00:15 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1761 (часть 3: скорость записи на Android после ADB Sync) [land]
