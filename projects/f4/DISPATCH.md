@@ -6,5 +6,3 @@
 16-10-2026 19:24:34 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/566 (часть 2б, шаг C2: подключить Backend в Windows) [land]
 
 16-10-2026 20:00:15 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1761 (часть 3: скорость записи на Android после ADB Sync) [land]
-
-16-10-2026 20:11:41 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/issues/2002 (часть 5 из 6: именованные профили) [land]
