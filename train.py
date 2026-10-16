@@ -413,10 +413,21 @@ def freeze_stamp(repo):
     return active_freeze(p.stdout, project) if p.returncode == 0 else None
 
 
+def parse_land_commits(output):
+    """Parse git log records; git inserts a newline before later format records."""
+    parsed = []
+    for record in output.split("\x01"):
+        if not record.strip():
+            continue
+        sha, body = record.split("\0", 1)
+        parsed.append((sha.strip(), body))
+    return parsed
+
+
 def land(fix=False):
     run("git", "fetch", "-q", "origin", STAGING_REFSPEC)
     commits = run("git", "log", "--format=%H%x00%B%x01", f"origin/{STAGING}..HEAD").stdout
-    msgs = [c.split("\0", 1) for c in commits.split("\x01") if c.strip()]
+    msgs = parse_land_commits(commits)
     if not msgs:
         sys.exit("нечего приземлять: HEAD не впереди origin/lunobot/staging")
     bad = [sha[:9] for sha, body in msgs if not TRAILER.search(body)]

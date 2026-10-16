@@ -942,6 +942,15 @@ class ComplaintsWarnTest(unittest.TestCase):
         self.assertEqual(self.run_warn(None), "")
 
 
+class LandCommitParseTest(unittest.TestCase):
+    def test_strips_git_log_separator_newline_from_later_sha(self):
+        first = "a" * 40
+        second = "b" * 40
+        output = f"{first}\0first body\x01\n{second}\0second body\x01\n"
+        self.assertEqual(train.parse_land_commits(output), [
+            (first, "first body"), (second, "second body")])
+
+
 class MainHelpTest(unittest.TestCase):
     """5а.1: `--help` и опечатка в аргументах не должны запускать настоящий land."""
 
