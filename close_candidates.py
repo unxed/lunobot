@@ -65,13 +65,18 @@ def default_repo(project):
     return m.group(1) if m else f"unxed/{project}"
 
 
-def candidates(rows, repo, days, now=None):
+def candidates(rows, repo, days, now=None, bug_issues=None):
+    """`bug_issues` — {номер: тикет} из одного списка открытых тикетов с меткой bug: строки вне него
+    пропускаются без запроса (иначе по запросу на каждую строку TRIAGE, у f4 дольше 100 с)."""
     now = now or dt.datetime.now(dt.timezone.utc)
     owner = repo.split("/")[0].lower()
     out, skipped = [], []
     for row in rows:
         n = int(row["number"])
-        issue = api_issue(repo, n)
+        if bug_issues is not None and n not in bug_issues:
+            skipped.append((n, "нет метки bug: нет среди открытых тикетов с этой меткой"))
+            continue
+        issue = bug_issues[n] if bug_issues is not None else api_issue(repo, n)
         labels = {l["name"] for l in issue["labels"]}
         if "bug" not in labels:
             skipped.append((n, "нет метки bug: " + (",".join(sorted(labels)) or "без меток")))
@@ -111,7 +116,9 @@ def main(argv=None):
     a = p.parse_args(argv)
     repo = a.repo or default_repo(a.project)
     try:
-        out, skipped = candidates(triage_rows(a.project), repo, a.days)
+        bugs = {i["number"]: i for i in api(f"repos/{repo}/issues?state=open&labels=bug")
+                if "pull_request" not in i}
+        out, skipped = candidates(triage_rows(a.project), repo, a.days, bug_issues=bugs)
     except RuntimeError as e:
         print(e, file=sys.stderr)
         return 2
