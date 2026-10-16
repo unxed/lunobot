@@ -951,7 +951,17 @@ def drop_bisect(repo, refs):
 
 def cancel_run(repo, run_id):
     """Cancel an Actions run through REST; `gh run cancel` is unreliable in Claude Code cloud."""
-    return api(f"repos/{repo}/actions/runs/{run_id}/cancel", "-X", "POST")
+    try:
+        return api(f"repos/{repo}/actions/runs/{run_id}/cancel", "-X", "POST")
+    except SystemExit as error:
+        # The run can finish after the caller's in_progress snapshot but before
+        # this request reaches Actions. GitHub answers 409 in that race; there is
+        # nothing left to cancel, and it must not fail the whole tick.
+        message = str(error)
+        if "HTTP 409" in message and "run that is completed" in message:
+            print(f"прогон #{run_id} уже завершён до отмены — пропускаю")
+            return None
+        raise
 
 
 def close_train(repo, pr, comment):
