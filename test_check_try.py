@@ -104,6 +104,19 @@ class PrematureTryTest(unittest.TestCase):
                 "*Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; Claude Sonnet 5.5)* — Пробуйте!")
         self.assertEqual(check_try.commit_refs(body), [])
 
+    def test_commit_of_another_repository_is_not_checked(self):
+        # unxed/f4#1610: исправление лежит в unxed/wayland (ветка master); по f4 такого sha нет.
+        body = "Исправлено: https://github.com/unxed/wayland/commit/fa6821d8 — Пробуйте!"
+        def fail(sha):
+            raise AssertionError("чужой репозиторий не запрашивается")
+        got = check_try.premature_tries({1: self.row()}, lambda n: [{"body": body}], fail, now=self.NOW,
+                                        repo="unxed/f4")
+        self.assertEqual(got, [])
+        own = body.replace("unxed/wayland", "unxed/f4")
+        got = check_try.premature_tries({1: self.row()}, lambda n: [{"body": own}], lambda sha: False,
+                                        now=self.NOW, repo="unxed/f4")
+        self.assertEqual(got, [(1, "fa6821d8", "коммит ещё не в main")])
+
     def test_comment_without_try_is_ignored(self):
         body = "Исправление лежит в commit/aaaaaaa1, войдёт в main поездом."
         self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": body}]}, lambda sha: False), [])
