@@ -16,3 +16,5 @@
 16-10-2026 13:42:40 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), работаю над задачей https://github.com/unxed/f4/issues/1602
 
 16-10-2026 14:04:42 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/pull/1995 (красный поезд: TestEditorCtrlOAfterCtrlTabStillRestoresPanels на darwin/arm64 — чужие UI-задачи тестов макросов в очереди) [urgent: по § 5 п. 2 — красный main]
+
+16-10-2026 14:05:34 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «триаж 1991» по § 5 п. 4 [urgent: по § 5 п. 4 — учётный шаг без ветки и PR]
