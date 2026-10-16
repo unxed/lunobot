@@ -8,7 +8,7 @@ import check_ci
 
 HEAD = "# CI \u2014 dn\n\n"
 OK = ("15-10-2026 09:56:36 \u041b\u0443\u043d\u043e\u0431\u043e\u0442-1 (node 19d368003c6c048e43dbec70; LNX), "
-      "PR [#83](https://github.com/unxed/dn/pull/83), \u043f\u0440\u043e\u0433\u043e\u043d "
+      "PR [#83](https://github.com/unxed/dn/pull/83), \u043a\u043e\u043c\u043c\u0438\u0442 7f58055, \u043f\u0440\u043e\u0433\u043e\u043d "
       "[#709](https://github.com/unxed/dn/actions/runs/38716477731)")
 
 
@@ -34,6 +34,10 @@ class EmptyLinkTest(unittest.TestCase):
     def test_empty_pull_number_is_a_problem(self):
         bad = OK.replace("[#83](https://github.com/unxed/dn/pull/83)", "[#](https://github.com/unxed/dn/pull/)")
         self.assertEqual(len(kinds(bad)), 1)
+
+    def test_empty_commit_sha_is_a_problem(self):
+        bad = OK.replace("\u043a\u043e\u043c\u043c\u0438\u0442 7f58055,", "\u043a\u043e\u043c\u043c\u0438\u0442 ,")
+        self.assertEqual(kinds(bad), ["\u043f\u0443\u0441\u0442\u043e\u0439 \u043a\u043e\u043c\u043c\u0438\u0442"])
 
 
 if __name__ == "__main__":

@@ -49,6 +49,7 @@ TS = re.compile(r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\b")
 HEADER = re.compile(r"^#{1,6}\s")
 BULLET = re.compile(r"^\s*[-*]\s")
 EMPTY_LINK = re.compile(r"\[#?\]\(|/(?:runs|pull|issues)/\)")
+EMPTY_COMMIT = re.compile(r"\b(?:коммит|commit)\s*,")
 
 
 def resolve_path(arg):
@@ -112,6 +113,10 @@ def check(path):
         if EMPTY_LINK.search(line):
             problems.append(("пустая ссылка", n,
                              f"в ссылке на PR или прогон нет номера (команда gh упала?): {line!r}"))
+
+        if EMPTY_COMMIT.search(line):
+            problems.append(("пустой коммит", n,
+                             f"после «коммит» нет SHA (команда подстановки могла завершиться ошибкой): {line!r}"))
 
         # валидная строка данных
         if in_data and n >= 2 and lines[n - 2].strip():
