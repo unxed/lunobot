@@ -31,3 +31,6 @@ jobs:
       - name: Формат OWNER_QUEUE.md
         if: always()
         run: python3 check_owner_queue.py
+      - name: Метки времени в status
+        if: always()
+        run: python3 check_status_times.py
