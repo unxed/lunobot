@@ -5,6 +5,4 @@
 
 17-10-2026 11:15:35 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), прекращаю работу: команда владельца
 
-17-10-2026 22:09:33 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/issues/1671 (п. 1: таблицы CJK в extralite) [land]
-
 17-10-2026 22:30:22 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2002 (часть 7: замечания tarlabnor 17-10 22:26 к билду 14d22ef, пп. 2, 3, 4, 6) [land]
