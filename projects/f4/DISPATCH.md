@@ -12,3 +12,5 @@
 17-10-2026 15:39:06 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2035 [land]
 
 17-10-2026 16:10:09 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/f4/issues/1395 (метасимволы в метках меню) [land]
+
+17-10-2026 16:17:02 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1761 (часть 4: чтение с устройства Android, ответ автору) [land]
