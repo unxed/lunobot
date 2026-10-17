@@ -30,7 +30,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
 ID = r"Я Лунобот-(?P<num>\d+) \((?:instance|node) (?P<node>[0-9a-f]{6,24}); (?P<plt>[A-Z]{3})(?:; воркер [0-9a-f]{6,})?\)"
@@ -233,6 +233,11 @@ def check(path, timeout_min, since=None):
         route = [x for x in route if fresh(x[1])]
 
     problems = []
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    for e in entries:
+        if e["ts"] > now:
+            problems.append(("время", e["line"],
+                             f"метка времени захвата из будущего (UTC): {e['ts']:%d-%m-%Y %H:%M:%S}"))
     for n, text, msg in route:
         problems.append(("маршрут", n, msg + f": {text}"))
     for n, text in no_origin:
