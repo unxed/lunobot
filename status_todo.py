@@ -29,7 +29,7 @@ import check_triage
 ROOT = Path(__file__).resolve().parent
 WIDTH = 160
 SKIP_STATES = ("ждёт ответа", "спор")
-HEADING = re.compile(r"^(?:#{1,6}\s*)?(Осталось|Дальше)\b(.*)$")
+HEADING = re.compile(r"^(?:#{1,6}\s*)?(Осталось|Дальше)\b(?:/(?:Осталось|Дальше)\b)?(.*)$")
 NEXT_HEADING = re.compile(r"^#{1,6}\s")
 MARKER = re.compile(r"^(?:\d+[а-яa-z]?[.)]|[-*•])\s+")
 # Раздел или остаток без исполнимой части либо с условием, которого ещё нет. Заголовок проверяется

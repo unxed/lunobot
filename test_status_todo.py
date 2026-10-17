@@ -21,6 +21,10 @@ class RemainderTest(unittest.TestCase):
     def test_inline_remainder(self):
         self.assertEqual(status_todo.remainder("Осталось: поднять zipper до тега.\nСостояние: x"), "поднять zipper до тега.")
 
+    def test_double_heading_with_slash(self):
+        # unxed/f4#1998: «Осталось/Дальше: …» — остаток в той же строке, как у «Осталось: …»
+        self.assertEqual(status_todo.remainder("Осталось/Дальше: закрывать диалог.\n\n## Часть 2\nx\n"), "закрывать диалог.")
+
     def test_inline_with_condition_in_parentheses_reads_next_lines(self):
         text = "Осталось (каждая часть — свой PR):\n2в. Ctrl+F12 — меню.\n3а. Ctrl+H.\n"
         self.assertEqual(status_todo.remainder(text), "Ctrl+F12 — меню.")
