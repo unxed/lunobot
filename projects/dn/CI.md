@@ -1,5 +1,3 @@
 # CI — dn
 
-17-10-2026 11:58:09 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, коммит `0737045`, прогоны [dn #39030659096](https://github.com/unxed/dn/actions/runs/39030659096), [dn-linux #39030659154](https://github.com/unxed/dn/actions/runs/39030659154), [dn-windows #39030659058](https://github.com/unxed/dn/actions/runs/39030659058)
-
 17-10-2026 12:17:14 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/dn/issues/80 (часть paneldlgs.pas), PR [#121](https://github.com/unxed/dn/pull/121), коммит `a0d099b`, прогоны [dn #777](https://github.com/unxed/dn/actions/runs/39031889962), [dn-linux #809](https://github.com/unxed/dn/actions/runs/39031889978), [dn-windows #699](https://github.com/unxed/dn/actions/runs/39031889957), [class-migration #190](https://github.com/unxed/dn/actions/runs/39031890112), [layout #708](https://github.com/unxed/dn/actions/runs/39031881204), [toolchain #285](https://github.com/unxed/dn/actions/runs/39031881206)
