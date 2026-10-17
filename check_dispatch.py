@@ -96,7 +96,10 @@ def route_error(line):
 
 REF_URL = re.compile(r"github\.com/([\w.-]+)/([\w.-]+)/(?:issues|pull)/(\d+)")
 REF_SHORT = re.compile(r"(?<![\w./-])([\w.-]+)/([\w.-]+)#(\d+)")
-PART_ANY = re.compile(r"часть (\d+) из (\d+)")
+# «часть 3 из 4», а также «часть 5в» и «часть 5» без «из M»: ключ делится по части, поэтому и часть
+# с буквой (§ 5.1: 5а/5б/5в) обязана распознаваться (17-10-2026 «часть 5в» и «часть 5» одного тикета
+# дали ложную «гонку»: обе не разобрались и получили ключ «1/1»)
+PART_ANY = re.compile(r"часть (\d+[а-яa-z]?)(?: из (\d+))?")
 # Инцидент без тикета: «красный поезд #1968», «красный main d5f1ef202» (§ 5 п. 2) — у него нет ссылки
 # на тикет, а чинить его одновременно двум сеансам незачем.
 INCIDENT = re.compile(r"красн\w*\s+(?:поезд\s*#(\d+)|main\s+([0-9a-f]{7,40})\b)", re.I)
@@ -175,7 +178,7 @@ def parse(path):
                 key = custom.group(1).strip() if custom else None
                 if key and "взял" in line and "по §" not in body:
                     no_origin.append((n, line[:110]))
-            part = re.search(r"\(часть (\d+) из (\d+)\)", line)
+            part = re.search(r"\(часть (\d+[а-яa-z]?)(?: из (\d+))?(?=[,)\s])", line)
             if not (ts and who and verb and key):
                 malformed.append((n, line[:110], {
                     "нет метки времени": not ts,
@@ -185,7 +188,7 @@ def parse(path):
                 }))
                 continue
             # часть не указана — значит единственная
-            part_key = f"{part.group(1)}/{part.group(2)}" if part else "1/1"
+            part_key = (f"{part.group(1)}/{part.group(2)}" if part.group(2) else part.group(1)) if part else "1/1"
             anypart = PART_ANY.search(line)
             entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
                             "who": who.group(0), "node": who.group("node"), "num": who.group("num"),
