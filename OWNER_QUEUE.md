@@ -54,6 +54,13 @@ id, адресат и проект не нужны (пишет с телефон
 Доп. проверка 17-10-2026 04:12 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): прочитан новый отчёт владельца из live Claude Code: подтверждены tick-all, REST-обходы и ряд операций; в нём отмечены ограничения GraphQL/search, загрузки файловых вложений, merge permission и удаления веток. Этот отчёт не подтверждает явно весь критерий #46 для health/sweep/status из Claude Code; в текущей OpenCode-среде cloud proxy недоступен. В этом круге check_triage/check_try/close_candidates прошли по 12 проектам; health f4/vtui — staging зелёный, main успешен/идёт; `owner_questions.py sweep` оставил 3 открытых вопроса. Не взял пересекающиеся/уже отслеживаемые status-шаги и незрелый CI bp#16; поручение остаётся открытым.
 Доп. проверка 17-10-2026 04:54:12 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): на текущем `main` учёта `python3 -m unittest test_train test_sweep test_owner_questions test_status test_gh_post` прошёл — 208 тестов; остались `ResourceWarning` в `train.py:1603`. `check_triage.py` прошёл по всем 12 проектам, `check_try.py` не нашёл тикетов без «Пробуйте!», кандидатов на закрытие нет. Отчёт владельца из Claude Code всё ещё не подтверждает live-критерий для `health`/`sweep`/`status`; в этой OpenCode-сессии Claude Code proxy недоступен, поэтому #46 остаётся открытым.
 
+## account-148
+Заметка владельца: https://github.com/unxed/lunobot/issues/148
+Проект: учёт
+Поручение: проверить исправление утечки файлового дескриптора в `train.py` и сопровождающий регрессионный тест по доверенному issue.
+Критерий: проверенное исправление находится в `main`; в issue оставлен краткий отчёт, issue закрыт, блок удалён.
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 17-10-2026 05:27:38 UTC
+
 
 --
 
