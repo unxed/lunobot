@@ -41,7 +41,7 @@ def add_paragraph(text, line):
 
 
 RECORD = re.compile(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d ")
-LEGACY_BRANCH_DATE = re.compile(r"\d\d-\d\d-\d{4} ")
+LEGACY_BRANCH_DATE = re.compile(r"\d\d-\d\d-\d{4} (?:Лунобот|Lunobot)-\d+[^\n]*?, ветка ")
 RECORD_FILES = ("DISPATCH.md", "CI.md", "BRANCHES.md")
 
 
