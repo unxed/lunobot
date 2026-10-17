@@ -27,16 +27,31 @@ ROW = re.compile(
 )
 
 
+GH_ATTEMPTS = 3
+
+
+def run_gh(command, attempts=GH_ATTEMPTS, timeout=60):
+    """subprocess.run для gh с повтором при тайм-ауте: один зависший запрос не должен валить весь гейт.
+
+    Гейты по всем проектам идут параллельно (§ 4 п. 2), и при нагрузке одиночный запрос gh
+    может не уложиться в минуту (17-10-2026: check_try.py f4 упал на одном комментарии из 82).
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            return subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            if attempt == attempts:
+                raise
+    raise AssertionError("недостижимо")
+
+
 def gh_pages_by_number(path):
     """Все страницы через gh api с явным page=N, не доверяя заголовку Link."""
     items = []
     page = 1
     while True:
         separator = "&" if "?" in path else "?"
-        result = subprocess.run(
-            ["gh", "api", f"{path}{separator}page={page}"],
-            capture_output=True, text=True, timeout=60,
-        )
+        result = run_gh(["gh", "api", f"{path}{separator}page={page}"])
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or "gh api завершился с ошибкой")
         batch = json.loads(result.stdout)
@@ -51,10 +66,7 @@ def gh_pages_by_number(path):
 def gh_pages(path):
     """Получить все страницы endpoint через gh или обычный HTTP."""
     if shutil.which("gh"):
-        result = subprocess.run(
-            ["gh", "api", path, "--paginate", "--slurp"],
-            capture_output=True, text=True, timeout=60,
-        )
+        result = run_gh(["gh", "api", path, "--paginate", "--slurp"])
         if result.returncode == 0:
             pages = json.loads(result.stdout)
             if not pages:
