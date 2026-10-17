@@ -89,6 +89,47 @@ class OwnerTest(unittest.TestCase):
             "https://github.com/unxed/dn/issues/33 (часть 3 из 4) [pr]"])
         self.assertIn("дубль", found)  # на узле main уже ловит это как «дубль»
 
+    def test_lettered_part_is_a_part_of_its_own(self):
+        # 17-10-2026: «часть 5в» и «часть 5» одного тикета у двух узлов давали ложную «гонку»
+        other = "801452e4fd3b9a26f8e6f02c"
+        url = "https://github.com/unxed/dn/issues/37"
+        found = kinds([
+            f"17-10-2026 00:39:16 Я Лунобот-1 (node {other}; LNX), взял задачу {url} "
+            "(часть 5в, Ctrl+\\ в корень) [land]",
+            f"17-10-2026 00:56:37 Я Лунобот-1 (node {NODE}; LNX), взял задачу {url} "
+            "(часть 5, тесты) [land]"])
+        self.assertNotIn("гонка", found)
+        self.assertNotIn("пересечение", found)
+
+    def test_same_lettered_part_on_two_nodes_is_still_a_race(self):
+        other = "801452e4fd3b9a26f8e6f02c"
+        url = "https://github.com/unxed/dn/issues/37"
+        found = kinds([
+            f"17-10-2026 00:39:16 Я Лунобот-1 (node {other}; LNX), взял задачу {url} "
+            "(часть 5в, Ctrl+\\ в корень) [land]",
+            f"17-10-2026 00:56:37 Я Лунобот-1 (node {NODE}; LNX), взял задачу {url} "
+            "(часть 5в, Ctrl+\\ в корень) [land]"])
+        self.assertIn("гонка", found)
+
+    def test_part_with_and_without_total_is_the_same_part(self):
+        # «часть 3 из 4» и «часть 3» — одна часть: пересечение не должно пропадать из-за разной записи
+        other = "801452e4fd3b9a26f8e6f02c"
+        url = "https://github.com/unxed/dn/issues/37"
+        found = kinds([
+            f"17-10-2026 00:39:16 Я Лунобот-1 (node {other}; LNX), взял задачу {url} (часть 3 из 4) [land]",
+            f"17-10-2026 00:56:37 Я Лунобот-1 (node {NODE}; LNX), взял задачу {url} (часть 3, тесты) [land]"])
+        self.assertIn("пересечение", found)
+
+    def test_bare_part_words_in_free_text_are_not_a_part(self):
+        # «часть 2 PR» в тексте кастомной задачи и «часть 2ой» — не часть: сравнение частей не отключается
+        other = "801452e4fd3b9a26f8e6f02c"
+        url = "https://github.com/unxed/dn/issues/37"
+        found = kinds([
+            f"17-10-2026 00:39:16 Я Лунобот-1 (node {other}; LNX), взял задачу {url} (часть 3 из 4) [land]",
+            f"17-10-2026 00:56:37 Я Лунобот-1 (node {NODE}; LNX), взял задачу {url} "
+            "(доводка: часть 2 PR) [land]"])
+        self.assertIn("пересечение", found)
+
     def test_same_session_keepalive_is_not_a_race(self):
         found = kinds([
             f"14-10-2026 08:37:22 Я Лунобот-1 (node {NODE}; LNX), взял задачу "
