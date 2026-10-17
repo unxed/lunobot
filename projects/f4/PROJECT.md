@@ -28,6 +28,7 @@
   аудита каждый новый тип с `ProcessKey`, `TestNoNewHardcodedUIStrings` и др.), которые
   падают от правок в ЛЮБОМ пакете. 28-09-2026 это дважды за час сделало staging красным
   (#1606 шаг 7, #312 шаг 1): песочница авторов гоняла только их пакеты.
+  - Изменения форматирования строк меню дисков (`internal/panel/drives_menu.go` и его row-text contract) проверяй в песочнице командой `go test ./internal/app ./internal/panel`: форматные ожидания существующих потребителей находятся в `internal/app`, реализация — в `internal/panel` (unxed/lunobot#159).
   - Песочница `sandbox.yml` (с 2cc80354): команда разбирается настоящим shell —
     `bash -c` на Linux/macOS, `Invoke-Expression` pwsh 7 на Windows, так что `&&`,
     `|`, `;`, кавычки и циклы работают без обходов
