@@ -830,6 +830,18 @@ class MarkCheckingStagingPartTest(unittest.TestCase):
         after = subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.clone, capture_output=True, text=True).stdout
         self.assertEqual(before, after)
 
+    def test_triage_read_closes_file(self):
+        import gc
+        import warnings
+
+        with warnings.catch_warnings(record=True) as seen:
+            warnings.simplefilter("always", ResourceWarning)
+            self.mark({"commits": []})
+            gc.collect()
+
+        self.assertFalse([warning for warning in seen
+                          if issubclass(warning.category, ResourceWarning)])
+
     def test_empty_staging_marks_all_checking(self):
         out, text = self.mark({"commits": []})
         self.assertNotIn("остаются", out)

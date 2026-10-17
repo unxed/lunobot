@@ -1600,7 +1600,8 @@ def mark_checking(repo, nums, sign, head=None):
             git("rebase", "--abort")
             break
         if not subject:  # правку делаем и коммитим один раз; повторы — только rebase и push
-            text = open(path, encoding="utf-8").read()
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
             done = []
 
             def fix(mo):
