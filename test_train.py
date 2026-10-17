@@ -293,6 +293,28 @@ class StuckTest(unittest.TestCase):
         self.assertIn("проверяется 3.0 ч", output)
         self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
 
+    def test_failed_or_cancelled_train_still_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("f" * 40, "old work", now - timedelta(hours=4))]
+        pr = {"number": 14, "head": {"sha": "staging"},
+              "created_at": (now - timedelta(minutes=5)).isoformat()}
+        for rollup in (([{}], [{"status": "IN_PROGRESS"}], [{"conclusion": "FAILURE"}], []),
+                       ([{}], [{"status": "IN_PROGRESS"}], [], [{"conclusion": "CANCELLED"}])):
+            result, output = self.check_stuck(commits, pr, rollup)
+            self.assertEqual(result, 1)
+            self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_train_for_other_head_or_no_train_still_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("9" * 40, "old work", now - timedelta(hours=4))]
+        pr = {"number": 15, "head": {"sha": "older-staging"},
+              "created_at": (now - timedelta(minutes=5)).isoformat()}
+        pending = ([{"status": "IN_PROGRESS"}], [{"status": "IN_PROGRESS"}], [], [])
+        for train_pr in (None, pr):
+            result, output = self.check_stuck(commits, train_pr, pending)
+            self.assertEqual(result, 1)
+            self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
 
 class TrainStepCancellationTest(unittest.TestCase):
     def test_cancelled_checks_are_restarted_while_other_checks_are_queued(self):

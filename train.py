@@ -1399,6 +1399,7 @@ def stuck(repo):
             hours = None
     else:
         hours = None
+    train_in_flight = hours is not None
     own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
     own = exclude_reverted(own)
     if not own:
@@ -1408,7 +1409,8 @@ def stuck(repo):
         oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
                      for c in own)
         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
-    print(f"в staging {len(own)} коммит(ов) ждут main; старший — {hours:.1f} ч")
+    label = "поезд идёт" if train_in_flight else "старший"
+    print(f"в staging {len(own)} коммит(ов) ждут main; {label} — {hours:.1f} ч")
     if hours > STUCK_HOURS:
         print(f"ИНЦИДЕНТ ПРОЦЕССА: приземлённая работа ждёт main дольше {STUCK_HOURS} ч. "
               "§ 4 «ретро круга»: найти, почему не едет поезд, починить конвейер и "
