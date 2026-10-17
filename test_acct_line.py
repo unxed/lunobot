@@ -172,6 +172,20 @@ class RemoveLineTest(unittest.TestCase):
         self.assertEqual(acct_line.remove_line(text, "dn", records_only=True), "# Захваты — dn\n")
         self.assertIsNone(acct_line.remove_line("# Захваты — dn\n", "dn", records_only=True))
 
+    def test_remove_legacy_branch_record(self):
+        text = "# BRANCHES — bp\n\n15-10-2026 Лунобот-2, ветка `lunobot/pr/old` для https://github.com/unxed/bp/issues/1\n"
+        self.assertEqual(
+            acct_line.remove_line(text, "lunobot/pr/old", records_only=True, legacy_branch_records=True),
+            "# BRANCHES — bp\n",
+        )
+        self.assertIsNone(
+            acct_line.remove_line("# BRANCHES — bp\n", "bp", records_only=True, legacy_branch_records=True)
+        )
+
+    def test_legacy_branch_record_does_not_take_dated_header_paragraph(self):
+        text = "# BRANCHES — bp\n\n15-10-2026 заметка: ветки bp чистили вручную\n"
+        self.assertIsNone(acct_line.remove_line(text, "bp", records_only=True, legacy_branch_records=True))
+
 
 class GitBytesTest(unittest.TestCase):
     def test_blob_keeps_lf(self):

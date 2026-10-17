@@ -41,16 +41,19 @@ def add_paragraph(text, line):
 
 
 RECORD = re.compile(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d ")
+LEGACY_BRANCH_DATE = re.compile(r"\d\d-\d\d-\d{4} (?:Лунобот|Lunobot)-\d+[^\n]*?, ветка ")
 RECORD_FILES = ("DISPATCH.md", "CI.md", "BRANCHES.md")
 
 
-def remove_line(text, key, records_only=False, remove_all=False):
+def remove_line(text, key, records_only=False, remove_all=False, legacy_branch_records=False):
     """Новый текст без единственной строки с key; None — такой строки нет; ValueError — их несколько.
     records_only: искать только среди записей с меткой времени, чтобы ключ не снёс шапку файла.
+    legacy_branch_records: также разрешает старые BRANCHES-записи с датой без времени.
     remove_all: убрать все строки с key одним проходом (пять строк прогонов одного main — один коммит)."""
     lines = text.split("\n")
     hits = [i for i, l in enumerate(lines)
-            if key in l and (not records_only or RECORD.match(l))]
+            if key in l and (not records_only or RECORD.match(l)
+                             or (legacy_branch_records and LEGACY_BRANCH_DATE.match(l)))]
     if not hits:
         return None
     if len(hits) > 1 and not remove_all:
@@ -101,7 +104,8 @@ def attempt(repo, remote, branch, op, relpath, arg, message, sign, remove_all=Fa
         new = add_paragraph(old.stdout, arg)
         added = len(new.rstrip("\n").split("\n"))
     else:
-        new = remove_line(old.stdout, arg, os.path.basename(relpath) in RECORD_FILES, remove_all)
+        new = remove_line(old.stdout, arg, os.path.basename(relpath) in RECORD_FILES, remove_all,
+                          legacy_branch_records=os.path.basename(relpath) == "BRANCHES.md")
         if new is None:
             print(f"в {relpath} нет строки с {arg!r} — удалять нечего")
             return "noop"
