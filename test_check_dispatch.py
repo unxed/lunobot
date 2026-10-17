@@ -3,6 +3,7 @@
 import os
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import check_dispatch
@@ -29,6 +30,13 @@ class MalformedMessageTest(unittest.TestCase):
         self.assertEqual([p[0] for p in found], ["формат"])
         self.assertIn("без имени модели", found[0][2])
         self.assertNotIn("не указана часть", found[0][2])
+
+
+class FutureTimestampTest(unittest.TestCase):
+    def test_future_capture_timestamp_is_rejected(self):
+        future = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%d-%m-%Y %H:%M:%S")
+        found = kinds([line(future, 2)])
+        self.assertIn("время", found)
 
 
 class SameNodeDuplicateTest(unittest.TestCase):
