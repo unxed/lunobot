@@ -1383,15 +1383,34 @@ def stuck(repo):
     if green_train:
         print(f"staging tip уже покрыт зелёным поездом #{green_train['number']} — ждёт merge в main")
         return 0
+    train = train_pr(repo)
+    if train and train["head"]["sha"] == staging:
+        checks, pending, failed, cancelled = rollup(repo, train["number"])
+        if pending and not failed and not cancelled:
+            created = datetime.fromisoformat(train["created_at"].replace("Z", "+00:00"))
+            train_hours = (datetime.now(timezone.utc) - created).total_seconds() / 3600
+            if train_hours <= STUCK_HOURS:
+                print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
+                      "ожидание полной матрицы пока штатное")
+                return 0
+            print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч без ошибок")
+            hours = train_hours
+        else:
+            hours = None
+    else:
+        hours = None
+    train_in_flight = hours is not None
     own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
     own = exclude_reverted(own)
     if not own:
         print("staging не впереди main — приземлённая работа вся в main")
         return 0
-    oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
-                 for c in own)
-    hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
-    print(f"в staging {len(own)} коммит(ов) ждут main; старший — {hours:.1f} ч")
+    if hours is None:
+        oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
+                     for c in own)
+        hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
+    label = "поезд идёт" if train_in_flight else "старший"
+    print(f"в staging {len(own)} коммит(ов) ждут main; {label} — {hours:.1f} ч")
     if hours > STUCK_HOURS:
         print(f"ИНЦИДЕНТ ПРОЦЕССА: приземлённая работа ждёт main дольше {STUCK_HOURS} ч. "
               "§ 4 «ретро круга»: найти, почему не едет поезд, починить конвейер и "
