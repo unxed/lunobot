@@ -241,10 +241,12 @@ class StuckTest(unittest.TestCase):
             "committer": {"date": when.isoformat().replace("+00:00", "Z")},
         }}
 
-    def check_stuck(self, commits):
+    def check_stuck(self, commits, train_pr=None, rollup=None):
         with mock.patch.object(train, "api", side_effect=[
                 {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
                 mock.patch.object(train, "green_train_covering", return_value=None), \
+                mock.patch.object(train, "train_pr", return_value=train_pr), \
+                mock.patch.object(train, "rollup", return_value=rollup or ([], [], [], [])), \
                 mock.patch.object(train, "compare", return_value={"commits": commits}), \
                 contextlib.redirect_stdout(io.StringIO()) as output:
             result = train.stuck("o/r")
@@ -268,6 +270,28 @@ class StuckTest(unittest.TestCase):
         result, output = self.check_stuck(commits)
         self.assertEqual(result, 0)
         self.assertIn("1 коммит(ов) ждут main", output)
+
+    def test_recent_train_in_flight_does_not_trigger_old_staging_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("d" * 40, "old work", now - timedelta(hours=4))]
+        pr = {"number": 12, "head": {"sha": "staging"},
+              "created_at": (now - timedelta(minutes=15)).isoformat()}
+        result, output = self.check_stuck(commits, pr, ([{"status": "IN_PROGRESS"}],
+                                                         [{"status": "IN_PROGRESS"}], [], []))
+        self.assertEqual(result, 0)
+        self.assertIn("поезд #12 проверяется", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_train_in_flight_over_two_hours_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("e" * 40, "old work", now - timedelta(hours=4))]
+        pr = {"number": 13, "head": {"sha": "staging"},
+              "created_at": (now - timedelta(hours=3)).isoformat()}
+        result, output = self.check_stuck(commits, pr, ([{"status": "IN_PROGRESS"}],
+                                                         [{"status": "IN_PROGRESS"}], [], []))
+        self.assertEqual(result, 1)
+        self.assertIn("проверяется 3.0 ч", output)
+        self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
 
 
 class TrainStepCancellationTest(unittest.TestCase):
