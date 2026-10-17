@@ -123,5 +123,28 @@ class PrStateTest(unittest.TestCase):
         self.assertEqual((n, deleted), (0, []))
 
 
+class ReferencesTest(unittest.TestCase):
+    def test_references_read_closes_files(self):
+        import gc
+        import os
+        import tempfile
+        import warnings
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = os.path.join(tmp, "projects", "sample")
+            os.makedirs(os.path.join(project, "status"))
+            with open(os.path.join(project, "DISPATCH.md"), "w", encoding="utf-8") as f:
+                f.write("захват /tmp/clone-1\n")
+            with open(os.path.join(project, "status", "1.md"), "w", encoding="utf-8") as f:
+                f.write("ветка feature/x\n")
+            with patch.object(sweep, "ROOT", tmp), warnings.catch_warnings(record=True) as seen:
+                warnings.simplefilter("always", ResourceWarning)
+                text = sweep.references()
+                gc.collect()
+        self.assertFalse([w for w in seen if issubclass(w.category, ResourceWarning)])
+        self.assertIn("/tmp/clone-1", text)
+        self.assertIn("feature/x", text)
+
+
 if __name__ == "__main__":
     unittest.main()

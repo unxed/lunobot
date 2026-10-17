@@ -40,7 +40,8 @@ def sh(*cmd, timeout=180):
 
 
 def projects():
-    text = open(os.path.join(ROOT, "projects", "INDEX.md"), encoding="utf-8").read()
+    with open(os.path.join(ROOT, "projects", "INDEX.md"), encoding="utf-8") as f:
+        text = f.read()
     return re.findall(r"^\d+\.\s*\[([^\]]+)\]", text, re.M)
 
 
@@ -52,7 +53,9 @@ def captures(node, number=None):
         path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
         if not os.path.exists(path):
             continue
-        for line in open(path, encoding="utf-8"):
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+        for line in lines:
             if node in line and ("взял" in line or "работаю" in line) \
                     and (own is None or own.search(line)):
                 m = TS.match(line)
@@ -96,8 +99,13 @@ def free_work():
         dis = os.path.join(ROOT, "projects", p, "DISPATCH.md")
         if not os.path.exists(tri):
             continue
-        taken = open(dis, encoding="utf-8").read() if os.path.exists(dis) else ""
-        for line in open(tri, encoding="utf-8"):
+        taken = ""
+        if os.path.exists(dis):
+            with open(dis, encoding="utf-8") as f:
+                taken = f.read()
+        with open(tri, encoding="utf-8") as f:
+            tri_lines = f.readlines()
+        for line in tri_lines:
             m = re.match(r"\|\s*(\d+)\s*\|\s*([^|]+)\|\s*свободен\s*\|", line)
             if m and f"/issues/{m.group(1)}" not in taken:
                 found.append(f"{p}#{m.group(1)}(п{m.group(2).strip()})")

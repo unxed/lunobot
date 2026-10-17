@@ -83,6 +83,35 @@ class PrivateAccountingTest(unittest.TestCase):
                 self.assertEqual(len(fleet_watch.captures(node, "1")), 2)
                 self.assertEqual(len(fleet_watch.captures(node, "2")), 1)
 
+    def test_fleet_watch_reads_close_files(self):
+        import gc
+        import warnings
+
+        node = "a721a6d1487257292ae00780"
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory, "projects", "sample")
+            project.mkdir(parents=True)
+            Path(directory, "projects", "INDEX.md").write_text(
+                "1. [sample](sample/PROJECT.md)\n", encoding="utf-8")
+            project.joinpath("DISPATCH.md").write_text(
+                f"29-09-2026 08:00:00 Я Лунобот-1 (node {node}; LNX), взял задачу "
+                "https://github.com/example/project/issues/1 [pr]\n", encoding="utf-8")
+            project.joinpath("TRIAGE.md").write_text(
+                "| 1 | 3 | свободен | 0 | 2026-10-16T01:00:00Z |\n"
+                "| 2 | 4 | свободен | 0 | 2026-10-16T01:00:00Z |\n", encoding="utf-8")
+            with patch.object(fleet_watch, "ROOT", directory), \
+                 patch.object(fleet_watch, "sh", return_value=(0, "")), \
+                 warnings.catch_warnings(record=True) as seen:
+                warnings.simplefilter("always", ResourceWarning)
+                names = fleet_watch.projects()
+                taken = fleet_watch.captures(node)
+                free = fleet_watch.free_work()
+                gc.collect()
+        self.assertFalse([w for w in seen if issubclass(w.category, ResourceWarning)])
+        self.assertEqual(names, ["sample"])
+        self.assertEqual(len(taken), 1)
+        self.assertEqual(free, ["sample#2(п4)"])
+
     def test_janitor_uses_trailer_not_deleted_actor(self):
         log = ("@@LUNOBOT-COMMIT@@100\tЛунобот-1 (node a721a6d1487257292ae00780; LNX)\n"
                "-Лунобот-2 (node 91d86915909d88ed7991a74c; LNX)\n")
