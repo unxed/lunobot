@@ -453,6 +453,19 @@ class BisectDispatchTest(unittest.TestCase):
                              good=-1, bad=0)
 
 
+class NightlyTryNoteTest(unittest.TestCase):
+    """nightly_try_note: the reminder for the one who posts «Пробуйте!» exists only for projects
+    that ship builds through the floating nightly release (unxed/f4#1758, 17-10-2026)."""
+
+    def test_project_with_nightly_gets_the_note_with_the_release_link(self):
+        note = train.nightly_try_note("unxed/f4")
+        self.assertIn("https://github.com/unxed/f4/releases/tag/nightly", note)
+        self.assertIn("Пробуйте!", note)
+
+    def test_project_without_nightly_gets_no_note(self):
+        self.assertEqual(train.nightly_try_note("unxed/vtui"), "")
+
+
 class NightlyStaleTest(unittest.TestCase):
     """nightly_is_stale / should_cancel_main_run: the main run after a fast-forward is kept
     only while the floating nightly of a project that has one is old (or unknown)."""
