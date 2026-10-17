@@ -1446,3 +1446,25 @@ class ReadsCloseFilesTest(unittest.TestCase):
                 seen = self.resource_warnings(lambda: result.extend(train.staged_repos()))
             self.assertEqual(seen, [])
             self.assertEqual(result, ["unxed/f4"])
+
+
+class RevertedLaterInTrainTest(unittest.TestCase):
+    def test_revert_after_step_is_found(self):
+        a, b, c = "a" * 40, "b" * 40, "c" * 40
+        commits = [
+            {"sha": a, "commit": {"message": "step"}},
+            {"sha": b, "commit": {"message": f'Revert "step"\n\nThis reverts commit {a}.\n'}},
+            {"sha": c, "commit": {"message": "step again"}},
+        ]
+        self.assertEqual(train.reverted_later_in_train(commits, 0), b)
+
+    def test_no_revert_means_none(self):
+        a, b = "a" * 40, "b" * 40
+        commits = [{"sha": a, "commit": {"message": "step"}}, {"sha": b, "commit": {"message": "other"}}]
+        self.assertIsNone(train.reverted_later_in_train(commits, 0))
+
+    def test_revert_before_step_is_ignored(self):
+        a, b = "a" * 40, "b" * 40
+        commits = [{"sha": b, "commit": {"message": f"This reverts commit {a}."}},
+                   {"sha": a, "commit": {"message": "step"}}]
+        self.assertIsNone(train.reverted_later_in_train(commits, 1))
