@@ -28,20 +28,32 @@ ROW = re.compile(
 
 
 GH_ATTEMPTS = 3
+# Временные сетевые отказы gh: код возврата не нулевой, а stderr — сообщение Go-клиента.
+TRANSIENT_GH_ERRORS = re.compile(
+    r"TLS handshake timeout|i/o timeout|connection reset|unexpected EOF|"
+    r"HTTP 50[234]|temporary failure in name resolution",
+    re.IGNORECASE,
+)
 
 
 def run_gh(command, attempts=GH_ATTEMPTS, timeout=60):
-    """subprocess.run для gh с повтором при тайм-ауте: один зависший запрос не должен валить весь гейт.
+    """subprocess.run для gh с повтором при тайм-ауте и временном сетевом отказе: один запрос не должен валить весь гейт.
 
     Гейты по всем проектам идут параллельно (§ 4 п. 2), и при нагрузке одиночный запрос gh
-    может не уложиться в минуту (17-10-2026: check_try.py f4 упал на одном комментарии из 82).
+    может не уложиться в минуту (17-10-2026: check_try.py f4 упал на одном комментарии из 82)
+    или получить `TLS handshake timeout` с кодом возврата 1 (круг 17-10-2026, check_try.py f4:
+    тот же гейт отвечал «не удалось проверить» вместо результата).
     """
     for attempt in range(1, attempts + 1):
         try:
-            return subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+            result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             if attempt == attempts:
                 raise
+            continue
+        if result.returncode != 0 and attempt < attempts and TRANSIENT_GH_ERRORS.search(result.stderr or ""):
+            continue
+        return result
     raise AssertionError("недостижимо")
 
 
