@@ -1647,7 +1647,8 @@ def transit_warn(repo):
     последние TRANSIT_WINDOW_H ч — «Пробуйте!» не разнесён, состояние не сдвинулось.
     Коммиты без Touch: (эпоха PR) этим не видны — их состояние ведёт автор вручную."""
     try:
-        text = open(triage_path(repo), encoding="utf-8").read()
+        with open(triage_path(repo), encoding="utf-8") as f:
+            text = f.read()
     except OSError:
         return
     transit = {int(m.group(2)) for m in IN_TRANSIT.finditer(text)}
@@ -1831,10 +1832,12 @@ def staged_repos():
     необработанным поездом, потому что координатор помнил только про f4."""
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "projects")
     out = []
-    for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", open(os.path.join(root, "INDEX.md"),
-                                                         encoding="utf-8").read(), re.M):
+    with open(os.path.join(root, "INDEX.md"), encoding="utf-8") as f:
+        index = f.read()
+    for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", index, re.M):
         try:
-            text = open(os.path.join(root, name, "PROJECT.md"), encoding="utf-8").read()
+            with open(os.path.join(root, name, "PROJECT.md"), encoding="utf-8") as f:
+                text = f.read()
         except OSError:
             continue
         m = re.search(r"^- Код: https://github\.com/([^/\s]+/[^/\s]+)", text, re.M)

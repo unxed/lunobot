@@ -1388,3 +1388,46 @@ class LogTestFlagsTest(unittest.TestCase):
             train.pick_target_steps([(job, "Run Tests")], seeds),
             ("macos-latest", "go test -count=1 -timeout 15m -skip '^TestAllDialogs_LayoutValidation$' "
                              "-shuffle=1792160756767382000 ./internal/media"))
+
+
+class ReadsCloseFilesTest(unittest.TestCase):
+    """Чтение TRIAGE.md и projects/*.md не оставляет открытых дескрипторов (ResourceWarning)."""
+
+    def resource_warnings(self, func):
+        import gc
+        import warnings
+
+        with warnings.catch_warnings(record=True) as seen:
+            warnings.simplefilter("always", ResourceWarning)
+            func()
+            gc.collect()
+        return [w for w in seen if issubclass(w.category, ResourceWarning)]
+
+    def test_transit_warn_read_closes_file(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 7 | 3 | свободен | 1 | 2026-10-16T01:00:00Z |\n")
+            with mock.patch.object(train, "triage_path", return_value=path):
+                self.assertEqual(self.resource_warnings(lambda: train.transit_warn("unxed/f4")), [])
+
+    def test_staged_repos_read_closes_files(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = os.path.join(tmp, "projects")
+            os.makedirs(os.path.join(root, "f4"))
+            with open(os.path.join(root, "INDEX.md"), "w", encoding="utf-8") as f:
+                f.write("1. [f4](f4/PROJECT.md)\n2. [нет](нет/PROJECT.md)\n")
+            with open(os.path.join(root, "f4", "PROJECT.md"), "w", encoding="utf-8") as f:
+                f.write("- Код: https://github.com/unxed/f4\n")
+            result = []
+            with mock.patch.object(train, "__file__", os.path.join(tmp, "train.py")), \
+                 mock.patch.object(train, "api", return_value={"commit": {}}):
+                seen = self.resource_warnings(lambda: result.extend(train.staged_repos()))
+            self.assertEqual(seen, [])
+            self.assertEqual(result, ["unxed/f4"])

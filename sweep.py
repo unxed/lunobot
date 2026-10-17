@@ -111,7 +111,8 @@ def references():
     for dirpath, _, files in os.walk(os.path.join(ROOT, "projects")):
         for f in files:
             if f == "DISPATCH.md" or os.path.basename(dirpath) == "status":
-                text.append(open(os.path.join(dirpath, f), encoding="utf-8").read())
+                with open(os.path.join(dirpath, f), encoding="utf-8") as fh:
+                    text.append(fh.read())
     return "\n".join(text)
 
 
