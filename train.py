@@ -425,6 +425,19 @@ def parse_land_commits(output):
     return parsed
 
 
+def healed_by_revert(fix_bodies, staging_bodies):
+    """Ссылка из `Fixes-Staging:` в коммитах приземляемой починки, на которую в staging уже есть
+    `Staging-Revert:` (tick откатил виновного раньше), либо None. Починка вперёд, приземлённая
+    после такого отката, чинит то, чего в staging уже нет, и сама его ломает."""
+    fixed = {m.group(1) for body in fix_bodies
+             for m in re.finditer(r"^Fixes-Staging:\s*(\S+)", body, re.M)}
+    for body in staging_bodies:
+        for m in re.finditer(r"^Staging-Revert:\s*(\S+)", body, re.M):
+            if m.group(1) in fixed:
+                return m.group(1)
+    return None
+
+
 def land(fix=False):
     run("git", "fetch", "-q", "origin", STAGING_REFSPEC)
     commits = run("git", "log", "--format=%H%x00%B%x01", f"origin/{STAGING}..HEAD").stdout
@@ -453,6 +466,15 @@ def land(fix=False):
         sys.exit("--fix-staging: хотя бы один коммит обязан нести трейлер "
                  "`Fixes-Staging: <ссылка на красный quick>` — по нему остальные поймут, что "
                  "staging лечится, и снова смогут приземлять")
+    if fix:
+        log = run("git", "log", "-50", "--format=%B%x01", f"origin/{STAGING}").stdout
+        healed = healed_by_revert([body for _, body in msgs], log.split("\x01"))
+        if healed:
+            sys.exit(f"--fix-staging: красный {healed} уже вылечен откатом (`Staging-Revert:` на "
+                     "эту же ссылку лежит в staging), починка вперёд поверх отката ломает "
+                     "согласованность: код откачен, а правка тестов/ожиданий ждёт его "
+                     "(16-10-2026..17-10-2026, f4#1148). Приземли код и правку ВМЕСТЕ как обычную "
+                     "работу (`land` без флага, песочница на точном коде), а не как починку.")
     if repo and not fix:
         frozen = freeze_stamp(repo)
         if frozen:

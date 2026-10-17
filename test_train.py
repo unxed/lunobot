@@ -1065,6 +1065,21 @@ class LandCommitParseTest(unittest.TestCase):
             (first, "first body"), (second, "second body")])
 
 
+class HealedByRevertTest(unittest.TestCase):
+    URL = "https://github.com/unxed/f4/actions/runs/39017396343"
+
+    def test_fix_after_revert_of_same_run_is_refused(self):
+        fix = [f"test fix\n\nFixes-Staging: {self.URL}\n"]
+        log = [f'Revert "x"\n\nStaging-Revert: {self.URL}\n', "other\n"]
+        self.assertEqual(train.healed_by_revert(fix, log), self.URL)
+
+    def test_fix_of_other_run_or_without_revert_is_fine(self):
+        fix = [f"fix\n\nFixes-Staging: {self.URL}\n"]
+        self.assertIsNone(train.healed_by_revert(fix, ["Staging-Revert: https://x/runs/1\n"]))
+        self.assertIsNone(train.healed_by_revert(fix, ["plain commit\n"]))
+        self.assertIsNone(train.healed_by_revert(["no trailer\n"], [f"Staging-Revert: {self.URL}\n"]))
+
+
 class MainHelpTest(unittest.TestCase):
     """5а.1: `--help` и опечатка в аргументах не должны запускать настоящий land."""
 

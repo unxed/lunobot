@@ -1,5 +1,5 @@
 # CI — dn
 
-17-10-2026 09:48:52 Лунобот-1, main, коммит `ffe2ef9`, прогон [#770](https://github.com/unxed/dn/actions/runs/39022527666) — мерж unxed/dn#117; также dn-linux, dn-windows, layout, toolchain
+17-10-2026 10:15:04 Лунобот-1, main, коммит `da93735`, прогон [#772](https://github.com/unxed/dn/actions/runs/39024117737) — мерж unxed/dn#118; также dn-linux, dn-windows, layout, toolchain; не отменять (nightly)
 
-17-10-2026 09:52:10 Лунобот-1, тикет https://github.com/unxed/dn/issues/80 (часть: arvidavt.pas), PR [#118](https://github.com/unxed/dn/pull/118), коммит `86938e8`, прогон [#771](https://github.com/unxed/dn/actions/runs/39022717116) — dn; также dn-linux, dn-windows, class-migration
+17-10-2026 10:41:01 Лунобот-1, main, коммит `0687c9a`, прогон [#774](https://github.com/unxed/dn/actions/runs/39025803801) — мерж unxed/dn#119; также dn-linux, dn-windows, layout, toolchain; не отменять (nightly)
