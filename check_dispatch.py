@@ -96,10 +96,19 @@ def route_error(line):
 
 REF_URL = re.compile(r"github\.com/([\w.-]+)/([\w.-]+)/(?:issues|pull)/(\d+)")
 REF_SHORT = re.compile(r"(?<![\w./-])([\w.-]+)/([\w.-]+)#(\d+)")
-# «часть 3 из 4», а также «часть 5в» и «часть 5» без «из M»: ключ делится по части, поэтому и часть
-# с буквой (§ 5.1: 5а/5б/5в) обязана распознаваться (17-10-2026 «часть 5в» и «часть 5» одного тикета
-# дали ложную «гонку»: обе не разобрались и получили ключ «1/1»)
-PART_ANY = re.compile(r"часть (\d+[а-яa-z]?)(?: из (\d+))?")
+# «часть 3 из 4», а также «(часть 5в, …)» и «(часть 5, …)» без «из M»: ключ делится по части, поэтому и
+# часть с буквой (§ 5.1: 5а/5б/5в) обязана распознаваться (17-10-2026 «часть 5в» и «часть 5» одного тикета
+# дали ложную «гонку»: обе не разобрались и получили ключ «1/1»). Форма без «из M» признаётся только
+# в скобках «(часть N» — иначе зацепится посторонний текст («часть 2 PR»).
+PART_ANY = re.compile(r"(?:\(часть (\d+[а-яa-z]?)(?: из (\d+))?|часть (\d+) из (\d+))(?![\w])")
+
+
+def part_id(line):
+    """Номер части (с буквой) для сравнения частей: «3 из 4» и «3» — одна часть; нет части — None."""
+    m = PART_ANY.search(line)
+    return (m.group(1) or m.group(3)) if m else None
+
+
 # Инцидент без тикета: «красный поезд #1968», «красный main d5f1ef202» (§ 5 п. 2) — у него нет ссылки
 # на тикет, а чинить его одновременно двум сеансам незачем.
 INCIDENT = re.compile(r"красн\w*\s+(?:поезд\s*#(\d+)|main\s+([0-9a-f]{7,40})\b)", re.I)
@@ -135,8 +144,7 @@ def ci_refs(path):
     out = []
     for line in lines:
         if r := refs(line):
-            part = PART_ANY.search(line)
-            out.append((r, part.group(0) if part else None))
+            out.append((r, part_id(line)))
     return out
 
 
@@ -178,7 +186,7 @@ def parse(path):
                 key = custom.group(1).strip() if custom else None
                 if key and "взял" in line and "по §" not in body:
                     no_origin.append((n, line[:110]))
-            part = re.search(r"\(часть (\d+[а-яa-z]?)(?: из (\d+))?(?=[,)\s])", line)
+            part = PART_ANY.search(line)
             if not (ts and who and verb and key):
                 malformed.append((n, line[:110], {
                     "нет метки времени": not ts,
@@ -188,12 +196,15 @@ def parse(path):
                 }))
                 continue
             # часть не указана — значит единственная
-            part_key = (f"{part.group(1)}/{part.group(2)}" if part.group(2) else part.group(1)) if part else "1/1"
-            anypart = PART_ANY.search(line)
+            if part:
+                num, total = (part.group(1), part.group(2)) if part.group(1) else (part.group(3), part.group(4))
+                part_key = f"{num}/{total}" if total else num
+            else:
+                part_key = "1/1"
             entries.append({"line": n, "ts": datetime.strptime(ts.group(1), "%d-%m-%Y %H:%M:%S"),
                             "who": who.group(0), "node": who.group("node"), "num": who.group("num"),
                             "verb": verb, "refs": refs(line), "text": line,
-                            "part": anypart.group(0) if anypart else None,
+                            "part": part_id(line),
                             "route": (ROUTE_MARKER.search(line) or [None, None])[1],
                             "key": f"{key}#{part_key}",
                             "worker": (re.search(r"воркер\s+([0-9a-f]{6,})", line) or [None, None])[1]})
