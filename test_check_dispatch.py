@@ -229,6 +229,16 @@ class CiTest(unittest.TestCase):
                        "https://github.com/unxed/dn/issues/52 (часть 5 из 6) [pr]"], ci)
         self.assertNotIn("уже в CI.md", found)
 
+    def test_step_word_is_a_part_too(self):
+        # 17-10-2026: захват unxed/bp#27 «(шаг 2 из 3: …)» при «часть 2 из 3» в CI.md гейт не остановил
+        ci = self.CI.replace("issues/52,", "issues/52 (часть 2 из 3),")
+        found = kinds([f"14-10-2026 08:14:27 Я Лунобот-1 (node {OTHER}; LNX), взял задачу "
+                       "https://github.com/unxed/dn/issues/52 (шаг 2 из 3: workflow) [pr]"], ci)
+        self.assertIn("уже в CI.md", found)
+        found = kinds([f"14-10-2026 08:14:27 Я Лунобот-1 (node {OTHER}; LNX), взял задачу "
+                       "https://github.com/unxed/dn/issues/52 (шаг 3 из 3: документация) [pr]"], ci)
+        self.assertNotIn("уже в CI.md", found)
+
 
 class StrayAddedLineTest(unittest.TestCase):
     def stray(self, text):
