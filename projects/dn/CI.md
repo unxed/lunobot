@@ -1,1 +1,3 @@
 # CI — dn
+
+17-10-2026 20:41:29 Лунобот-2, тикет https://github.com/unxed/dn/issues/90 (Windows-проверка netproc), PR [#128](https://github.com/unxed/dn/pull/128), коммит `4245938`, прогоны [dn #39067720455](https://github.com/unxed/dn/actions/runs/39067720455), [dn-linux #39067720466](https://github.com/unxed/dn/actions/runs/39067720466), [dn-windows #39067720490](https://github.com/unxed/dn/actions/runs/39067720490), [class-migration #39067720546](https://github.com/unxed/dn/actions/runs/39067720546), [toolchain #39067716497](https://github.com/unxed/dn/actions/runs/39067716497), [layout #39067716517](https://github.com/unxed/dn/actions/runs/39067716517)
