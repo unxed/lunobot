@@ -8,3 +8,5 @@
 17-10-2026 20:57:20 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1148 (часть 1 из 2: лишние разделители Windows Registry) [land]
 
 17-10-2026 21:50:59 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2007 (часть 3: вставка файлов из Finder на macOS) [land]
+
+17-10-2026 22:06:08 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «синхронизировать TRIAGE.md с GitHub» по § 5 п. 4 [urgent: по § 5 п. 4 — учётный шаг без ветки и PR]
