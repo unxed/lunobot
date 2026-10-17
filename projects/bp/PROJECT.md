@@ -10,7 +10,7 @@
 - Режим публикации: PR
 - Отладка GitHub CI: да
 - Диагностические workflow: `ci.yml`, `fpide.yml`, `fpide-accept.yml`; отдельного `sandbox.yml` нет
-- Обязательная проверка: `ci.yml` на SHA PR; при изменениях в `fpide/**` — ещё `fpide.yml` и `fpide-accept.yml`
+- Обязательная проверка: `ci.yml` на SHA PR (прогон события `pull_request`); при изменениях в `fpide/**` — ещё `fpide.yml` и `fpide-accept.yml` (тоже `pull_request`). `push` в `ci.yml`, `fpide.yml` и `fpide-accept.yml` ограничен веткой `main` (unxed/bp#27, 17-10-2026): один коммит ветки PR даёт по одному прогону каждого workflow, а не два; прогоны `push` в `main` идут после мержа.
 - Особенности: лицензионные правила `CLAUDE.md` репозитория важнее всего остального (код IDE остаётся под GPL; tve и tv3 —
   без GPL/RIT кода). Для fpide есть правила в `.cursor/rules/fpide-full-port.mdc`. Сводный план работ — `docs/HANDOFF.md`
   в unxed/dn.
