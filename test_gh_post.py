@@ -78,6 +78,11 @@ class SignatureLanguageTest(unittest.TestCase):
         text = self.EN + " `исправление`\nhttps://example.com/пробуйте\n```\nпример на русском языке в блоке кода\n```\n\n*Lunobot-1 (node a; LNX)*"
         self.assertEqual(gh_post.check_signature(text), "")
 
+    def test_verbatim_quotes_do_not_decide_the_language(self):
+        quote = "<details><summary>Full text</summary>\n\n" + "Architectural proposals for the module, quoted verbatim. " * 20 + "\n\n</details>"
+        text = self.RU + "\n\n" + quote + "\n\n> " + self.EN + "\n\n*Лунобот-1 (node a; LNX)*"
+        self.assertEqual(gh_post.check_signature(text), "")
+
     def test_gate_rejects_wrong_signature_with_code_2(self):
         with TemporaryDirectory() as d:
             path = Path(d) / "t.md"

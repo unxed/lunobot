@@ -83,6 +83,7 @@ def check_text(text):
 
 SIGNATURE = re.compile(r"^\*(Лунобот|Lunobot)-\d[^\n]*\*\s*$", re.M)
 URL = re.compile(r"https?://\S+")
+QUOTED = re.compile(r"(?s:<details>.*?</details>)|^>.*$", re.M)
 CYRILLIC_SHARE = 0.3
 
 
@@ -97,7 +98,8 @@ def check_signature(text):
     if not matches:
         return ""
     sig = matches[-1]
-    body = URL.sub(" ", prose(text[:sig.start()]))
+    # Дословные вставки (<details>…</details>, цитаты «> …») не решают язык: пересказ чужого текста ≠ язык сообщения.
+    body = URL.sub(" ", QUOTED.sub(" ", prose(text[:sig.start()])))
     cyrillic = sum("\u0400" <= ch <= "\u04ff" for ch in body)
     letters = sum(ch.isalpha() for ch in body)
     if letters < 20:
