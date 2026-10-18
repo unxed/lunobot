@@ -10,3 +10,5 @@
 18-10-2026 22:08:41 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/378 [land]
 
 18-10-2026 22:35:15 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a2b325b4), взял задачу https://github.com/unxed/f4/issues/1255 (ответ автора про команды в sudo-папке) [land]
+
+18-10-2026 22:35:19 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер ae42ef51), взял кастомную задачу «review жалобы unxed/lunobot PR 196» по § 12 [urgent: по § 12 — review жалобы перед вливанием]
