@@ -269,7 +269,21 @@ def main():
 MOJIBAKE_DAYS = 7
 
 
-def body_rows(repo, since):
+def trusted_author():
+    """Логин, под которым боты пишут на GitHub: строка «Автор доверенных тикетов» в OWNER_QUEUE.md.
+
+    Править можно только свои тексты: текст человека («???????» в тикете о порче кодировки,
+    unxed/f4#2057, 18-10-2026) исказили не боты, и чинить его нельзя. Нет файла или строки — None
+    (фильтра нет)."""
+    try:
+        text = (Path(__file__).resolve().parent / "OWNER_QUEUE.md").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    m = re.search(r"^Автор доверенных тикетов:\s*(\S+)", text, re.M)
+    return m.group(1) if m else None
+
+
+def body_rows(repo, since, author=None):
     """Испорченные тела тикетов и PR, обновлённых за окно (`issues` отдаёт и PR).
 
     Тело тикета или PR портится тем же путём, что и комментарий (однобайтовая кодовая
@@ -285,6 +299,8 @@ def body_rows(repo, since):
     rows = []
     for it in items:
         if it.get("user", {}).get("type") == "Bot":
+            continue
+        if author and it.get("user", {}).get("login") != author:
             continue
         reason = check_text(it.get("body") or "")
         if not reason or reason == "текст пуст":
@@ -309,15 +325,18 @@ def mojibake(project_dir, repo):
     if comments is None:
         print(f"{repo}: нет доступа к комментариям, проверка кодировки пропущена", file=sys.stderr)
         return
+    author = trusted_author()
     rows = []
     for c in comments:
         if c.get("user", {}).get("type") == "Bot":
+            continue
+        if author and c.get("user", {}).get("login") != author:
             continue
         reason = check_text(c.get("body") or "")
         if reason and reason != "текст пуст":
             rows.append(f"- {c['html_url']} (id {c['id']}, {c['user']['login']}, "
                         f"{c['created_at']}): {reason}")
-    rows += body_rows(repo, since)
+    rows += body_rows(repo, since, author)
     f = project_dir / "MOJIBAKE.md"
     if not rows:
         if f.exists():
