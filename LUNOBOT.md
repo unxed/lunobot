@@ -1401,6 +1401,8 @@ PR Лунобота задачей не является никогда, кро�
    красной песочницы (`internal/winex11drag/wineconn.go`, 17-10-2026: лишний круг песочницы на одной строке).
    Так же `staticcheck` QF1001 красит `if !(a < b && b < c)` даже в тесте: пиши отрицание раскрытым (`a >= b || b >= c`) сразу
    (`plugins/archive/add_dialog_save_settings_test.go`, f4#2002 часть 8, 18-10-2026: лишний круг песочницы на одной строке).
+   Так же `gosec` G115 красит `rune(x)` от `uint64` (поле `CharInfo.Char`, переменные `vtui.ScrollUpArrow`/`vtui.ScrollDownArrow`): в тестах f4 пиши `testutil.Rune(x)` (`internal/testutil/numeric.go`) сразу
+   (`internal/dialog/attributes_ntfs_flags_test.go`, f4#1931 часть 8, 18-10-2026: Linux-песочница красная на двух строках, лишний круг).
    В проекте с `Отладка GitHub CI: да` локально — только gofmt/langfmt, никаких
    go build/vet/test и golangci-lint; менеджер не вправе дать воркеру исключение.
    «Свои пакеты» — это и пакеты, чьи тесты зовут то, что ты меняешь. Меняешь текст или формат,
