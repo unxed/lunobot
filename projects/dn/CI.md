@@ -1,5 +1,3 @@
 # CI — dn
 
-18-10-2026 04:06:29 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main после PR unxed/dn#134 (отставал от main, новая комбинация), коммит `aed0f5a`, прогоны [#39095880713](https://github.com/unxed/dn/actions/runs/39095880713), [#39095880624](https://github.com/unxed/dn/actions/runs/39095880624), [#39095880609](https://github.com/unxed/dn/actions/runs/39095880609), [#39095880699](https://github.com/unxed/dn/actions/runs/39095880699), [#39095880636](https://github.com/unxed/dn/actions/runs/39095880636)
-
 18-10-2026 04:08:44 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/dn/issues/80 (часть paneldlgs.pas MakeDialog), PR [#135](https://github.com/unxed/dn/pull/135), коммит `26676292`, проверки dn [#39096048128](https://github.com/unxed/dn/actions/runs/39096048128), dn-linux [#39096048129](https://github.com/unxed/dn/actions/runs/39096048129), dn-windows [#39096048121](https://github.com/unxed/dn/actions/runs/39096048121), class-migration [#39096048137](https://github.com/unxed/dn/actions/runs/39096048137)
