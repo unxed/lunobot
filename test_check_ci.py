@@ -49,5 +49,19 @@ class EmptyLinkTest(unittest.TestCase):
             self.assertEqual(kinds(ok), [])
 
 
+class ShortTimestampTest(unittest.TestCase):
+    SHORT = ("18-10-2026 13:21 UTC (\u041b\u0443\u043d\u043e\u0431\u043e\u0442-1, node 801452e4fd3b9a26f8e6f02c; LNX): "
+             "PR https://github.com/unxed/dn/pull/140")
+
+    def test_short_timestamp_before_first_valid_row_is_a_problem(self):
+        self.assertEqual(kinds(self.SHORT), ["\u043c\u0435\u0442\u043a\u0430 \u0431\u0435\u0437 \u0441\u0435\u043a\u0443\u043d\u0434"])
+
+    def test_short_timestamp_after_valid_row_is_a_problem(self):
+        self.assertEqual(kinds(OK + "\n\n" + self.SHORT), ["\u043c\u0435\u0442\u043a\u0430 \u0431\u0435\u0437 \u0441\u0435\u043a\u0443\u043d\u0434"])
+
+    def test_plain_preamble_is_still_fine(self):
+        self.assertEqual(kinds("\u041f\u0440\u043e\u0433\u043e\u043d\u044b, \u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u0437\u0430\u043f\u0443\u0449\u0435\u043d\u044b.\n\n" + OK), [])
+
+
 if __name__ == "__main__":
     unittest.main()
