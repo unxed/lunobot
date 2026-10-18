@@ -21,7 +21,8 @@ def fake_gh_all(comments, issues):
 class MojibakeBodies(unittest.TestCase):
     def run_janitor(self, comments, issues):
         with tempfile.TemporaryDirectory() as d, \
-                mock.patch.object(janitor, "gh_all", fake_gh_all(comments, issues)):
+                mock.patch.object(janitor, "gh_all", fake_gh_all(comments, issues)), \
+                mock.patch.object(janitor, "trusted_author", lambda: getattr(self, "author", None)):
             janitor.mojibake(Path(d), "o/r")
             f = Path(d) / "MOJIBAKE.md"
             return f.read_text(encoding="utf-8") if f.exists() else None
@@ -47,6 +48,29 @@ class MojibakeBodies(unittest.TestCase):
         self.assertNotIn("gh api -X PATCH", text)
         self.assertNotIn("/issues/8", text)
         self.assertNotIn("/issues/9", text)
+
+    def test_only_trusted_author_texts_reported(self):
+        issues = [
+            {"number": 1, "html_url": "https://github.com/o/r/issues/1", "body": BAD,
+             "user": {"login": "owner", "type": "User"}, "updated_at": "t"},
+            {"number": 2, "html_url": "https://github.com/o/r/issues/2", "body": BAD,
+             "user": {"login": "reporter", "type": "User"}, "updated_at": "t"},
+        ]
+        comments = [
+            {"id": 5, "html_url": "https://github.com/o/r/issues/2#c5", "body": BAD,
+             "user": {"login": "reporter", "type": "User"}, "created_at": "t"},
+            {"id": 6, "html_url": "https://github.com/o/r/issues/2#c6", "body": BAD,
+             "user": {"login": "owner", "type": "User"}, "created_at": "t"},
+        ]
+        self.author = "owner"
+        text = self.run_janitor(comments, issues)
+        self.assertIn("/issues/1", text)
+        self.assertIn("#c6", text)
+        self.assertNotIn("/issues/2 ", text)
+        self.assertNotIn("#c5", text)
+
+    def test_trusted_author_read_from_owner_queue(self):
+        self.assertTrue(janitor.trusted_author())
 
     def test_clean_bodies_no_file(self):
         issues = [{"number": 1, "html_url": "u", "body": "Всё хорошо.",
