@@ -61,6 +61,46 @@ class RemainderTest(unittest.TestCase):
         self.assertIsNone(status_todo.remainder("## Осталось\n\n## Журнал\nx\n"))
         self.assertIsNone(status_todo.remainder("## Осталось\n1. ✓ всё\n"))
 
+    # Тексты ниже — выдержки из реальных status-файлов (projects/dn/status/80.md, projects/f4/status/1998.md).
+    DN80 = (
+        "## Осталось (одна часть за круг, файл за файлом)\n\n"
+        "1. (сделано 17-10-2026: `uucode.pas` влит в unxed/dn#126.)\n"
+        "2. Последняя часть: включить сканер в CI со списком допустимых (см. выше), когда остальные перенесены.\n\n"
+        "18-10-2026 04:05:54 UTC (Лунобот-2): PR unxed/dn#134 зелёный, но база устарела; PR не влит.\n"
+        "Осталось: после освобождения общего слота обновить PR на актуальный main, пройти обязательные проверки и затем влить.\n"
+        "18-10-2026 05:54 UTC (Лунобот-1): часть влита (unxed/dn#137). Осталось в `--reads` по `filecopy.pas`: `TryToReset`, `DoSkip`; "
+        "затем сканер в CI со списком допустимых.\n\n"
+        "18-10-2026 15:02 UTC (Лунобот-2): `TryToReset` перенесён. PR ещё не запускались. "
+        "Осталось: после освобождения слота запушить ветку, открыть PR и пройти `dn.yml`.\n")
+
+    def test_dn80_waiting_for_ci_slot_keeps_scanner_part(self):
+        # unxed/dn#80: последняя запись — ожидание свободного слота CI; устаревший «обновить PR» не выдаётся
+        got = status_todo.remainder(self.DN80)
+        self.assertTrue(got.startswith("Последняя часть: включить сканер в CI"), got)
+        self.assertIsNone(status_todo.remainder(self.DN80.split("2. Последняя")[0]))  # без общего остатка — нечего выдавать
+
+    F4_1998 = (
+        "Часть 1 (приземлена в staging).\n\n"
+        "Осталось/Дальше: единые границы «атомарной операции» (квик-вью/F3) при необходимости сбрасывать отказ раньше; проверка на macOS.\n\n"
+        "## Часть 6 — отдельные подсчёты должны начинать новый sudo scope\n"
+        "18-10-2026 12:24:06 UTC (Лунобот-2): добавлен регрессионный тест; коммит `e6773cdd` в клоне.\n"
+        "Осталось/Дальше: запустить sandbox `go test ./vfs/` на точном SHA, затем выполнить `train.py land`.\n"
+        "Осталось/Дальше: часть 6 приземлена в staging; она попадёт в main через поезд. Следующая проверка — штатный tick/поезд.\n")
+
+    def test_f4_1998_landed_part_falls_back_to_general_remainder(self):
+        # unxed/f4#1998: «приземлена в staging … через поезд» — рутина § 7.2 п. 4, остаток общий
+        got = status_todo.remainder(self.F4_1998)
+        self.assertTrue(got.startswith("единые границы «атомарной операции»"), got)
+
+    def test_live_part_is_not_lost_and_other_routine_is_unchanged(self):
+        # unxed/goWidgets#13: живая «часть 6» остаётся; последняя запись без ожидания рутины побеждает первую
+        text = "Осталось: часть 5 — устарела.\n\n## Дальше\nчасть 6 — FastStone UX parity, отдельными шагами по одной возможности.\n"
+        self.assertEqual(status_todo.remainder(text), "часть 6 — FastStone UX parity, отдельными шагами по одной возможности.")
+        # приземлена, но без «попадёт в main» — как unxed/f4#285 — остаётся выдачей как раньше
+        self.assertTrue(status_todo.remainder("Осталось: Часть 3б приземлена (`9de7` в staging). После зелёного поезда — «Пробуйте!».\n"))
+        # единственная секция с ожиданием слота — выдавать нечего, а не устаревшее «обновить PR»
+        self.assertIsNone(status_todo.remainder("Осталось: после освобождения общего слота обновить PR.\n"))
+
     def test_short_cuts_long_lines(self):
         got = status_todo.short("а" * 300)
         self.assertEqual(len(got), 160)
