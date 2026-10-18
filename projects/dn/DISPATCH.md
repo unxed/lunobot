@@ -4,5 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 18-10-2026 15:01:44 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/80 (filecopy.pas: TryToReset и RewriteWriteStrem) [pr]
-
-18-10-2026 15:47:32 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «влить зелёный PR https://github.com/unxed/dn/pull/140 (шаги 5б и 5в), разнести «Пробуйте!», убрать за автором» по § 5 п. 3 [urgent: по § 5 п. 3 — зелёный PR из CI.md]
