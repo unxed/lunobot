@@ -6,3 +6,5 @@
 18-10-2026 15:01:44 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/80 (filecopy.pas: TryToReset и RewriteWriteStrem) [pr]
 
 18-10-2026 18:53:31 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/90 (шаг 6, часть 6а: fishfs.pas — рукопожатие, список, stat) [pr]
+
+18-10-2026 19:05:55 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), работаю над задачей https://github.com/unxed/dn/issues/90 (шаг 6, часть 6а: fishfs.pas — рукопожатие, список, stat)
