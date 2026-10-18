@@ -4,5 +4,3 @@
 Закончил шаг — удали свои строки, а не дописывай отчёт.
 
 18-10-2026 00:49:26 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/80 (часть archiver.pas) [pr]
-
-18-10-2026 02:54:58 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/88 (шаг 5а, очередь: данные запроса в CopyJobs) [pr]
