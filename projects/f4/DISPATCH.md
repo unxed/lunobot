@@ -10,5 +10,3 @@
 18-10-2026 22:08:41 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/378 [land]
 
 18-10-2026 22:10:05 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1931 (часть 8: довести припаркованный коммит 44a1a73) [land]
-
-18-10-2026 22:14:22 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «review жалобы unxed/lunobot PR 197» по § 12 [urgent: по § 12 — review жалобы перед вливанием]
