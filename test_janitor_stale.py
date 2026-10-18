@@ -42,6 +42,35 @@ class HardStale(unittest.TestCase):
                 "(припаркованный коммит 53675ad) [pr]")
         self.assertEqual(janitor.hard_stale([b], NOW), [])
 
+    def test_urgent_row_goes_stale_after_45_minutes(self):
+        b = row("16-10-2026 16:10:00", "взял кастомную задачу «красный staging f4» по § 5 п. 2 "
+                "[urgent: по § 5 п. 2 — красный staging]")
+        self.assertEqual(janitor.hard_stale([b], NOW), [b])
+
+    def test_urgent_row_younger_than_45_minutes_is_kept(self):
+        b = row("16-10-2026 16:30:00", "взял кастомную задачу «красный staging f4» по § 5 п. 2 "
+                "[urgent: по § 5 п. 2 — красный staging]")
+        self.assertEqual(janitor.hard_stale([b], NOW), [])
+
+    def test_urgent_row_is_extended_by_keepalive(self):
+        old = row("16-10-2026 15:00:00", "взял кастомную задачу «красный main» по § 5 п. 2 "
+                  "[urgent: по § 5 п. 2 — красный main]")
+        alive = row("16-10-2026 16:40:00", "работаю над кастомной задачей «красный main»")
+        self.assertEqual(janitor.hard_stale([old, alive], NOW), [])
+
+    def test_urgent_limit_is_strict_and_any_row_of_the_key_makes_it_urgent(self):
+        mark = "взял кастомную задачу «красный main» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]"
+        exactly = row("16-10-2026 16:15:00", mark)
+        self.assertEqual(janitor.hard_stale([exactly], NOW), [])
+        old = row("16-10-2026 15:00:00", mark)
+        plain = row("16-10-2026 15:20:00", "работаю над кастомной задачей «красный main»")
+        self.assertEqual(janitor.hard_stale([old, plain], NOW), [old, plain])
+
+    def test_other_urgent_reason_keeps_the_long_limit(self):
+        b = row("16-10-2026 14:30:00", "взял кастомную задачу «довести PR» по § 5 п. 3 "
+                "[urgent: по § 5 п. 3 — зрелая строка CI.md]")
+        self.assertEqual(janitor.hard_stale([b], NOW), [])
+
     def test_non_capture_lines_are_ignored(self):
         b = "16-10-2026 10:00:00 Я Лунобот-1, объявляю заморозку land проекта f4"
         self.assertEqual(janitor.hard_stale([b], NOW), [])

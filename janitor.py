@@ -30,6 +30,11 @@ SILENT_MIN = 90
 # живость узла (ниже) не отличает бота от воркера, умершего давно (16-10-2026: четыре строки
 # 3–6 часов висели, пока на узле работал другой бот).
 HARD_SILENT_MIN = 240
+# Срочный захват по § 5 п. 2 («красный staging», «красный main», «застой main») держит весь конвейер, поэтому его срок короче: 18-10-2026
+# захват «красный staging f4» воркера, умершего в 18:31, жил бы до 22:31 (узел живой), хотя причина — одна строка — была известна в 19:11,
+# а порог инцидента процесса — два часа. Воркер, который чинит дольше, продлевает строку keepalive («работаю над …», § 8).
+URGENT_SILENT_MIN = 45
+URGENT_MARK = "по § 5 п. 2"
 TS = r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})"
 WHO = r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]+); ([A-Z]{3})(?:; [^)]*)?\)"
 DRY = "--dry-run" in sys.argv
@@ -150,9 +155,11 @@ def row_key(block):
 
 
 def hard_stale(blocks_, now):
-    """Блоки захватов, чей ключ не продлевался дольше HARD_SILENT_MIN минут (метки — UTC, § 8).
+    """Блоки захватов, чей ключ не продлевался дольше HARD_SILENT_MIN минут (метки — UTC, § 8);
+    для срочных по § 5 п. 2 — дольше URGENT_SILENT_MIN.
     Продление — любая более поздняя строка с тем же ключом (keepalive «работаю над …»)."""
     latest = {}
+    urgent = set()
     for b in blocks_:
         ts_m = re.match(TS, b.strip())
         key = row_key(b)
@@ -161,10 +168,15 @@ def hard_stale(blocks_, now):
         ts = datetime.strptime(ts_m.group(1), "%d-%m-%Y %H:%M:%S").replace(
             tzinfo=timezone.utc).timestamp()
         latest[key] = max(latest.get(key, 0), ts)
+        if URGENT_MARK in b:
+            urgent.add(key)
+    def limit(key):
+        return URGENT_SILENT_MIN if key in urgent else HARD_SILENT_MIN
+
     # строка с припаркованным коммитом (§ 1) живёт, пока коммит не приземлят
     return [b for b in blocks_
             if re.search(WHO, b) and "припаркован" not in b and row_key(b) in latest
-            and (now - latest[row_key(b)]) / 60 > HARD_SILENT_MIN]
+            and (now - latest[row_key(b)]) / 60 > limit(row_key(b))]
 
 
 def save(path, kept, removed, what):
@@ -224,7 +236,7 @@ def main():
                 silent = (now - ts) / 60 if ts else SILENT_MIN + 1
                 (gone if silent > SILENT_MIN else kept).append(b)
             total += save(f, kept, gone, f"владелец молчит дольше {SILENT_MIN} мин или строку не "
-                          f"продлевали дольше {HARD_SILENT_MIN} мин")
+                          f"продлевали дольше {HARD_SILENT_MIN} мин ({URGENT_SILENT_MIN} мин у срочных по § 5 п. 2)")
 
         # 2. очередь CI: PR уже влит или закрыт
         f = d / "CI.md"
