@@ -689,6 +689,75 @@ class MainCancelledRunTest(unittest.TestCase):
             self.assertEqual(train.main_ci("o/r"), 0)
         self.assertIn(("repos/o/r/actions/runs/7/rerun", ("-X", "POST")), calls)
 
+    def _merge_api(self, calls, parent_trees=("T", "X"), parent_runs=None, merge_tree="T", parents=("p1", "p2")):
+        base = self._fake_api(1, calls)
+        parent_runs = parent_runs if parent_runs is not None else [
+            {"name": "CI", "status": "completed", "conclusion": "success"},
+            {"name": "quick", "status": "completed", "conclusion": "failure"}]
+
+        def api(path, *args, check=True):
+            if path == "repos/o/r/commits/abc123def":
+                return {"commit": {"tree": {"sha": merge_tree}}, "parents": [{"sha": s} for s in parents]}
+            if path == "repos/o/r/commits/p1":
+                return {"commit": {"tree": {"sha": parent_trees[0]}}, "parents": []}
+            if path == "repos/o/r/commits/p2":
+                return {"commit": {"tree": {"sha": parent_trees[1]}}, "parents": []}
+            if path.startswith("repos/o/r/actions/runs?head_sha=p"):
+                calls.append((path, args))
+                return {"workflow_runs": parent_runs}
+            return base(path, *args, check=check)
+        return api
+
+    def _run_merge(self, **kw):
+        calls = []
+        with mock.patch.object(train, "api", side_effect=self._merge_api(calls, **kw)), \
+                mock.patch("builtins.print") as pr:
+            rc = train.main_ci("o/r")
+        reran = any(p.endswith("/rerun") for p, _ in calls)
+        return rc, reran, [str(c.args[0]) for c in pr.call_args_list]
+
+    def test_cancelled_merge_commit_with_green_parent_tree_is_not_rerun(self):
+        rc, reran, out = self._run_merge()
+        self.assertEqual(rc, 0)
+        self.assertFalse(reran)
+        self.assertIn("main abc123def: прогон отменён, но дерево совпадает с зелёным p1 — повтор не нужен", out)
+
+    def test_cancelled_merge_commit_second_parent_green(self):
+        rc, reran, _ = self._run_merge(parent_trees=("X", "T"))
+        self.assertEqual(rc, 0)
+        self.assertFalse(reran)
+
+    def test_cancelled_merge_commit_tree_differs_is_rerun(self):
+        _, reran, _ = self._run_merge(merge_tree="OTHER")
+        self.assertTrue(reran)
+
+    def test_cancelled_merge_commit_parent_not_green_is_rerun(self):
+        for runs in ([], [{"name": "CI", "status": "completed", "conclusion": "failure"}],
+                     [{"name": "CI", "status": "in_progress", "conclusion": None}],
+                     [{"name": "CI", "status": "completed", "conclusion": "success"},
+                      {"name": "CI", "status": "completed", "conclusion": "cancelled"}],
+                     [{"name": "CI", "status": "completed", "conclusion": "skipped"}],
+                     [{"name": "quick", "status": "completed", "conclusion": "success"}]):
+            with self.subTest(runs=runs):
+                _, reran, _ = self._run_merge(parent_runs=runs)
+                self.assertTrue(reran)
+
+    def test_cancelled_non_merge_commit_is_rerun(self):
+        _, reran, _ = self._run_merge(parents=("p1",))
+        self.assertTrue(reran)
+
+    def test_cancelled_merge_commit_api_error_is_rerun(self):
+        calls = []
+        merge_api = self._merge_api(calls)
+
+        def broken(path, *args, check=True):
+            if path.startswith("repos/o/r/commits/"):
+                return {"message": "Server Error"}
+            return merge_api(path, *args, check=check)
+        with mock.patch.object(train, "api", side_effect=broken):
+            self.assertEqual(train.main_ci("o/r"), 0)
+        self.assertTrue(any(p.endswith("/rerun") for p, _ in calls))
+
     def test_cancelled_again_is_not_rerun_forever(self):
         calls = []
         with mock.patch.object(train, "api", side_effect=self._fake_api(2, calls)):
