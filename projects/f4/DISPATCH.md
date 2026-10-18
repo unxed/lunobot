@@ -12,3 +12,5 @@
 18-10-2026 17:15:45 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), работаю над задачей https://github.com/unxed/f4/issues/2076
 
 18-10-2026 17:34:42 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2071 (часть Tango Dark из комментария автора) [land]
+
+18-10-2026 17:39:50 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «review жалобы unxed/lunobot PR 189» по § 12 [urgent: по § 12 — review жалобы перед вливанием]
