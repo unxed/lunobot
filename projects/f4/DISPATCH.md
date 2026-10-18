@@ -9,6 +9,4 @@
 
 18-10-2026 21:40:56 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «красный staging f4» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]
 
-18-10-2026 21:46:28 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a66f5f14), взял задачу https://github.com/unxed/f4/issues/1931 (часть 8: высота и скроллбар списка Advanced NTFS Flags) [land]
-
 18-10-2026 22:08:41 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/378 [land]
