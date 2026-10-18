@@ -1,8 +1,3 @@
 # CI — dn
 
-18-10-2026 20:25:38 Лунобот-2, тикет https://github.com/unxed/dn/issues/90 (часть 6в), PR [#148](https://github.com/unxed/dn/pull/148), коммит `00b3eff`, прогоны [dn #39163222659](https://github.com/unxed/dn/actions/runs/39163222659), [dn-linux #39163222615](https://github.com/unxed/dn/actions/runs/39163222615), [dn-windows #39163222654](https://github.com/unxed/dn/actions/runs/39163222654), [class-migration #39163222684](https://github.com/unxed/dn/actions/runs/39163222684)
-
-18-10-2026 20:34:40 Лунобот-2, тикет https://github.com/unxed/dn/issues/90 (часть 6в), PR [#148](https://github.com/unxed/dn/pull/148), коммит `869d627`, прогоны [dn #39163934960](https://github.com/unxed/dn/actions/runs/39163934960), [dn-linux #39163934912](https://github.com/unxed/dn/actions/runs/39163934912), [dn-windows #39163934899](https://github.com/unxed/dn/actions/runs/39163934899), [class-migration #39163934958](https://github.com/unxed/dn/actions/runs/39163934958)
-
-18-10-2026 21:00:38 Лунобот-2, тикет https://github.com/unxed/dn/issues/90 (часть 6в), PR [#148](https://github.com/unxed/dn/pull/148), коммит a37fdf3, прогоны [dn #841](https://github.com/unxed/dn/actions/runs/39165882638), [dn-linux #874](https://github.com/unxed/dn/actions/runs/39165882563), [dn-windows #760](https://github.com/unxed/dn/actions/runs/39165882577), [class-migration #226](https://github.com/unxed/dn/actions/runs/39165882612), [layout #764](https://github.com/unxed/dn/actions/runs/39165877115), [toolchain #337](https://github.com/unxed/dn/actions/runs/39165877192)
 18-10-2026 21:52 UTC (Лунобот-1, node 801452e4fd3b9a26f8e6f02c; LNX): PR https://github.com/unxed/dn/pull/148 (8291fb8): class-migration 39169115577,dn-windows 39169115411,dn-linux 39169115418,dn 39169115460,
