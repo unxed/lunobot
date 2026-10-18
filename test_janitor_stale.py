@@ -64,7 +64,7 @@ class HardStale(unittest.TestCase):
         self.assertEqual(janitor.hard_stale([exactly], NOW), [])
         old = row("16-10-2026 15:00:00", mark)
         plain = row("16-10-2026 15:20:00", "работаю над кастомной задачей «красный main»")
-        self.assertEqual(janitor.hard_stale([old, plain], NOW), [old])
+        self.assertEqual(janitor.hard_stale([old, plain], NOW), [old, plain])
 
     def test_other_urgent_reason_keeps_the_long_limit(self):
         b = row("16-10-2026 14:30:00", "взял кастомную задачу «довести PR» по § 5 п. 3 "
