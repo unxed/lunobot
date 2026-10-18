@@ -60,6 +60,38 @@ class CheckTextTest(unittest.TestCase):
             self.assertEqual(gh_post.gate(str(path)), "Привет, всё в порядке.")
 
 
+class SignatureLanguageTest(unittest.TestCase):
+    RU = "Исправление войдёт в main со следующим поездом, «Пробуйте!» будет отдельным комментарием позже."
+    EN = "The fix will land in main with the next train; a separate comment will say when it can be tried."
+
+    def test_signature_must_match_text_language(self):
+        self.assertEqual(gh_post.check_signature(self.RU + "\n\n*Лунобот-1 (node a; LNX; Claude Sonnet 5)*"), "")
+        self.assertEqual(gh_post.check_signature(self.EN + "\n\n*Lunobot-1 (node a; LNX; Claude Sonnet 5)*"), "")
+        self.assertIn("латиницей", gh_post.check_signature(self.RU + "\n\n*Lunobot-1 (node a; LNX)*"))
+        self.assertIn("кириллицей", gh_post.check_signature(self.EN + "\n\n*Лунобот-2 (node a; LNX)*"))
+
+    def test_text_without_signature_or_with_little_prose_is_not_checked(self):
+        self.assertEqual(gh_post.check_signature(self.RU), "")
+        self.assertEqual(gh_post.check_signature("Готово.\n\n*Lunobot-1 (node a; LNX)*"), "")
+
+    def test_code_and_links_do_not_decide_the_language(self):
+        text = self.EN + " `исправление`\nhttps://example.com/пробуйте\n```\nпример на русском языке в блоке кода\n```\n\n*Lunobot-1 (node a; LNX)*"
+        self.assertEqual(gh_post.check_signature(text), "")
+
+    def test_verbatim_quotes_do_not_decide_the_language(self):
+        quote = "<details><summary>Full text</summary>\n\n" + "Architectural proposals for the module, quoted verbatim. " * 20 + "\n\n</details>"
+        text = self.RU + "\n\n" + quote + "\n\n> " + self.EN + "\n\n*Лунобот-1 (node a; LNX)*"
+        self.assertEqual(gh_post.check_signature(text), "")
+
+    def test_gate_rejects_wrong_signature_with_code_2(self):
+        with TemporaryDirectory() as d:
+            path = Path(d) / "t.md"
+            path.write_text(self.RU + "\n\n*Lunobot-1 (node a; LNX)*\n", encoding="utf-8", newline="")
+            with self.assertRaises(SystemExit) as err:
+                gh_post.gate(str(path))
+            self.assertEqual(err.exception.code, 2)
+
+
 class VerifyTest(unittest.TestCase):
     def test_comment_that_arrived_broken_is_rewritten_then_deleted(self):
         calls = []

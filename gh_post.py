@@ -81,6 +81,37 @@ def check_text(text):
     return ""
 
 
+SIGNATURE = re.compile(r"^\*(Лунобот|Lunobot)-\d[^\n]*\*\s*$", re.M)
+URL = re.compile(r"https?://\S+")
+QUOTED = re.compile(r"(?s:<details>.*?</details>)|^>.*$", re.M)
+CYRILLIC_SHARE = 0.3
+
+
+def check_signature(text):
+    """Причина отказа или пустая строка: написание подписи (§ 9) обязано совпадать с языком текста.
+
+    Проверяется только подпись бота последней строкой тела. Язык текста — русский, если кириллица составляет не
+    меньше трети его букв вне кода и ссылок; иначе — латиница. Текст без подписи не проверяется (подпись нужна не
+    везде), `scan` janitor это правило не применяет: оно только для отправки новых текстов.
+    """
+    matches = list(SIGNATURE.finditer(text))
+    if not matches:
+        return ""
+    sig = matches[-1]
+    # Дословные вставки (<details>…</details>, цитаты «> …») не решают язык: пересказ чужого текста ≠ язык сообщения.
+    body = URL.sub(" ", QUOTED.sub(" ", prose(text[:sig.start()])))
+    cyrillic = sum("\u0400" <= ch <= "\u04ff" for ch in body)
+    letters = sum(ch.isalpha() for ch in body)
+    if letters < 20:
+        return ""
+    russian = cyrillic >= CYRILLIC_SHARE * letters
+    if russian and sig.group(1) != "Лунобот":
+        return "текст русский, а подпись латиницей «Lunobot»: подпись пишется на языке текста (LUNOBOT.md § 9)"
+    if not russian and sig.group(1) != "Lunobot":
+        return "текст не русский, а подпись кириллицей «Лунобот»: подпись пишется на языке текста (LUNOBOT.md § 9)"
+    return ""
+
+
 def read_text(path):
     with open(path, "rb") as f:
         raw = f.read()
@@ -134,7 +165,7 @@ def api(path, *args, check=True):
 
 def gate(path):
     text = read_text(path)
-    reason = check_text(text)
+    reason = check_text(text) or check_signature(text)
     if reason:
         print(f"отклонено: {reason}. {GATE_MESSAGE}", file=sys.stderr)
         raise SystemExit(2)
