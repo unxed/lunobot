@@ -12,3 +12,5 @@
 18-10-2026 16:11:38 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2071 (часть 3б': переводы поля Theme в lng) [land]
 
 18-10-2026 16:17:42 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a3fe4248), взял кастомную задачу «review жалобы unxed/lunobot PR 188» по § 12 [urgent: по § 12 — review жалобы перед вливанием]
+
+18-10-2026 16:19:59 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1894 [urgent: по § 7.2 п. 4 — разнос «Пробуйте!»]
