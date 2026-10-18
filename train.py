@@ -1422,6 +1422,37 @@ def stuck(repo):
     return 0
 
 
+def cancelled_main_is_expected(repo, head):
+    """Отмена прогона вершины main ожидаема: вершина — merge-коммит, чьё дерево совпадает с
+    деревом одного из родителей, а на этом родителе все прогоны полной матрицы завершены
+    `success`/`skipped` (хотя бы один `success`). Это ручной мерж зелёного актуального PR по
+    § 7.3 («результат мерж-коммита известен, отмени свежесозданный прогон»): тот же код уже
+    проверен, повторять ~50 job'ов незачем (18-10-2026, unxed/f4#2083: merge-коммит 37fe96df8,
+    прогон 39162354404 отменён по § 7.3, `health` перезапустил его). Возвращает sha зелёного
+    родителя или None; любое сомнение (ошибка API, нет родителей, дерево не совпало, нет
+    зелёного прогона) — None, то есть прежнее поведение (rerun)."""
+    commit = api(f"repos/{repo}/commits/{head}", check=False)
+    if not isinstance(commit, dict):
+        return None
+    parents = [p.get("sha") for p in commit.get("parents") or []]
+    tree = ((commit.get("commit") or {}).get("tree") or {}).get("sha")
+    if len(parents) != 2 or not tree or not all(parents):
+        return None
+    for parent in parents:
+        pc = api(f"repos/{repo}/commits/{parent}", check=False)
+        if not isinstance(pc, dict) or ((pc.get("commit") or {}).get("tree") or {}).get("sha") != tree:
+            continue
+        data = api(f"repos/{repo}/actions/runs?head_sha={parent}&per_page=100", check=False)
+        if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
+            continue
+        full = [r for r in data["workflow_runs"] if r.get("name") not in ("quick", "sandbox")]
+        if (full and all(r.get("status") == "completed" and r.get("conclusion") in ("success", "skipped")
+                         for r in full)
+                and any(r.get("conclusion") == "success" for r in full)):
+            return parent
+    return None
+
+
 def main_ci(repo):
     """Последний прогон полной матрицы на вершине main. После мержа мимо поезда (владелец
     влил staging руками, merge-коммит поезда, срочный PR) это ПЕРВАЯ проверка комбинации
@@ -1460,6 +1491,11 @@ def main_ci(repo):
     if r["conclusion"] == "cancelled":
         # Отменённый прогон на вершине main никто не повторит: новых push нет (09-10-2026: прогон
         # поезда #1841 отменился, tick печатал «cancelled» как норму, красный Race увидели через час).
+        green = cancelled_main_is_expected(repo, head)
+        if green:
+            print(f"main {head[:9]}: прогон отменён, но дерево совпадает с зелёным {green[:9]} — "
+                  "повтор не нужен")
+            return 0
         if r.get("run_attempt", 1) < 2:
             api(f"repos/{repo}/actions/runs/{r['id']}/rerun", "-X", "POST", check=False)
             print(f"main {head[:9]}: прогон отменён (не упал) — перезапустил: {r['html_url']}")
