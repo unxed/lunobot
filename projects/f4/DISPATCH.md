@@ -7,6 +7,4 @@
 
 18-10-2026 06:23:47 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/1148 (часть 1 из 2) [land]
 
-18-10-2026 07:44:52 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял кастомную задачу «красный поезд unxed/f4#2063 (Test linux/arm64: TestDriveMenuWatchRebuildsTheOpenMenu, -shuffle=1792308598853459304)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
-
 18-10-2026 07:48:51 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), работаю над задачей https://github.com/unxed/f4/issues/1148 (часть 1 из 2)
