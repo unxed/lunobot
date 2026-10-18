@@ -1424,9 +1424,9 @@ PR Лунобота задачей не является никогда, кро�
    cgo-generated code», и прогон красный независимо от правки. Платформенную проверку кода без cgo делай
    `GOOS=windows` и `GOOS=darwin`, а freebsd оставь CI проекта (17-10-2026, unxed/f4#1758: лишний круг песочницы).
    Исключение — код с ограничениями сборки: шаг добавляет или меняет файл с `//go:build` либо с суффиксом ОС (`*_unix.go`, `*_other.go`, `*_linux.go`) или вызывает символ из такого файла.
-   Тогда в команду песочницы добавь сборку (`go build`, не `go vet`) целей, которые собирает job `cross` в `quick.yml`; для f4 это
-   `CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 go build -gcflags=github.com/go-webgpu/goffi/internal/fakecgo=-std -o /dev/null ./cmd/f4 && CGO_ENABLED=0 GOOS=openbsd GOARCH=amd64 go build -o /dev/null ./cmd/f4`
-   (флаги и теги сверяй с `quick.yml`, они меняются). 18-10-2026 unxed/f4#2076: `external_unix.go` с тегом `!windows && !freebsd` вызывал `canInheritTTY`,
+   Тогда в команду песочницы добавь сборку (`go build`, не `go vet`) BSD и illumos, которые собирает job `cross` в `quick.yml` (по одной цели на ОС: файл с тегом вроде `!windows && !freebsd` на одной из них не собирается, поэтому одной-двух целей мало); для f4 это
+   `for t in freebsd netbsd dragonfly openbsd illumos solaris; do f=; case $t in freebsd|netbsd) f=-gcflags=github.com/go-webgpu/goffi/internal/fakecgo=-std;; esac; CGO_ENABLED=0 GOOS=$t GOARCH=amd64 go build $f -o /dev/null ./cmd/f4 || exit 1; done`
+   (флаги и теги сверяй с `quick.yml`, они меняются; linux/386, mips и прочие архитектуры CI гоняет сам). 18-10-2026 unxed/f4#2076: `external_unix.go` с тегом `!windows && !freebsd` вызывал `canInheritTTY`,
    определённую не для всех ОС этого тега; песочница (linux, windows, darwin) была зелёной, а `quick` на staging упал в двух job'ах `Cross-compile`
    (`undefined: canInheritTTY`, прогон 39153716869, 18:20Z); поверх первого коммита легли ещё четыре правки lint к тому же тикету, и на 19:05Z staging красный.
    Кросс-`go vet` на `GOOS=windows`/`darwin` в f4 гоняй с `-unsafeptr=false`, как `Vet (<цели>)` в `build.yml`: `uintptr` из
