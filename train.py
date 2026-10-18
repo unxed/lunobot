@@ -1387,21 +1387,48 @@ def stuck(repo):
         print(f"staging tip уже покрыт зелёным поездом #{green_train['number']} — ждёт merge в main")
         return 0
     train = train_pr(repo)
-    if train and train["head"]["sha"] == staging:
+    hours = None
+    if train:
         checks, pending, failed, cancelled = rollup(repo, train["number"])
         if pending and not failed and not cancelled:
             created = datetime.fromisoformat(train["created_at"].replace("Z", "+00:00"))
             train_hours = (datetime.now(timezone.utc) - created).total_seconds() / 3600
-            if train_hours <= STUCK_HOURS:
-                print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
-                      "ожидание полной матрицы пока штатное")
-                return 0
-            print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч без ошибок")
-            hours = train_hours
-        else:
-            hours = None
-    else:
-        hours = None
+            if train["head"]["sha"] == staging:
+                if train_hours <= STUCK_HOURS:
+                    print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
+                          "ожидание полной матрицы пока штатное")
+                    return 0
+                print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч без ошибок")
+                hours = train_hours
+            else:
+                # land во время полёта поезда уводит вершину staging вперёд головы поезда
+                # (18-10-2026, unxed/f4#2085: поезд 14 минут в пути, а старший коммит staging,
+                # который как раз едет в нём, старше 2 ч — ложный «ИНЦИДЕНТ ПРОЦЕССА»).
+                # Голова поезда — предок вершины: коммиты поезда в подсчёт возраста не входят,
+                # «ждут main» только те, что впереди головы; возраст самого поезда — как раньше.
+                ahead = compare(repo, train["head"]["sha"], staging)
+                if ahead.get("status") in ("ahead", "identical"):
+                    if train_hours > STUCK_HOURS:
+                        print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч без ошибок")
+                        hours = train_hours
+                    else:
+                        own = exclude_reverted([c for c in ahead["commits"] if len(c["parents"]) == 1])
+                        if not own:
+                            print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
+                                  "ожидание штатное")
+                            return 0
+                        oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
+                                     for c in own)
+                        hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
+                        print(f"в staging {len(own)} коммит(ов) ждут main впереди поезда "
+                              f"#{train['number']} (проверяется {train_hours:.1f} ч); "
+                              f"старший — {hours:.1f} ч")
+                        if hours > STUCK_HOURS:
+                            print(f"ИНЦИДЕНТ ПРОЦЕССА: приземлённая работа ждёт main дольше {STUCK_HOURS} ч. "
+                                  "§ 4 «ретро круга»: найти, почему не едет поезд, починить конвейер и "
+                                  "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
+                            return 1
+                        return 0
     train_in_flight = hours is not None
     own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
     own = exclude_reverted(own)

@@ -255,13 +255,18 @@ class StuckTest(unittest.TestCase):
             "committer": {"date": when.isoformat().replace("+00:00", "Z")},
         }}
 
-    def check_stuck(self, commits, train_pr=None, rollup=None):
+    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None):
+        def compare(repo, base, head):
+            if base == "main":
+                return {"commits": commits}
+            return ahead if ahead is not None else {"status": "diverged", "commits": []}
+
         with mock.patch.object(train, "api", side_effect=[
                 {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
                 mock.patch.object(train, "green_train_covering", return_value=None), \
                 mock.patch.object(train, "train_pr", return_value=train_pr), \
                 mock.patch.object(train, "rollup", return_value=rollup or ([], [], [], [])), \
-                mock.patch.object(train, "compare", return_value={"commits": commits}), \
+                mock.patch.object(train, "compare", side_effect=compare), \
                 contextlib.redirect_stdout(io.StringIO()) as output:
             result = train.stuck("o/r")
         return result, output.getvalue()
@@ -326,6 +331,67 @@ class StuckTest(unittest.TestCase):
         pending = ([{"status": "IN_PROGRESS"}], [{"status": "IN_PROGRESS"}], [], [])
         for train_pr in (None, pr):
             result, output = self.check_stuck(commits, train_pr, pending)
+            self.assertEqual(result, 1)
+            self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    PENDING = ([{"status": "IN_PROGRESS"}], [{"status": "IN_PROGRESS"}], [], [])
+
+    def test_land_during_flight_does_not_count_train_commits(self):
+        # 18-10-2026, unxed/f4#2085: поезд 14 минут в пути, в staging после него два свежих
+        # land, а старший коммит staging (2 ч) едет в самом поезде.
+        now = datetime.now(timezone.utc)
+        in_train = self.commit("1" * 40, "old work", now - timedelta(hours=2, minutes=1))
+        fresh = self.commit("2" * 40, "fresh work", now - timedelta(minutes=2))
+        pr = {"number": 2085, "head": {"sha": "train-head"},
+              "created_at": (now - timedelta(minutes=14)).isoformat()}
+        result, output = self.check_stuck([in_train, fresh], pr, self.PENDING,
+                                          ahead={"status": "ahead", "commits": [fresh]})
+        self.assertEqual(result, 0)
+        self.assertIn("1 коммит(ов) ждут main впереди поезда #2085", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_nothing_ahead_of_train_head_is_normal_flight(self):
+        now = datetime.now(timezone.utc)
+        old = self.commit("3" * 40, "old work", now - timedelta(hours=5))
+        pr = {"number": 7, "head": {"sha": "train-head"},
+              "created_at": (now - timedelta(minutes=14)).isoformat()}
+        result, output = self.check_stuck([old], pr, self.PENDING,
+                                          ahead={"status": "identical", "commits": []})
+        self.assertEqual(result, 0)
+        self.assertIn("поезд #7 проверяется 0.2 ч; ожидание штатное", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_old_commit_ahead_of_train_head_still_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        old = self.commit("4" * 40, "stale work", now - timedelta(hours=3))
+        pr = {"number": 8, "head": {"sha": "train-head"},
+              "created_at": (now - timedelta(minutes=14)).isoformat()}
+        result, output = self.check_stuck([old], pr, self.PENDING,
+                                          ahead={"status": "ahead", "commits": [old]})
+        self.assertEqual(result, 1)
+        self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_train_over_two_hours_behind_staging_tip_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        old = self.commit("5" * 40, "old work", now - timedelta(hours=4))
+        fresh = self.commit("6" * 40, "fresh work", now - timedelta(minutes=2))
+        pr = {"number": 9, "head": {"sha": "train-head"},
+              "created_at": (now - timedelta(hours=3)).isoformat()}
+        result, output = self.check_stuck([old, fresh], pr, self.PENDING,
+                                          ahead={"status": "ahead", "commits": [fresh]})
+        self.assertEqual(result, 1)
+        self.assertIn("проверяется 3.0 ч", output)
+        self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_red_train_or_train_head_not_ancestor_keeps_old_behaviour(self):
+        now = datetime.now(timezone.utc)
+        old = self.commit("7" * 40, "old work", now - timedelta(hours=4))
+        pr = {"number": 10, "head": {"sha": "train-head"},
+              "created_at": (now - timedelta(minutes=5)).isoformat()}
+        failed = ([{}], [{"status": "IN_PROGRESS"}], [{"conclusion": "FAILURE"}], [])
+        for rollup, ahead in ((failed, {"status": "ahead", "commits": []}),
+                              (self.PENDING, {"status": "diverged", "commits": []})):
+            result, output = self.check_stuck([old], pr, rollup, ahead=ahead)
             self.assertEqual(result, 1)
             self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
 
