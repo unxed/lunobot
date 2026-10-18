@@ -68,7 +68,9 @@ def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RE
     """[(номер, sha, причина)]: «Пробуйте!» последних дней на коммит, который не тот или не в `main`.
 
     in_main(sha) -> True / False / None (None — такого коммита в репозитории нет);
-    about(sha, номер) -> True / False: в сообщении коммита назван этот тикет.
+    about(sha, номер) -> True / False: в сообщении коммита назван этот тикет. Проверка срабатывает,
+    только если тикет не назван ни в одном из коммитов комментария (шаг из нескольких коммитов
+    называет их все, тикет — в одном).
     """
     now = now or datetime.datetime.now(datetime.timezone.utc)
     found = []
@@ -79,14 +81,24 @@ def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RE
         tries = [c for c in fetch_comments(number) if TRY.search(c.get("body") or "")]
         if not tries:
             continue
-        for sha in dict.fromkeys(commit_refs(tries[-1].get("body"), repo)):
-            state = in_main(sha)
-            if state is None:
+        shas = list(dict.fromkeys(commit_refs(tries[-1].get("body"), repo)))
+        states = {sha: in_main(sha) for sha in shas}
+        broken = False
+        for sha in shas:
+            if states[sha] is None:
                 found.append((number, sha, "такого коммита нет в репозитории"))
-            elif not state:
+                broken = True
+            elif not states[sha]:
                 found.append((number, sha, "коммит ещё не в main"))
-            elif about is not None and not about(sha, number):
-                found.append((number, sha, "в сообщении коммита нет этого тикета (чужой коммит?)"))
+                broken = True
+        # Шаг из двух коммитов (первый — «данные» с `Lunobot-Task:`, второй — с `Touch: #N`)
+        # легитимно называет оба. Чужой sha (f4#1976) — когда тикет не назван НИ В ОДНОМ из
+        # коммитов комментария; ошибки «нет в main» выше важнее и этой проверки не требуют.
+        if about is None or broken:
+            continue
+        if shas and not any(about(sha, number) for sha in shas):
+            found.extend((number, sha, "ни в одном из названных коммитов нет этого тикета (чужой коммит?)")
+                         for sha in shas)
     return found
 
 

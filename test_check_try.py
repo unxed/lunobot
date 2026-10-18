@@ -48,6 +48,7 @@ class TicketsWithoutTryTest(unittest.TestCase):
 
 class PrematureTryTest(unittest.TestCase):
     NOW = datetime.datetime(2026, 10, 16, 12, 0, tzinfo=datetime.timezone.utc)
+    NO_TICKET = "ни в одном из названных коммитов нет этого тикета (чужой коммит?)"
 
     def run_check(self, rows, comments, in_main, about=None):
         return check_try.premature_tries(rows, lambda n: comments[n], in_main, about, now=self.NOW)
@@ -73,7 +74,60 @@ class PrematureTryTest(unittest.TestCase):
         body = "Исправление: https://github.com/unxed/f4/commit/9effe76 — Пробуйте!"
         got = self.run_check({1976: self.row()}, {1976: [{"body": body}]}, lambda sha: True,
                              lambda sha, number: False)
-        self.assertEqual(got, [(1976, "9effe76", "в сообщении коммита нет этого тикета (чужой коммит?)")])
+        self.assertEqual(got, [(1976, "9effe76", self.NO_TICKET)])
+
+    def two_commits(self, in_main, with_ticket, number=2071):
+        body = ("Данные: https://github.com/unxed/f4/commit/67d9ba512 и правка: "
+                "https://github.com/unxed/f4/commit/72a596421 — Пробуйте!")
+        return self.run_check({number: self.row()}, {number: [{"body": body}]}, in_main,
+                              lambda sha, n: sha in with_ticket)
+
+    def test_companion_commit_without_ticket_is_fine(self):
+        # unxed/f4#2071: первый коммит шага — «данные» без номера тикета, второй — с `Touch:`
+        self.assertEqual(self.two_commits(lambda sha: True, {"72a596421"}), [])
+        self.assertEqual(self.two_commits(lambda sha: True, {"67d9ba512"}), [])
+
+    def test_two_commits_without_ticket_are_reported_each(self):
+        got = self.two_commits(lambda sha: True, set())
+        self.assertEqual(got, [(2071, "67d9ba512", self.NO_TICKET), (2071, "72a596421", self.NO_TICKET)])
+
+    def test_one_of_two_not_in_main_is_reported(self):
+        got = self.two_commits(lambda sha: sha == "72a596421", {"72a596421"})
+        self.assertEqual(got, [(2071, "67d9ba512", "коммит ещё не в main")])
+
+    def test_one_of_two_unknown_is_reported(self):
+        got = self.two_commits(lambda sha: None if sha == "67d9ba512" else True, {"72a596421"})
+        self.assertEqual(got, [(2071, "67d9ba512", "такого коммита нет в репозитории")])
+
+    def test_not_in_main_commit_with_ticket_does_not_hide_companion(self):
+        # ошибка «не в main» уже названа, лишнюю «чужой коммит» по спутнику не добавляем
+        got = self.two_commits(lambda sha: sha == "67d9ba512", {"72a596421"})
+        self.assertEqual(got, [(2071, "72a596421", "коммит ещё не в main")])
+
+    def test_repeated_sha_is_reported_once(self):
+        body = ("https://github.com/unxed/f4/commit/9effe76 и ещё раз "
+                "https://github.com/unxed/f4/commit/9effe76 — Пробуйте!")
+        got = self.run_check({1976: self.row()}, {1976: [{"body": body}]}, lambda sha: True,
+                             lambda sha, number: False)
+        self.assertEqual(got, [(1976, "9effe76", self.NO_TICKET)])
+
+    def test_no_commit_links_means_no_ticket_check(self):
+        def fail(sha, number):
+            raise AssertionError("без ссылок на коммиты сообщения не запрашиваются")
+        self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": "Пробуйте!"}]}, lambda sha: True, fail), [])
+
+    def test_without_about_companion_check_is_skipped(self):
+        self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": "commit/aaaaaaa1 commit/bbbbbbb2 Пробуйте!"}]},
+                                        lambda sha: True), [])
+
+    def test_commit_of_another_repository_is_not_a_companion(self):
+        # исправление в зависимости (своя ветка и свои сообщения) не считается ни спутником, ни чужим sha
+        body = "https://github.com/unxed/wayland/commit/aaaaaaa1 и https://github.com/unxed/f4/commit/bbbbbbb2 — Пробуйте!"
+        asked = []
+        got = check_try.premature_tries(
+            {1: self.row()}, lambda n: [{"body": body}], lambda sha: True,
+            lambda sha, number: asked.append(sha) or sha == "bbbbbbb2", now=self.NOW, repo="unxed/f4")
+        self.assertEqual((got, asked), ([], ["bbbbbbb2"]))
 
     def test_ticket_already_returned_to_in_transit_is_quiet(self):
         body = "Исправление: https://github.com/unxed/f4/commit/9effe76 — Пробуйте!"
