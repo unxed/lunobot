@@ -104,6 +104,31 @@ class PrematureTryTest(unittest.TestCase):
         got = self.two_commits(lambda sha: sha == "67d9ba512", {"72a596421"})
         self.assertEqual(got, [(2071, "72a596421", "коммит ещё не в main")])
 
+    def test_repeated_sha_is_reported_once(self):
+        body = ("https://github.com/unxed/f4/commit/9effe76 и ещё раз "
+                "https://github.com/unxed/f4/commit/9effe76 — Пробуйте!")
+        got = self.run_check({1976: self.row()}, {1976: [{"body": body}]}, lambda sha: True,
+                             lambda sha, number: False)
+        self.assertEqual(got, [(1976, "9effe76", self.NO_TICKET)])
+
+    def test_no_commit_links_means_no_ticket_check(self):
+        def fail(sha, number):
+            raise AssertionError("без ссылок на коммиты сообщения не запрашиваются")
+        self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": "Пробуйте!"}]}, lambda sha: True, fail), [])
+
+    def test_without_about_companion_check_is_skipped(self):
+        self.assertEqual(self.run_check({1: self.row()}, {1: [{"body": "commit/aaaaaaa1 commit/bbbbbbb2 Пробуйте!"}]},
+                                        lambda sha: True), [])
+
+    def test_commit_of_another_repository_is_not_a_companion(self):
+        # исправление в зависимости (своя ветка и свои сообщения) не считается ни спутником, ни чужим sha
+        body = "https://github.com/unxed/wayland/commit/aaaaaaa1 и https://github.com/unxed/f4/commit/bbbbbbb2 — Пробуйте!"
+        asked = []
+        got = check_try.premature_tries(
+            {1: self.row()}, lambda n: [{"body": body}], lambda sha: True,
+            lambda sha, number: asked.append(sha) or sha == "bbbbbbb2", now=self.NOW, repo="unxed/f4")
+        self.assertEqual((got, asked), ([], ["bbbbbbb2"]))
+
     def test_ticket_already_returned_to_in_transit_is_quiet(self):
         body = "Исправление: https://github.com/unxed/f4/commit/9effe76 — Пробуйте!"
         row = {"state": "в пути", "updated": "2026-10-16T09:00:00Z"}
