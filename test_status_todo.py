@@ -21,6 +21,14 @@ class RemainderTest(unittest.TestCase):
     def test_inline_remainder(self):
         self.assertEqual(status_todo.remainder("Осталось: поднять zipper до тега.\nСостояние: x"), "поднять zipper до тега.")
 
+    def test_uses_latest_historical_remainder(self):
+        text = "## Осталось\nСтарая часть, уже выполненная.\n\n## 18-10 — шаг завершён\nОсталось: новая часть.\n"
+        self.assertEqual(status_todo.remainder(text), "новая часть.")
+
+    def test_latest_section_can_clear_stale_remainder(self):
+        text = "## Осталось\nСтарая часть, уже выполненная.\n\n## 18-10 — всё сделано\nОсталось: ничего обязательного, ждём автора.\n"
+        self.assertIsNone(status_todo.remainder(text))
+
     def test_double_heading_with_slash(self):
         # unxed/f4#1998: «Осталось/Дальше: …» — остаток в той же строке, как у «Осталось: …»
         self.assertEqual(status_todo.remainder("Осталось/Дальше: закрывать диалог.\n\n## Часть 2\nx\n"), "закрывать диалог.")

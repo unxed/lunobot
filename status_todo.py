@@ -88,7 +88,9 @@ def remainder(text):
     found = sections(text)
     if not found:
         return None
-    heading, body = found[0]
+    # Status-файлы ведут хронологию: более поздние заметки уточняют/закрывают старые
+    # остатки. Первая секция может быть устаревшим планом; используем последнюю запись.
+    heading, body = found[-1]
     item = first_item(body)
     if item is None:
         return None
