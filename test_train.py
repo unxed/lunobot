@@ -29,6 +29,13 @@ class ApiRetryTest(unittest.TestCase):
             self.assertEqual(train.api("repos/o/r/compare/a...b"), {"a": 1})
         self.assertEqual(run.call_count, 2)
 
+    def test_gateway_5xx_is_retried(self):
+        timeout = _proc(1, "", "gh: We couldn't respond to your request in time. Sorry about that. (HTTP 504)")
+        with mock.patch.object(train, "run", side_effect=[timeout, _proc(0, '{"a": 1}')]) as run, \
+                mock.patch.object(train.time, "sleep"):
+            self.assertEqual(train.api("repos/o/r/actions/workflows/quick.yml/runs?per_page=100"), {"a": 1})
+        self.assertEqual(run.call_count, 2)
+
     def test_gives_up_after_the_limit_and_reports_the_error(self):
         err = _proc(1, "", "stream error: INTERNAL_ERROR")
         with mock.patch.object(train, "run", return_value=err) as run, \
