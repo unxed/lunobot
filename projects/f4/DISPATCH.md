@@ -8,5 +8,3 @@
 18-10-2026 03:13:52 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял кастомную задачу «красный main f4 cfd559df0 (run 39091749086: TestDriveMenuWatchRebuildsTheOpenMenu linux/amd64, TestActionExecuteBatchExitRestartsShell windows/arm64)» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
 
 18-10-2026 03:20:46 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «красный main 39091749086» по § 5 п. 2 [urgent: по § 5 п. 2 — красный main]
-
-18-10-2026 03:47:09 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «unxed/f4#1602 часть 17: проверить атрибутную подсветку дерева» по § 5.1 [land]
