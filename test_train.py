@@ -22,6 +22,13 @@ class ApiRetryTest(unittest.TestCase):
             self.assertEqual(train.api("repos/o/r/compare/a...b"), {"a": 1})
         self.assertEqual(run.call_count, 2)
 
+    def test_bare_go_client_eof_is_retried(self):
+        eof = _proc(1, "", 'Get "https://api.github.com/repos/o/r/compare/a...b": EOF')
+        with mock.patch.object(train, "run", side_effect=[eof, _proc(0, '{"a": 1}')]) as run, \
+                mock.patch.object(train.time, "sleep"):
+            self.assertEqual(train.api("repos/o/r/compare/a...b"), {"a": 1})
+        self.assertEqual(run.call_count, 2)
+
     def test_gives_up_after_the_limit_and_reports_the_error(self):
         err = _proc(1, "", "stream error: INTERNAL_ERROR")
         with mock.patch.object(train, "run", return_value=err) as run, \

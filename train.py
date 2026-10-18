@@ -202,8 +202,9 @@ def run(*cmd, check=True, cwd=None):
 
 API_RETRIES = 3
 # Обрыв связи посреди ответа (мобильный интернет): `gh` печатает эти тексты в stderr, повтор обычно проходит.
+# `": EOF` — голый EOF Go-клиента (`Get "https://…": EOF`), без слов «unexpected» (18-10-2026, `tick unxed/f4`).
 API_TRANSIENT = ("unexpected end of JSON input", "unexpected EOF", "stream error", "i/o timeout",
-                 "TLS handshake timeout", "connection reset by peer")
+                 "TLS handshake timeout", "connection reset by peer", '": EOF')
 
 
 def api_transient(p):
