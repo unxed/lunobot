@@ -170,10 +170,13 @@ def hard_stale(blocks_, now):
         latest[key] = max(latest.get(key, 0), ts)
         if URGENT_MARK in b:
             urgent.add(key)
+    def limit(key):
+        return URGENT_SILENT_MIN if key in urgent else HARD_SILENT_MIN
+
     # строка с припаркованным коммитом (§ 1) живёт, пока коммит не приземлят
     return [b for b in blocks_
             if re.search(WHO, b) and "припаркован" not in b and row_key(b) in latest
-            and (now - latest[row_key(b)]) / 60 > (URGENT_SILENT_MIN if row_key(b) in urgent else HARD_SILENT_MIN)]
+            and (now - latest[row_key(b)]) / 60 > limit(row_key(b))]
 
 
 def save(path, kept, removed, what):
