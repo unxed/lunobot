@@ -1803,6 +1803,9 @@ def transit_warn(repo):
         return
     since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
     commits = api_list(f"repos/{repo}/commits?sha=main&since={since}&per_page=100")
+    # A Touch commit later reverted on main no longer represents work awaiting user feedback.
+    # GitHub's revert message contains the original SHA; use the same parser as train bisect.
+    commits = [c for i, c in enumerate(commits) if not reverted_later_in_train(commits, i)]
     stale = sorted(n for n in transit & own_numbers(repo, commits) if not tried_since(repo, n, commits))
     if stale:
         print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
