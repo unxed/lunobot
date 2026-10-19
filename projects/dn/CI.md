@@ -1,7 +1,5 @@
 # CI — dn
 
 
-19-10-2026 03:34:44 Лунобот-1, main, коммит `6ce0e72` (merge unxed/dn#159, ветка отставала от main на 2, новая комбинация), прогон [#900](https://github.com/unxed/dn/actions/runs/39195315279)
-
 19-10-2026 03:38:44 Лунобот-1, тикет https://github.com/unxed/dn/issues/80 (часть renamefile), PR [#160](https://github.com/unxed/dn/pull/160), коммит `673bca7`, прогон [#901](https://github.com/unxed/dn/actions/runs/39195645275)
 19-10-2026 03:57:08 Лунобот-1, PR #161 (`07fe0a7`): все 51 обязательная проверка зелёные, готов к вливанию
