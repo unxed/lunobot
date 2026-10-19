@@ -87,6 +87,13 @@ def gate(relpath, text, added_line_no):
     return [p for p in problems if p[1] == added_line_no]
 
 
+def unrecorded_hits(text, key):
+    """Номера строк (с 1) с key, которые не запись с меткой времени и не заголовок: remove их не снимает (records_only),
+    а «нет строки» при этом вводит в заблуждение (круг 19-10-2026: строка CI.md с меткой без секунд)."""
+    return [i + 1 for i, l in enumerate(text.split("\n"))
+            if key in l and l.strip() and not l.startswith("#") and not RECORD.match(l)]
+
+
 def attempt(repo, remote, branch, op, relpath, arg, message, sign, remove_all=False):
     git(repo, "fetch", "-q", remote, branch)
     base = git(repo, "rev-parse", "FETCH_HEAD").stdout.strip()
@@ -108,6 +115,11 @@ def attempt(repo, remote, branch, op, relpath, arg, message, sign, remove_all=Fa
                           legacy_branch_records=os.path.basename(relpath) == "BRANCHES.md")
         if new is None:
             print(f"в {relpath} нет строки с {arg!r} — удалять нечего")
+            if os.path.basename(relpath) in RECORD_FILES:
+                bad = unrecorded_hits(old.stdout, arg)
+                if bad:
+                    print(f"ВНИМАНИЕ: ключ есть в строках {bad}, но они без метки ДД-ММ-ГГГГ ЧЧ:ММ:СС — это не запись, "
+                          f"remove их не трогает. Убери строку правкой файла и `git commit` (после — `check_ci.py`/`check_dispatch.py`).")
             return "noop"
     problems = gate(relpath, new, added)
     if problems:

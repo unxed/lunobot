@@ -187,6 +187,17 @@ class RemoveLineTest(unittest.TestCase):
         self.assertIsNone(acct_line.remove_line(text, "bp", records_only=True, legacy_branch_records=True))
 
 
+class UnrecordedHitsTest(unittest.TestCase):
+    def test_finds_row_without_seconds(self):
+        text = "# CI — dn\n\n19-10-2026 00:15 UTC, тикет x PR pull/151\n\n19-10-2026 00:43:00 Лунобот-1, main\n"
+        self.assertEqual(acct_line.unrecorded_hits(text, "pull/151"), [3])
+        self.assertIsNone(acct_line.remove_line(text, "pull/151", records_only=True))
+
+    def test_ignores_records_and_headings(self):
+        text = "# CI — pull/151\n\n19-10-2026 00:43:00 Лунобот-1, pull/151\n"
+        self.assertEqual(acct_line.unrecorded_hits(text, "pull/151"), [])
+
+
 class GitBytesTest(unittest.TestCase):
     def test_blob_keeps_lf(self):
         # stdin в байтах: "\n" не превращается в os.linesep (CRLF в Windows)
