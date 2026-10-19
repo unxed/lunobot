@@ -6,3 +6,5 @@
 - Проверки: форматирование Go и `git diff --check`; тесты запрещены локальной политикой vtui. Sandbox run [39194876493](https://github.com/unxed/f4/actions/runs/39194876493) запущен на точном клоне из `tmp/19d3/coverage-vtui-protocol`, при последней проверке `queued`.
 - Дальше: запушить точный коммит во временную ветку, проверить `go test ./...` через `sandbox.yml`, затем выполнить `train.py land` при зелёной проверке.
 - 19-10-2026 03:28 UTC
+
+- 19-10-2026 05:29 UTC: Run `39194876493` was in `unxed/f4`, whose workflow checked out f4; it did not test this vtui commit. Correct `unxed/vtui` sandbox run `39204796007` now targets exact SHA `f5140571f7c245a0f0c9847df92a5e7646eb1c21`; it is running. Keep this step captured and resume after the run completes.
