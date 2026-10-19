@@ -9,5 +9,3 @@
 19-10-2026 02:39:58 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/dn/issues/90 (часть 11б: соединение FTP — управляющий канал, PASV/EPSV, List/Stat, тест против pyftpdlib; ветка поверх 11а, PR после #155) [pr]
 
 19-10-2026 03:05:26 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/dn/issues/80 (часть: filecopy.pas — вынести DoRemove из __Remove) [pr]
-
-19-10-2026 03:08:56 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «влить зелёный PR unxed/dn#156» по § 5 п. 3 [urgent: по § 5 п. 3 — влить зелёный PR]
