@@ -106,6 +106,27 @@ class CoveredTest(unittest.TestCase):
         self.assertIn("прогон на fedcba9", output.getvalue())
 
 
+class StagingPushTimeTest(unittest.TestCase):
+    SHA = "f5140571f7c245a0f0c9847df92a5e7646eb1c21"
+    PUSHED_AT = "2026-10-19T06:46:15Z"
+
+    def test_exact_quick_push_run_is_the_staging_arrival_time(self):
+        # Real regression data: unxed/lunobot#205, unxed/vtui commit f5140571 and run 39211840597.
+        run = {
+            "name": "quick",
+            "event": "push",
+            "head_branch": "lunobot/staging",
+            "head_sha": self.SHA,
+            "created_at": self.PUSHED_AT,
+        }
+        with mock.patch.object(train, "api", return_value={"workflow_runs": [run]}) as api:
+            got = train.staging_push_time("unxed/vtui", self.SHA)
+        self.assertEqual(got, datetime.fromisoformat(self.PUSHED_AT.replace("Z", "+00:00")))
+        api.assert_called_once_with(
+            f"repos/unxed/vtui/actions/runs?branch={train.STAGING}&head_sha={self.SHA}&event=push&per_page=100",
+            check=False)
+
+
 class RefCreatedTest(unittest.TestCase):
     def test_422_json_is_not_success(self):
         body = {"message": "Reference already exists", "status": "422"}
@@ -255,16 +276,23 @@ class StuckTest(unittest.TestCase):
             "committer": {"date": when.isoformat().replace("+00:00", "Z")},
         }}
 
-    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None):
+    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None, push_time=None, now=None):
         def compare(repo, base, head):
             if base == "main":
                 return {"commits": commits}
             return ahead if ahead is not None else {"status": "diverged", "commits": []}
 
+        class FixedDateTime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return now
+
         with mock.patch.object(train, "api", side_effect=[
                 {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
                 mock.patch.object(train, "green_train_covering", return_value=None), \
                 mock.patch.object(train, "train_pr", return_value=train_pr), \
+                mock.patch.object(train, "staging_push_time", return_value=push_time), \
+                mock.patch.object(train, "datetime", FixedDateTime if now else datetime), \
                 mock.patch.object(train, "rollup", return_value=rollup or ([], [], [], [])), \
                 mock.patch.object(train, "compare", side_effect=compare), \
                 contextlib.redirect_stdout(io.StringIO()) as output:
@@ -289,6 +317,17 @@ class StuckTest(unittest.TestCase):
         result, output = self.check_stuck(commits)
         self.assertEqual(result, 0)
         self.assertIn("1 коммит(ов) ждут main", output)
+
+    def test_real_old_commit_uses_its_recent_staging_push_time(self):
+        # Committer date 03:28:10Z; exact quick push run 39211840597 was created at 06:46:15Z.
+        old = self.commit("f5140571f7c245a0f0c9847df92a5e7646eb1c21", "test: cover protocol",
+                          datetime(2026, 10, 19, 3, 28, 10, tzinfo=timezone.utc))
+        pushed = datetime(2026, 10, 19, 6, 46, 15, tzinfo=timezone.utc)
+        now = datetime(2026, 10, 19, 7, 3, 40, tzinfo=timezone.utc)
+        result, output = self.check_stuck([old], push_time=pushed, now=now)
+        self.assertEqual(result, 0)
+        self.assertIn("старший — 0.3 ч", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
 
     def test_recent_train_in_flight_does_not_trigger_old_staging_incident(self):
         now = datetime.now(timezone.utc)
