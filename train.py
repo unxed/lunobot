@@ -302,6 +302,16 @@ def quick_runs(repo):
     return sorted(rs, key=lambda r: r["created_at"], reverse=True)
 
 
+def staging_push_time(repo, sha):
+    """Время push, создавшего quick для точной вершины staging, если оно доступно."""
+    runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?per_page=100")["workflow_runs"]
+    pushes = [r for r in runs if r.get("head_branch") == STAGING
+              and r.get("head_sha") == sha and r.get("event") == "push"]
+    if not pushes:
+        return None
+    return min(datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) for r in pushes)
+
+
 def staging_health(repo):
     """green | pending | healing | red, и подробности.
 
@@ -1388,6 +1398,7 @@ def stuck(repo):
         return 0
     train = train_pr(repo)
     hours = None
+    push_time = None
     if train:
         checks, pending, failed, cancelled = rollup(repo, train["number"])
         if pending and not failed and not cancelled:
@@ -1417,8 +1428,10 @@ def stuck(repo):
                             print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
                                   "ожидание штатное")
                             return 0
-                        oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
-                                     for c in own)
+                        push_time = staging_push_time(repo, staging)
+                        oldest = push_time or min(
+                            datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
+                            for c in own)
                         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
                         print(f"в staging {len(own)} коммит(ов) ждут main впереди поезда "
                               f"#{train['number']} (проверяется {train_hours:.1f} ч); "
@@ -1436,8 +1449,10 @@ def stuck(repo):
         print("staging не впереди main — приземлённая работа вся в main")
         return 0
     if hours is None:
-        oldest = min(datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
-                     for c in own)
+        push_time = push_time or staging_push_time(repo, staging)
+        oldest = push_time or min(
+            datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
+            for c in own)
         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
     label = "поезд идёт" if train_in_flight else "старший"
     print(f"в staging {len(own)} коммит(ов) ждут main; {label} — {hours:.1f} ч")

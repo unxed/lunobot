@@ -255,7 +255,7 @@ class StuckTest(unittest.TestCase):
             "committer": {"date": when.isoformat().replace("+00:00", "Z")},
         }}
 
-    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None):
+    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None, push_time=None):
         def compare(repo, base, head):
             if base == "main":
                 return {"commits": commits}
@@ -266,6 +266,7 @@ class StuckTest(unittest.TestCase):
                 mock.patch.object(train, "green_train_covering", return_value=None), \
                 mock.patch.object(train, "train_pr", return_value=train_pr), \
                 mock.patch.object(train, "rollup", return_value=rollup or ([], [], [], [])), \
+                mock.patch.object(train, "staging_push_time", return_value=push_time), \
                 mock.patch.object(train, "compare", side_effect=compare), \
                 contextlib.redirect_stdout(io.StringIO()) as output:
             result = train.stuck("o/r")
@@ -289,6 +290,32 @@ class StuckTest(unittest.TestCase):
         result, output = self.check_stuck(commits)
         self.assertEqual(result, 0)
         self.assertIn("1 коммит(ов) ждут main", output)
+
+    def test_exact_staging_push_time_beats_rewritten_committer_date(self):
+        # unxed/vtui#205: f514057 was committed at 03:28 but pushed with the exact
+        # staging quick run 39211840597 at 06:46; it was only minutes old at health 07:03.
+        now = datetime.now(timezone.utc)
+        old = self.commit("f5140571f7c245a0f0c9847df92a5e7646eb1c21", "landed work",
+                          now - timedelta(hours=4))
+        result, output = self.check_stuck([old], push_time=now - timedelta(minutes=10))
+        self.assertEqual(result, 0)
+        self.assertIn("старший — 0.2 ч", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_staging_push_time_requires_exact_push_run(self):
+        sha = "f5140571f7c245a0f0c9847df92a5e7646eb1c21"
+        timestamp = "2026-10-19T06:46:15Z"
+        runs = [
+            {"head_branch": train.STAGING, "head_sha": sha, "event": "push",
+             "created_at": timestamp},
+            {"head_branch": train.STAGING, "head_sha": "other", "event": "push",
+             "created_at": "2026-10-19T06:40:00Z"},
+            {"head_branch": train.STAGING, "head_sha": sha, "event": "workflow_dispatch",
+             "created_at": "2026-10-19T06:30:00Z"},
+        ]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": runs}):
+            self.assertEqual(train.staging_push_time("unxed/vtui", sha),
+                             datetime.fromisoformat(timestamp.replace("Z", "+00:00")))
 
     def test_recent_train_in_flight_does_not_trigger_old_staging_incident(self):
         now = datetime.now(timezone.utc)
