@@ -588,7 +588,8 @@ def rollup(repo, number):
     # (05-10-2026 поезд unxed/f4#1756: staging 12 ч, main стоял на codecov/project).
     material = [c for c in checks
                 if not (c.get("name") or "").lower().startswith("codecov/")]
-    pending = [c for c in material if c.get("status", "COMPLETED") != "COMPLETED"
+    pending = [c for c in material if
+               (c.get("status", "COMPLETED") != "COMPLETED" and not c.get("conclusion"))
                or c.get("state") == "PENDING"]
     failed = [c for c in material if (c.get("conclusion") or c.get("state"))
               in ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")]

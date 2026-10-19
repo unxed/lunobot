@@ -934,6 +934,24 @@ class MainRedRunRerunTest(unittest.TestCase):
 
 
 class RollupRestRerunTest(unittest.TestCase):
+    def test_terminal_conclusion_wins_over_stale_in_progress_status(self):
+        output = ('{"statusCheckRollup":[{"name":"vendorHash matches go.mod/go.sum",'
+                  '"status":"IN_PROGRESS","conclusion":"SUCCESS"}]}')
+        with mock.patch.object(train, "run", return_value=_proc(0, output)):
+            checks, pending, failed, cancelled = train.rollup("o/r", 5)
+        self.assertEqual(checks[0]["name"], "vendorHash matches go.mod/go.sum")
+        self.assertEqual(pending, [])
+        self.assertEqual(failed, [])
+        self.assertEqual(cancelled, [])
+
+    def test_terminal_failure_with_stale_in_progress_status_is_failed_not_pending(self):
+        output = ('{"statusCheckRollup":[{"name":"check",'
+                  '"status":"IN_PROGRESS","conclusion":"FAILURE"}]}')
+        with mock.patch.object(train, "run", return_value=_proc(0, output)):
+            checks, pending, failed, cancelled = train.rollup("o/r", 5)
+        self.assertEqual(pending, [])
+        self.assertEqual(failed, [checks[0]])
+
     def test_failed_check_from_rest_can_be_rerun(self):
         def api(path, *args, check=True):
             if path.endswith("/pulls/5"):
