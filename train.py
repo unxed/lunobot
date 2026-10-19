@@ -1676,6 +1676,20 @@ def own_numbers(repo, commits):
     return {int(k.split("#")[1]) for k in tickets(repo, commits) if k.startswith(f"{repo}#")}
 
 
+def unreverted_commits(commits):
+    """Исключает Touch-коммиты, которые явно откачены другим коммитом из того же окна.
+
+    GitHub сохраняет исходный коммит в истории main после revert. Считать его признаком
+    доехавшего изменения нельзя: например, #1931 получил ложное предупреждение, когда
+    71c1a4f был откачен коммитом 6c11081c.
+    """
+    reverted = set()
+    for commit in commits:
+        message = commit.get("commit", {}).get("message", "")
+        reverted.update(re.findall(r"(?im)^This reverts commit ([0-9a-f]{7,40})\.?$", message))
+    return [commit for commit in commits if commit.get("sha") not in reverted]
+
+
 def triage_path(repo):
     return os.path.join(ACCOUNTING, "projects", repo.split("/")[1], "TRIAGE.md")
 
@@ -1804,7 +1818,9 @@ def transit_warn(repo):
         return
     since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
     commits = api_list(f"repos/{repo}/commits?sha=main&since={since}&per_page=100")
-    stale = sorted(n for n in transit & own_numbers(repo, commits) if not tried_since(repo, n, commits))
+    effective = unreverted_commits(commits)
+    stale = sorted(n for n in transit & own_numbers(repo, effective)
+                   if not tried_since(repo, n, effective))
     if stale:
         print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
               f"нет «Пробуйте!»: {', '.join(f'#{n}' for n in stale)}. Разнеси «Пробуйте!» "

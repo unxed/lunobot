@@ -1167,6 +1167,31 @@ class TriedSinceTest(unittest.TestCase):
             self.assertFalse(train.tried_since("unxed/f4", 8, self.commits))
 
 
+class TransitWarnRevertTest(unittest.TestCase):
+    def test_reverted_touch_does_not_warn_as_landed(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 1931 | 3 | в пути | 12 | 2026-10-19T14:00:00Z |\n")
+            commits = [
+                {"sha": "71c1a4fd2c0aca06237c491fa9c530216a9f19dc",
+                 "commit": {"message": "Show milliseconds\n\nTouch: #1931"}},
+                {"sha": "6c11081c94dbcb39ecb491bb08da95e773b8a1b1",
+                 "commit": {"message": "Revert \"Show milliseconds\"\n\n"
+                                     "This reverts commit 71c1a4fd2c0aca06237c491fa9c530216a9f19dc."}},
+            ]
+            output = io.StringIO()
+            with mock.patch.object(train, "triage_path", return_value=path), \
+                 mock.patch.object(train, "api_list", return_value=commits), \
+                 contextlib.redirect_stdout(output):
+                train.transit_warn("unxed/f4")
+
+        self.assertNotIn("ПРЕДУПРЕЖДЕНИЕ", output.getvalue())
+
+
 class CheckSectionTest(unittest.TestCase):
     TOUCH = "\n\nTouch: unxed/f4#912\n"
 
