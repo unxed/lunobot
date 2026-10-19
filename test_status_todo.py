@@ -29,6 +29,28 @@ class RemainderTest(unittest.TestCase):
         text = "## Осталось\nЧасть 2 уже устарела.\n\n## Дальше\nНичего обязательного — шаги завершены.\n"
         self.assertIsNone(status_todo.remainder(text))
 
+    def test_dated_last_entry_with_nothing_left_closes_earlier_remainder(self):
+        text = (
+            "Осталось: f4 — поднять zipper до нового тега.\n\n"
+            "18-10-2026 15:18 UTC (Лунобот-1): остаток снят как неактуальный. Осталось: ничего по коду; тикет не закрывать.\n"
+        )
+        self.assertIsNone(status_todo.remainder(text))
+
+    def test_dated_last_entry_with_real_remainder_does_not_replace_heading(self):
+        text = (
+            "Осталось: часть 2 — ключи очереди.\n\n"
+            "18-10-2026 15:18 UTC (Лунобот-1): часть 1 влита. Осталось: часть 3.\n"
+        )
+        self.assertEqual(status_todo.remainder(text), "часть 2 — ключи очереди.")
+
+    def test_dated_closing_entry_in_the_middle_is_ignored(self):
+        text = (
+            "18-10-2026 15:18 UTC (Лунобот-1): снято. Осталось: ничего по коду.\n\n"
+            "Осталось: новая часть появилась позже.\n"
+            "19-10-2026 01:00 UTC (Лунобот-1): записали новую часть.\n"
+        )
+        self.assertEqual(status_todo.remainder(text), "новая часть появилась позже.")
+
     def test_double_heading_with_slash(self):
         # unxed/f4#1998: «Осталось/Дальше: …» — остаток в той же строке, как у «Осталось: …»
         self.assertEqual(status_todo.remainder("Осталось/Дальше: закрывать диалог.\n\n## Часть 2\nx\n"), "закрывать диалог.")

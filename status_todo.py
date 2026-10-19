@@ -102,11 +102,30 @@ def executable_item(heading, body):
     return item, bool(ROUTINE_WAIT_START.match(item.lower()))
 
 
+# Последняя запись status-файла — датированный абзац, который в конце закрывает тикет:
+# «18-10-2026 15:18 UTC (…): … Осталось: ничего по коду; …». Заголовком секции такая строка не
+# считается (середина строки), и более ранний «Осталось: …» оставался бы в списке (unxed/zipper#32).
+DATED_CLOSING = re.compile(r"^\d{2}-\d{2}-\d{4}\b.*\b(?:Осталось|Дальше)\b\s*:\s*(.*)$")
+
+
+def closed_by_last_entry(text):
+    """Последняя непустая строка — датированная запись с «Осталось: ничего …» (не исполнимый остаток)."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    match = DATED_CLOSING.match(lines[-1]) if lines else None
+    if not match:
+        return False
+    item, _ = executable_item("Осталось", [match.group(1)])
+    return item is None
+
+
 def remainder(text):
     """Первая строка исполнимого остатка status-файла или None (нет раздела / нечего делать).
 
     Берётся последняя секция; если она лишь ждёт рутину (свободный слот CI, поезд — ROUTINE_WAIT_START),
-    остаток читается из первой секции (unxed/dn#80, unxed/f4#1998)."""
+    остаток читается из первой секции (unxed/dn#80, unxed/f4#1998). Датированная последняя запись
+    «… Осталось: ничего …» закрывает остаток целиком."""
+    if closed_by_last_entry(text):
+        return None
     found = sections(text)
     if not found:
         return None
