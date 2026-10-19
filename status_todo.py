@@ -12,7 +12,8 @@ status-файлу с исполнимым остатком: тикет, прио
 
 Пропускаются: остаток, начинающийся с «Ничего обязательного» / «Ничего исполнимого» /
 «Исполнимых частей нет» / «необязательно», раздел с пометкой «после ответа автора» / «только после
-файлов» / «до ответа не брать»; тикеты в состояниях `ждёт ответа` и `спор`; тикеты, которых нет
+файлов» / «до ответа не брать»; последний остаток, ждущий рутину («после освобождения слота», «часть N
+приземлена … попадёт в main через поезд»), заменяется остатком первой секции; тикеты в состояниях `ждёт ответа` и `спор`; тикеты, которых нет
 в `TRIAGE.md` (закрыты); тикеты, занятые в `DISPATCH.md` проекта; сделанные пункты (`✓`,
 «(сделано …)») в начале списка. Порядок вывода: приоритет (меньше — раньше), проект, номер.
 
@@ -45,6 +46,14 @@ NOT_EXECUTABLE_START = re.compile(
     r"|только после файлов|до ответа не брать"
     # «Пробуйте!» и «после поезда» — рутина § 7.2 п. 4, а не часть работы
     r"|пробуйте!|после (?:зел[её]ного |влития )?поезда)")
+
+
+# Последний остаток — ожидание рутины § 7.2/§ 7.3 (свободный слот CI, поезд), а не работа: он ничего не
+# говорит о частях тикета, поэтому остаток берётся из первой («общей») секции status-файла, а не пропадает
+# и не подменяет её. «Ничего обязательного» и прочие NOT_EXECUTABLE_START сюда не относятся: они закрывают тикет.
+ROUTINE_WAIT_START = re.compile(
+    r"^[\s`«\"'*_]*(?:после освобождения (?:общего |свободного )?слота"
+    r"|часть\s+\S+\s+приземлена\b[^.;]*;\s*(?:она|оно)\s+попад[её]т\s+в\s+main)")
 
 
 def is_done(item):
@@ -83,17 +92,27 @@ def first_item(body):
     return None
 
 
+def executable_item(heading, body):
+    """(строка остатка или None, рутина ли ожидания) для одной секции «Осталось»/«Дальше»."""
+    item = first_item(body)
+    if item is None:
+        return None, False
+    if any(phrase in heading.lower() for phrase in NOT_EXECUTABLE) or NOT_EXECUTABLE_START.match(item.lower()):
+        return None, False
+    return item, bool(ROUTINE_WAIT_START.match(item.lower()))
+
+
 def remainder(text):
-    """Первая строка исполнимого остатка status-файла или None (нет раздела / нечего делать)."""
+    """Первая строка исполнимого остатка status-файла или None (нет раздела / нечего делать).
+
+    Берётся последняя секция; если она лишь ждёт рутину (свободный слот CI, поезд — ROUTINE_WAIT_START),
+    остаток читается из первой секции (unxed/dn#80, unxed/f4#1998)."""
     found = sections(text)
     if not found:
         return None
-    heading, body = found[-1]
-    item = first_item(body)
-    if item is None:
-        return None
-    if any(phrase in heading.lower() for phrase in NOT_EXECUTABLE) or NOT_EXECUTABLE_START.match(item.lower()):
-        return None
+    item, waiting = executable_item(*found[-1])
+    if waiting:
+        item, _ = executable_item(*found[0]) if len(found) > 1 else (None, False)
     return item
 
 
