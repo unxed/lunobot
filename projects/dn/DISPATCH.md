@@ -11,5 +11,3 @@
 19-10-2026 03:39:32 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/dn/issues/90 (часть 7а: команда ssh для адреса sh:// и sftp:// — модуль netssh, без панели) [pr]
 
 19-10-2026 04:11:18 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/dn/issues/90 (часть 7б: FISH и SFTP через ssh по адресу — OpenFishSsh/OpenSftpSsh, тест со своим sshd; ветка поверх 7а, PR после #161) [pr]
-
-19-10-2026 04:44:36 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «триаж 80–80» по § 5 п. 4 [urgent: по § 5 п. 4 — учётный шаг без ветки и PR]
