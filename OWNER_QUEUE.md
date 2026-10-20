@@ -74,3 +74,10 @@ id, адресат и проект не нужны (пишет с телефон
 Доп. шаг 16-10-2026 04:57 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): unxed/bp#3 — часть 4.2b открыта в PR unxed/bp#12 на `0cc12a9`; владение сессией Go-отладчика и временными объектами переведено на `Safe.TOwned`. Обязательные CI `ci`, `fpide`, `fpide-accept` запущены; результат ещё не готов. Следующее — после прохождения CI и мержа: остаток 4.1c.
 Доп. шаг 16-10-2026 11:53 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): unxed/bp#3 — начат шаг 4.3a: владение временным `TStringList` в `fpextcomp.ExternalTargets` переведено на `TOwned`; PR unxed/bp#14, SHA `00572bd1b10cc518ddf204a2053f399fdd242264`. Обязательные CI `ci`, `fpide`, `fpide-accept` ещё идут, шаг не объявлен завершённым; `fpsrcbrw` отложен до проверки fcl-passrc ownership.
 Доп. шаг 17-10-2026 03:42 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): unxed/bp#3 — продолжена часть 4.3b: открыт PR unxed/bp#16 (SHA 83985b3d1ea5160cdcbace9eedee58564e2b4b4c) с тестом сохранности procedure/source reference в скопированных browser symbols после teardown; обязательные CI ci/fpide/fpide-accept запущены, результаты не проверены. Issue и status обновлены, TRIAGE=в пути; точный refcount ledger/leak-free teardown не заявлены. Следующее — обработать обязательные проверки, затем отдельный runtime/refcount шаг.
+
+## account-213
+Заметка владельца: https://github.com/unxed/lunobot/issues/213
+Проект: bp
+Поручение: вести unxed/bp#56 (safe-диалект) по плану тикета, один шаг — один PR; после шагов 2 и 13 сверить планы unxed/dn#87 и unxed/bp#3 и записать сверку в тикетах.
+Критерий: шаги unxed/bp#56 влиты в main с зелёным CI, SPEC v0.7 — по критерию шага 16; сверка планов unxed/dn#87 и unxed/bp#3 записана в тикетах.
+Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 20-10-2026 21:49:25 UTC
