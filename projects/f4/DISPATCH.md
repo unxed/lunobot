@@ -13,3 +13,4 @@
 
 20-10-2026 22:45:59 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a6af7f9f), взял задачу https://github.com/unxed/f4/issues/1894 (часть 5, срез 2) [land]
 
+20-10-2026 23:00:00 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/242 (часть 3а: F3 на ключе реестра показывает .reg) по § 5 п. 5 [land]
