@@ -317,6 +317,59 @@ class StuckTest(unittest.TestCase):
             self.assertEqual(train.staging_push_time("unxed/vtui", sha),
                              datetime.fromisoformat(timestamp.replace("Z", "+00:00")))
 
+    def test_push_time_covers_commits_without_their_own_quick_run(self):
+        # quick создаётся на вершину push'а: у остальных коммитов того же land собственного прогона
+        # нет (unxed/f4, 60 из 78 коммитов многокоммитных push'ей за 18-20-10-2026). Старые даты
+        # коммиттера таких коммитов не должны возвращать ложный инцидент (unxed/vtui#205).
+        tip = "f5140571f7c245a0f0c9847df92a5e7646eb1c21"
+        runs = [{"head_branch": train.STAGING, "head_sha": tip, "event": "push",
+                 "created_at": "2026-10-19T06:46:15Z"}]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": runs}) as api:
+            got = train.staging_push_time("unxed/vtui", ["a" * 40, "b" * 40, tip])
+        self.assertEqual(got, datetime(2026, 10, 19, 6, 46, 15, tzinfo=timezone.utc))
+        self.assertIn("quick.yml/runs?branch=lunobot/staging&event=push", api.call_args.args[0])
+
+    def test_push_time_is_the_earliest_push_of_the_waiting_commits(self):
+        # Накопление: старый push ещё не уехал в main, свежий land не обнуляет возраст.
+        runs = [
+            {"head_branch": train.STAGING, "head_sha": "d" * 40, "event": "push",
+             "created_at": "2026-10-19T06:46:15Z"},
+            {"head_branch": train.STAGING, "head_sha": "c" * 40, "event": "push",
+             "created_at": "2026-10-19T03:00:00Z"},
+        ]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": runs}):
+            got = train.staging_push_time("unxed/vtui", ["c" * 40, "d" * 40])
+        self.assertEqual(got, datetime(2026, 10, 19, 3, 0, tzinfo=timezone.utc))
+
+    def test_push_time_api_error_or_no_run_gives_none(self):
+        for body in ({"message": "API rate limit exceeded"}, {"workflow_runs": []}, None):
+            with mock.patch.object(train, "api", return_value=body):
+                self.assertIsNone(train.staging_push_time("unxed/vtui", ["a" * 40]))
+
+    def test_oldest_arrival_falls_back_to_committer_date_without_push_run(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("a" * 40, "docs", now - timedelta(hours=3)),
+                   self.commit("b" * 40, "docs", now - timedelta(hours=1))]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": []}):
+            self.assertEqual(train.oldest_staging_arrival("o/r", commits), now - timedelta(hours=3))
+
+    def test_old_commits_of_one_multi_commit_land_use_push_time_and_no_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("a" * 40, "parked", now - timedelta(hours=20)),
+                   self.commit("b" * 40, "parked", now - timedelta(hours=19)),
+                   self.commit("c" * 40, "parked", now - timedelta(hours=18))]
+        result, output = self.check_stuck(commits, push_time=now - timedelta(minutes=10))
+        self.assertEqual(result, 0)
+        self.assertIn("3 коммит(ов) ждут main; старший — 0.2 ч", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_without_push_run_old_committer_date_still_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("a" * 40, "old", now - timedelta(hours=4))]
+        result, output = self.check_stuck(commits, push_time=None)
+        self.assertEqual(result, 1)
+        self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
     def test_recent_train_in_flight_does_not_trigger_old_staging_incident(self):
         now = datetime.now(timezone.utc)
         commits = [self.commit("d" * 40, "old work", now - timedelta(hours=4))]

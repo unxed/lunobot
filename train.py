@@ -302,14 +302,34 @@ def quick_runs(repo):
     return sorted(rs, key=lambda r: r["created_at"], reverse=True)
 
 
-def staging_push_time(repo, sha):
-    """Время push, создавшего quick для точной вершины staging, если оно доступно."""
-    runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?per_page=100")["workflow_runs"]
-    pushes = [r for r in runs if r.get("head_branch") == STAGING
-              and r.get("head_sha") == sha and r.get("event") == "push"]
+def staging_push_time(repo, shas):
+    """Время прибытия работы в staging: самый ранний push-прогон quick, чья вершина — один из
+    `shas` (строка или коллекция SHA), либо None, если такого прогона нет или API не ответил.
+
+    `quick` создаётся на вершину push'а, а не на каждый его коммит: из пяти коммитов одного
+    `land` свой прогон есть только у последнего, а дата коммиттера остаётся временем создания
+    коммита в клоне автора (land без rebase её не меняет). Поэтому «когда коммит попал в
+    staging» = первый push-прогон, чья вершина этот коммит или его потомок (вершина push'а,
+    выше по ветке). Берём минимум по всем коммитам впереди main: старейший из них приехал в
+    этом или более раннем push'е (unxed/vtui#205: коммит от 03:28 приземлён в 06:46; на
+    unxed/f4 в 60 из 78 коммитов многокоммитных push'ей за 18–20-10-2026 собственного прогона нет)."""
+    wanted = {shas} if isinstance(shas, str) else set(shas)
+    data = api(f"repos/{repo}/actions/workflows/quick.yml/runs?branch={STAGING}&event=push&per_page=100",
+               check=False)
+    if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
+        return None
+    pushes = [r for r in data["workflow_runs"] if r.get("head_branch") == STAGING
+              and r.get("head_sha") in wanted and r.get("event") == "push" and r.get("created_at")]
     if not pushes:
         return None
     return min(datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) for r in pushes)
+
+
+def oldest_staging_arrival(repo, own):
+    """Когда в staging приехал старейший из коммитов `own`: время push (см. staging_push_time),
+    иначе дата коммиттера как оценка (push без кода — только .md/docs — quick не запускает)."""
+    return staging_push_time(repo, [c["sha"] for c in own]) or min(
+        datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00")) for c in own)
 
 
 def staging_health(repo):
@@ -1386,8 +1406,10 @@ def stuck(repo):
     Флот может выглядеть очень занятым (десятки land, поезд за поездом) и при этом не
     доставлять ничего — именно так прошли 9.5 часов 28-09-2026.
 
-    Меряется возраст самого старого коммита staging, которого нет в main (дата коммиттера —
-    это момент land: land переносит коммиты rebase'ом). Не возраст вершины main: поезд
+    Меряется возраст самого старого коммита staging, которого нет в main: от первого push-прогона
+    quick, чья вершина этот коммит или его потомок (`staging_push_time`); нет такого прогона
+    (push только с .md/docs) — от даты коммиттера, это лишь оценка: она не момент land, land
+    без rebase её не меняет. Не возраст вершины main: поезд
     вливается fast-forward'ом, коммиты сохраняют старые даты, и «main стоит N часов»
     показывало бы застой сразу после мержа; а в проекте, где main долго не нужен был, один
     свежий коммит в staging поднимал бы ложный инцидент."""
@@ -1399,7 +1421,6 @@ def stuck(repo):
         return 0
     train = train_pr(repo)
     hours = None
-    push_time = None
     if train:
         checks, pending, failed, cancelled = rollup(repo, train["number"])
         if pending and not failed and not cancelled:
@@ -1429,10 +1450,7 @@ def stuck(repo):
                             print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
                                   "ожидание штатное")
                             return 0
-                        push_time = staging_push_time(repo, staging)
-                        oldest = push_time or min(
-                            datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
-                            for c in own)
+                        oldest = oldest_staging_arrival(repo, own)
                         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
                         print(f"в staging {len(own)} коммит(ов) ждут main впереди поезда "
                               f"#{train['number']} (проверяется {train_hours:.1f} ч); "
@@ -1450,10 +1468,7 @@ def stuck(repo):
         print("staging не впереди main — приземлённая работа вся в main")
         return 0
     if hours is None:
-        push_time = push_time or staging_push_time(repo, staging)
-        oldest = push_time or min(
-            datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00"))
-            for c in own)
+        oldest = oldest_staging_arrival(repo, own)
         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
     label = "поезд идёт" if train_in_flight else "старший"
     print(f"в staging {len(own)} коммит(ов) ждут main; {label} — {hours:.1f} ч")
