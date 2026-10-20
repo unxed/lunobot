@@ -200,7 +200,8 @@ class PickGreenTest(unittest.TestCase):
             if base == "main":
                 return {"ahead_by": 3, "behind_by": behind[head]}
             return {"status": "ahead"}
-        with mock.patch.object(train, "compare", side_effect=compare):
+        with mock.patch.object(train, "compare", side_effect=compare), \
+                mock.patch.object(train, "api", return_value={"parents": [{"sha": "p"}]}):
             return train.pick_green("o/r", "main", "tip", runs)
 
     def test_green_commit_behind_main_is_skipped(self):
@@ -715,6 +716,63 @@ class MainPushRunsTest(unittest.TestCase):
         with mock.patch.object(train, "api", return_value={"workflow_runs": []}) as api:
             train.main_push_runs_in_progress("o/r", "abc")
         self.assertEqual(api.call_args.kwargs.get("check"), False)
+
+class MergeCoveredTest(unittest.TestCase):
+    """Слияние main в staging без кода сверх зелёного первого родителя покрыто его quick
+    (20-10-2026 vtui: 274822fea «Merge main into lunobot/staging» поверх зелёного 2d86accf9)."""
+
+    RUNS = [{"conclusion": "success", "head_sha": "p1", "html_url": "u", "created_at": "t"}]
+
+    def fake_api(self, parents, files):
+        def api(path, *args, check=True):
+            if "/commits/" in path:
+                return {"parents": [{"sha": p} for p in parents]}
+            if "/compare/p1...tip" in path:
+                return {"files": [{"filename": f} for f in files]}
+            if "quick.yml/runs" in path:
+                return {"workflow_runs": self.RUNS}
+            return {}
+        return api
+
+    def covered(self, parents, files, runs=None):
+        with mock.patch.object(train, "api", self.fake_api(parents, files)):
+            return train.merge_covered("o/r", "tip", runs)
+
+    def test_empty_merge_over_green_parent_is_covered(self):
+        got = self.covered(["p1", "m"], [], self.RUNS)
+        self.assertEqual(got["head_sha"], "tip")
+        self.assertEqual(got["html_url"], "u")
+
+    def test_doc_only_merge_is_covered_and_runs_are_fetched(self):
+        self.assertIsNotNone(self.covered(["p1", "m"], ["README.md", "docs/a.txt"]))
+
+    def test_code_in_merge_is_not_covered(self):
+        self.assertIsNone(self.covered(["p1", "m"], ["main.go"], self.RUNS))
+
+    def test_plain_commit_is_not_covered(self):
+        self.assertIsNone(self.covered(["p1"], [], self.RUNS))
+
+    def test_red_parent_is_not_covered(self):
+        red = [dict(self.RUNS[0], conclusion="failure")]
+        self.assertIsNone(self.covered(["p1", "m"], [], red))
+
+    def test_pick_green_takes_covered_merge_tip(self):
+        def compare(repo, base, head):
+            return {"ahead_by": 2, "behind_by": 0 if head == "tip" else 4, "status": "ahead"}
+        with mock.patch.object(train, "api", self.fake_api(["p1", "m"], [])), \
+                mock.patch.object(train, "compare", side_effect=compare):
+            got = train.pick_green("o/r", "main", "tip", self.RUNS)
+        self.assertEqual(got["head_sha"], "tip")
+
+    def test_pick_green_skips_covered_merge_tip_with_own_red_run(self):
+        def compare(repo, base, head):
+            return {"ahead_by": 2, "behind_by": 0 if head == "tip" else 4, "status": "ahead"}
+        runs = [{"conclusion": "failure", "head_sha": "tip", "html_url": "r", "created_at": "t2"},
+                *self.RUNS]
+        with mock.patch.object(train, "api", self.fake_api(["p1", "m"], [])), \
+                mock.patch.object(train, "compare", side_effect=compare):
+            self.assertIsNone(train.pick_green("o/r", "main", "tip", runs))
+
 
 class EnsureQuickOnTipTest(unittest.TestCase):
     def tip(self, minutes):

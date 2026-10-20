@@ -714,6 +714,34 @@ def summaries(repo, commits):
     return out
 
 
+def quick_ignored(name):
+    """Файл из paths-ignore quick.yml (`**.md`, `docs/**`): его правка quick не запускает."""
+    return name.endswith(".md") or name.startswith("docs/")
+
+
+def merge_covered(repo, sha, runs=None):
+    """Зелёный прогон quick первого родителя, если `sha` — слияние (main в staging), чей дифф к первому
+    родителю пуст или состоит только из paths-ignore: такой push quick не запускает, а проверять в нём
+    нечего сверх первого родителя. Иначе None. 20-10-2026 vtui: вершина 274822fea «Merge main into
+    lunobot/staging» с пустым диффом к зелёному 2d86accf9 — quick не было, поезд не резался."""
+    commit = api(f"repos/{repo}/commits/{sha}", check=False)
+    parents = commit.get("parents") if isinstance(commit, dict) else None
+    if not parents or len(parents) < 2:
+        return None
+    first = parents[0]["sha"]
+    if runs is None:
+        got = api(f"repos/{repo}/actions/workflows/quick.yml/runs?head_sha={first}&per_page=5", check=False)
+        runs = got.get("workflow_runs", []) if isinstance(got, dict) else []
+    green = next((r for r in runs if r.get("head_sha") == first and r.get("conclusion") == "success"), None)
+    if not green:
+        return None
+    diff = api(f"repos/{repo}/compare/{first}...{sha}", check=False)
+    files = diff.get("files") if isinstance(diff, dict) else None
+    if files is None or not all(quick_ignored(f.get("filename", "")) for f in files):
+        return None
+    return dict(green, head_sha=sha)
+
+
 def pick_green(repo, main_sha, staging_sha, runs):
     """Последний коммит staging с зелёным quick, до которого можно резать поезд: впереди main,
     предок вершины staging и СОДЕРЖИТ текущий main (behind_by == 0). Коммит до слияния main в
@@ -726,6 +754,17 @@ def pick_green(repo, main_sha, staging_sha, runs):
         if c.get("ahead_by", 0) > 0 and c.get("behind_by", 0) == 0 \
                 and compare(repo, r["head_sha"], staging_sha)["status"] in ("ahead", "identical"):
             return r
+    # Вершина — слияние main без кода сверх зелёного первого родителя: quick на ней не запускался
+    # (paths-ignore), но она покрыта прогоном родителя (merge_covered). Свой завершённый прогон у
+    # вершины есть (запуск руками) и он не зелёный — родителем не покрываем: с красной вершины поезд
+    # не режется никогда (§ 7.2 п. 0), её лечит heal.
+    if any(r.get("head_sha") == staging_sha for r in runs):
+        return None
+    tip = merge_covered(repo, staging_sha, runs)
+    if tip:
+        c = compare(repo, main_sha, staging_sha)
+        if c.get("ahead_by", 0) > 0 and c.get("behind_by", 0) == 0:
+            return tip
     return None
 
 
@@ -1655,6 +1694,10 @@ def ensure_quick_on_tip(repo):
         return
     runs = api(f"repos/{repo}/actions/workflows/quick.yml/runs?head_sha={sha}&per_page=5", check=False)
     if runs and runs.get("total_count"):
+        return
+    # слияние main с пустым (или только doc) диффом к первому родителю с зелёным quick: покрыто
+    # родителем, pick_green режет поезд от него и без прогона (merge_covered, 20-10-2026 vtui 274822fea)
+    if merge_covered(repo, sha):
         return
     when = tip["commit"]["commit"]["committer"]["date"]
     age = (datetime.now(timezone.utc) - datetime.fromisoformat(when.replace("Z", "+00:00"))).total_seconds() / 60
