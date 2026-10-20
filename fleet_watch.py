@@ -8,7 +8,10 @@
 
   ПРОСТОЙ   — живых захватов сессии в projects/*/DISPATCH.md меньше --min, а работа есть
   КРАСНОЕ   — train.py health по проекту со staging вернул 1 (красный staging/main, застой)
-  ПРОТУХ    — захват сессии держится дольше 45 минут без отметки
+  ПРОТУХ    — захват сессии держится дольше 45 минут без отметки; а также
+              `ПРОТУХ очередь <id>` — блок OWNER_QUEUE.md `Состояние: взял в работу`, у которого
+              последняя метка времени (Состояние/Прогресс/Доп. проверка/Доп. шаг) старше 90 минут
+              и в DISPATCH.md нет строки захвата с этим id в «ёлочках» (§ 6, § 8): подхватывай
 
 Сессия — захваты с id `Лунобот-<N> (node <узел>; …)`: потолок воркеров считается на сессию
 (LUNOBOT.md § 4, «(б)»), а на одном узле могут работать сессии разных номеров. Без --number
@@ -28,7 +31,12 @@ from datetime import datetime, timedelta, timezone
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REPEAT = timedelta(minutes=5)
 STALE = timedelta(minutes=45)
+QUEUE_STALE = timedelta(minutes=90)  # § 6: захват без следов дольше 90 минут брошен
 TS = re.compile(r"^(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}) ")
+# метка следа в блоке OWNER_QUEUE.md: `ДД-ММ-ГГГГ ЧЧ:ММ[:СС]`; одна дата без времени — след «в
+# течение суток», считается концом этих суток (лучше опоздать с подхватом, чем ложно сорвать живой)
+QUEUE_TS = re.compile(r"\b(\d{2})-(\d{2})-(\d{4})(?: (\d{2}):(\d{2})(?::(\d{2}))?)?")
+QUEUE_TRACE = re.compile(r"^(?:Состояние|Прогресс|Доп\. проверка|Доп\. шаг)\b", re.M)
 
 
 def sh(*cmd, timeout=180):
@@ -74,26 +82,78 @@ def captures(node, number=None):
     return list(latest.values())
 
 
+def queue_blocks(content):
+    """Блоки OWNER_QUEUE.md: шапка (до первой заметки) — не поручение; заметки разделены
+    строкой `--`, формальные блоки начинаются с `## id`; поле «Адресат» больше не используется."""
+    notes = re.split(r"^--\s*$", content, flags=re.M)[1:] or []
+    for note in notes:
+        for block in re.split(r"(?=^## )", note, flags=re.M):
+            if block.strip():
+                yield block.strip()
+
+
+def read_queue():
+    queue = os.path.join(ROOT, "OWNER_QUEUE.md")
+    if not os.path.exists(queue):
+        return ""
+    with open(queue, encoding="utf-8") as source:
+        return source.read()
+
+
+def queue_last_trace(text):
+    """Последняя метка времени (UTC) в строках следа блока или None."""
+    best = None
+    for line in text.splitlines():
+        if not QUEUE_TRACE.match(line):
+            continue
+        for m in QUEUE_TS.finditer(line):
+            d, mo, y, h, mi, sec = m.groups()
+            try:
+                if h is None:
+                    ts = datetime(int(y), int(mo), int(d), 23, 59, 59, tzinfo=timezone.utc)
+                else:
+                    ts = datetime(int(y), int(mo), int(d), int(h), int(mi), int(sec or 0),
+                                  tzinfo=timezone.utc)
+            except ValueError:
+                continue
+            if best is None or ts > best:
+                best = ts
+    return best
+
+
+def stale_queue(now):
+    """Блоки `Состояние: взял в работу` без следов дольше QUEUE_STALE и без строки захвата
+    с их id в «ёлочках» в DISPATCH.md. «Ждёт владельца» и свободные блоки не трогает."""
+    dispatch = ""
+    for p in projects():
+        path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                dispatch += f.read() + "\n"
+    found = []
+    for text in queue_blocks(read_queue()):
+        key = re.match(r"## (\S+)", text)
+        states = re.findall(r"^Состояние: (.+)$", text, re.M)
+        if not key or not states or not states[-1].strip().startswith("взял в работу"):
+            continue
+        ident = key.group(1)
+        if re.search(rf"«[^»\n]*(?<![\w-]){re.escape(ident)}(?![\w-])[^»\n]*»", dispatch):
+            continue
+        last = queue_last_trace(text)
+        if last is not None and now - last > QUEUE_STALE:
+            found.append((ident, last, states[-1].strip()))
+    return found
+
+
 def free_work():
     found = []
-    queue = os.path.join(ROOT, "OWNER_QUEUE.md")
-    if os.path.exists(queue):
-        with open(queue, encoding="utf-8") as source:
-            content = source.read()
-        # шапка (до первой заметки) — не поручение; заметки разделены строкой `--`,
-        # формальные блоки начинаются с `## id`; поле «Адресат» больше не используется
-        notes = re.split(r"^--\s*$", content, flags=re.M)[1:] or []
-        for note in notes:
-            for block in re.split(r"(?=^## )", note, flags=re.M):
-                text = block.strip()
-                if not text:
-                    continue
-                key = re.match(r"## ([^\n]+)", text)
-                state = re.search(r"^Состояние: (.+)$", text, re.M)
-                if state and state.group(1).strip() != "свободно":
-                    continue
-                label = key.group(1) if key else text.splitlines()[0][:40]
-                found.append(f"очередь {label}")
+    for text in queue_blocks(read_queue()):
+        key = re.match(r"## ([^\n]+)", text)
+        state = re.search(r"^Состояние: (.+)$", text, re.M)
+        if state and state.group(1).strip() != "свободно":
+            continue
+        label = key.group(1) if key else text.splitlines()[0][:40]
+        found.append(f"очередь {label}")
     for p in projects():
         tri = os.path.join(ROOT, "projects", p, "TRIAGE.md")
         dis = os.path.join(ROOT, "projects", p, "DISPATCH.md")
@@ -135,6 +195,11 @@ def check(node, minimum, last, number=None):
         if ts and now - ts > STALE:
             events.append((f"ПРОТУХ {line[:60]}", f"захват держится "
                            f"{int((now - ts).total_seconds() // 60)} мин: {line[:160]}"))
+    for ident, ts, state in stale_queue(now):
+        events.append((f"ПРОТУХ очередь {ident}",
+                       f"блок OWNER_QUEUE.md «{ident}» без следов {int((now - ts).total_seconds() // 60)} мин "
+                       f"(последний {ts:%d-%m-%Y %H:%M} UTC) и без строки захвата в DISPATCH.md — "
+                       f"подхватить по § 6/§ 8: {state[:100]}"))
     if not last.get("_health") or now - last["_health"] > timedelta(minutes=5):
         last["_health"] = now
         for repo in staged_repos():
