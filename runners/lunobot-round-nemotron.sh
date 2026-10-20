@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lunobot-round.sh — один круг Lunobot через opencode + Nemotron 3 Ultra Free
+# lunobot-round-nemotron.sh — один круг Lunobot через opencode + Nemotron 3 Ultra Free
 
 set -euo pipefail
 
