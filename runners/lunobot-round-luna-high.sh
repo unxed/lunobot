@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+# lunobot-round-luna-high.sh — один круг Lunobot через opencode + ChatGPT-6 Luna High
+
+set -euo pipefail
+
+export LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONUTF8=1
+export NO_PROXY=127.0.0.1,localhost
+
+# ── настройки ─────────────────────────────────────────────────────────
+MODEL="openai/gpt-6-luna#high"
+SESSION_NAME="lunobot-2"
+BOT_NUMBER=2
+WORKDIR="${HOME}"
+INTERVAL_MIN=15
+MAX_RETRIES=3
+RETRY_DELAY=60
+TOKEN_LIMIT_WAIT=120
+LOG_DIR="${HOME}/.lunobot/logs-luna-high"
+mkdir -p "${LOG_DIR}"
+ACTIVE_PID=""
+ACTIVE_PGID=""
+ACTIVE_TAIL_PID=""
+
+# ── ротация логов ────────────────────────────────────────────────────
+rotate_logs() {
+  find "${LOG_DIR}" -name 'round-*.log' -type f -printf '%T@ %p\n' 2>/dev/null \
+    | sort -n | head -n -50 | cut -d' ' -f2- | xargs -r rm -f
+  find "${LOG_DIR}" -name 'round-*.log' -type f -mtime +7 -exec gzip -f {} \; 2>/dev/null || true
+}
+
+# ── вспомогательные ──────────────────────────────────────────────────
+log() { echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] $*" | tee -a "${LOG_DIR}/lunobot.log"; }
+
+acquire_runner_lock() {
+  mkdir -p "/tmp/lunobot-${BOT_NUMBER}"
+  exec 9>"/tmp/lunobot-${BOT_NUMBER}/runner.lock"
+  if ! flock -n 9; then
+    log "ERROR: another Lunobot-${BOT_NUMBER} runner is already active on this node"
+    return 1
+  fi
+}
+
+check_token_limit() {
+  local log_file="$1"
+  grep -qi -E "rate limit|token limit|quota exceeded|too many tokens|429 Too Many Requests|insufficient quota|billing" "${log_file}" 2>/dev/null
+}
+
+wait_token_reset() {
+  local wait_time="$1"
+  log "Token limit hit. Waiting ${wait_time}s for quota reset..."
+  local elapsed=0
+  while (( elapsed < wait_time )); do
+    printf "\r[%3d/%3ds] " $((wait_time - elapsed)) "${wait_time}"
+    sleep 5
+    ((elapsed += 5))
+  done
+  echo
+  log "Quota wait complete, retrying..."
+}
+
+stop_active_round() {
+  local signal_name="$1"
+  local exit_status="$2"
+  local self_pgid
+  self_pgid="$(ps -o pgid= -p "$$" 2>/dev/null | tr -d ' ' || true)"
+  trap - INT TERM
+  log "Received ${signal_name}; stopping only this round's process group"
+
+  if [[ -n "${ACTIVE_PGID}" && "${ACTIVE_PGID}" != "${self_pgid}" && "${ACTIVE_PGID}" != 1 ]]; then
+    kill -TERM -- "-${ACTIVE_PGID}" 2>/dev/null || true
+    sleep 2
+    kill -KILL -- "-${ACTIVE_PGID}" 2>/dev/null || true
+  elif [[ -n "${ACTIVE_PID}" ]]; then
+    # Never signal our own terminal/process group if setsid did not isolate the child.
+    kill -TERM "${ACTIVE_PID}" 2>/dev/null || true
+    sleep 2
+    kill -KILL "${ACTIVE_PID}" 2>/dev/null || true
+  fi
+  if [[ -n "${ACTIVE_PID}" ]]; then wait "${ACTIVE_PID}" 2>/dev/null || true; fi
+  if [[ -n "${ACTIVE_TAIL_PID}" ]]; then
+    kill -TERM "${ACTIVE_TAIL_PID}" 2>/dev/null || true
+    wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
+  fi
+  exit "${exit_status}"
+}
+
+# ── один чистый круг Lunobot ─────────────────────────────────────────
+run_round() {
+  local round_num="$1"
+  local ts="$(date -u '+%Y%m%d-%H%M%S')"
+  local log_file="${LOG_DIR}/round-${round_num}-${ts}.log"
+
+  log "=== Round ${round_num} START ==="
+
+  log "Fetching LUNOBOT.md ..."
+  mkdir -p /tmp/lunobot-2
+  curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md" \
+    -o "/tmp/lunobot-2/LUNOBOT.md" || { log "ERROR: cannot fetch LUNOBOT.md"; return 1; }
+
+  local prompt="Ты — Лунобот-2 (GPT-6 Luna, high). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-2/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. Ответь кратко итогом круга."
+
+  log "Starting opencode (model: ${MODEL}) ..."
+  cd "${WORKDIR}"
+  # --standalone: own private server, no external dependency
+  # Stream output to the terminal and log while preserving the command status.
+  setsid timeout --foreground 1800 opencode run \
+    --model "${MODEL}" \
+    --title "Lunobot-2 round ${round_num}" \
+    --auto \
+    --standalone \
+    -- "$prompt" \
+    >"${log_file}" 2>&1 &
+  ACTIVE_PID=$!
+  ACTIVE_PGID="$(ps -o pgid= -p "${ACTIVE_PID}" 2>/dev/null | tr -d ' ' || true)"
+  tail --pid="${ACTIVE_PID}" -n +1 -f "${log_file}" &
+  ACTIVE_TAIL_PID=$!
+  local exit_code=0
+  if wait "${ACTIVE_PID}"; then
+    exit_code=0
+  else
+    exit_code=$?
+  fi
+  ACTIVE_PID=""
+  ACTIVE_PGID=""
+  wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
+  ACTIVE_TAIL_PID=""
+
+  if check_token_limit "${log_file}"; then
+    log "DETECTED: Token limit / rate limit in round output"
+    wait_token_reset "${TOKEN_LIMIT_WAIT}"
+    return 2
+  fi
+
+  if [[ ${exit_code} -eq 124 ]]; then
+    log "WARNING: round ${round_num} timed out (30 min)"
+    return 1
+  elif [[ ${exit_code} -ne 0 ]]; then
+    log "ERROR: opencode exited with code ${exit_code}"
+    return 1
+  fi
+
+  log "=== Round ${round_num} DONE ==="
+  return 0
+}
+
+# ── основной цикл ────────────────────────────────────────────────────
+main() {
+  acquire_runner_lock || exit 1
+  log "=== Lunobot-Luna High runner started (PID $$) ==="
+  log "Model: ${MODEL}, interval: ${INTERVAL_MIN} min, logs: ${LOG_DIR}"
+
+  rotate_logs
+
+  local round=1
+  while true; do
+    local attempt=1
+    while (( attempt <= MAX_RETRIES )); do
+      local rc=0
+      if run_round "${round}"; then
+        rc=0
+      else
+        rc=$?
+      fi
+      case $rc in
+        0) break ;;
+        2) log "Token limit retry (not counted against MAX_RETRIES)" ;;
+        *) log "Round ${round} failed (attempt ${attempt}/${MAX_RETRIES})"
+           if (( attempt < MAX_RETRIES )); then
+             log "Retrying in ${RETRY_DELAY}s ..."
+             sleep "${RETRY_DELAY}"
+           fi
+           ((attempt++))
+           ;;
+      esac
+    done
+
+    if (( attempt > MAX_RETRIES )); then
+      log "ERROR: round ${round} failed after ${MAX_RETRIES} attempts, continuing anyway"
+    fi
+
+    rotate_logs
+    log "Sleeping ${INTERVAL_MIN} minutes until next round ..."
+    sleep $(( INTERVAL_MIN * 60 ))
+    ((round++))
+  done
+}
+
+trap 'stop_active_round INT 130' INT
+trap 'stop_active_round TERM 143' TERM
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
