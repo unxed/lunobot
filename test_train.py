@@ -106,27 +106,6 @@ class CoveredTest(unittest.TestCase):
         self.assertIn("прогон на fedcba9", output.getvalue())
 
 
-class StagingPushTimeTest(unittest.TestCase):
-    SHA = "f5140571f7c245a0f0c9847df92a5e7646eb1c21"
-    PUSHED_AT = "2026-10-19T06:46:15Z"
-
-    def test_exact_quick_push_run_is_the_staging_arrival_time(self):
-        # Real regression data: unxed/lunobot#205, unxed/vtui commit f5140571 and run 39211840597.
-        run = {
-            "name": "quick",
-            "event": "push",
-            "head_branch": "lunobot/staging",
-            "head_sha": self.SHA,
-            "created_at": self.PUSHED_AT,
-        }
-        with mock.patch.object(train, "api", return_value={"workflow_runs": [run]}) as api:
-            got = train.staging_push_time("unxed/vtui", self.SHA)
-        self.assertEqual(got, datetime.fromisoformat(self.PUSHED_AT.replace("Z", "+00:00")))
-        api.assert_called_once_with(
-            f"repos/unxed/vtui/actions/runs?branch={train.STAGING}&head_sha={self.SHA}&event=push&per_page=100",
-            check=False)
-
-
 class RefCreatedTest(unittest.TestCase):
     def test_422_json_is_not_success(self):
         body = {"message": "Reference already exists", "status": "422"}
@@ -276,24 +255,18 @@ class StuckTest(unittest.TestCase):
             "committer": {"date": when.isoformat().replace("+00:00", "Z")},
         }}
 
-    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None, push_time=None, now=None):
+    def check_stuck(self, commits, train_pr=None, rollup=None, ahead=None, push_time=None):
         def compare(repo, base, head):
             if base == "main":
                 return {"commits": commits}
             return ahead if ahead is not None else {"status": "diverged", "commits": []}
 
-        class FixedDateTime(datetime):
-            @classmethod
-            def now(cls, tz=None):
-                return now
-
         with mock.patch.object(train, "api", side_effect=[
                 {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
                 mock.patch.object(train, "green_train_covering", return_value=None), \
                 mock.patch.object(train, "train_pr", return_value=train_pr), \
-                mock.patch.object(train, "staging_push_time", return_value=push_time), \
-                mock.patch.object(train, "datetime", FixedDateTime if now else datetime), \
                 mock.patch.object(train, "rollup", return_value=rollup or ([], [], [], [])), \
+                mock.patch.object(train, "staging_push_time", return_value=push_time), \
                 mock.patch.object(train, "compare", side_effect=compare), \
                 contextlib.redirect_stdout(io.StringIO()) as output:
             result = train.stuck("o/r")
@@ -318,16 +291,84 @@ class StuckTest(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertIn("1 коммит(ов) ждут main", output)
 
-    def test_real_old_commit_uses_its_recent_staging_push_time(self):
-        # Committer date 03:28:10Z; exact quick push run 39211840597 was created at 06:46:15Z.
-        old = self.commit("f5140571f7c245a0f0c9847df92a5e7646eb1c21", "test: cover protocol",
-                          datetime(2026, 10, 19, 3, 28, 10, tzinfo=timezone.utc))
-        pushed = datetime(2026, 10, 19, 6, 46, 15, tzinfo=timezone.utc)
-        now = datetime(2026, 10, 19, 7, 3, 40, tzinfo=timezone.utc)
-        result, output = self.check_stuck([old], push_time=pushed, now=now)
+    def test_exact_staging_push_time_beats_rewritten_committer_date(self):
+        # unxed/vtui#205: f514057 was committed at 03:28 but pushed with the exact
+        # staging quick run 39211840597 at 06:46; it was only minutes old at health 07:03.
+        now = datetime.now(timezone.utc)
+        old = self.commit("f5140571f7c245a0f0c9847df92a5e7646eb1c21", "landed work",
+                          now - timedelta(hours=4))
+        result, output = self.check_stuck([old], push_time=now - timedelta(minutes=10))
         self.assertEqual(result, 0)
-        self.assertIn("старший — 0.3 ч", output)
+        self.assertIn("старший — 0.2 ч", output)
         self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_staging_push_time_requires_exact_push_run(self):
+        sha = "f5140571f7c245a0f0c9847df92a5e7646eb1c21"
+        timestamp = "2026-10-19T06:46:15Z"
+        runs = [
+            {"head_branch": train.STAGING, "head_sha": sha, "event": "push",
+             "created_at": timestamp},
+            {"head_branch": train.STAGING, "head_sha": "other", "event": "push",
+             "created_at": "2026-10-19T06:40:00Z"},
+            {"head_branch": train.STAGING, "head_sha": sha, "event": "workflow_dispatch",
+             "created_at": "2026-10-19T06:30:00Z"},
+        ]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": runs}):
+            self.assertEqual(train.staging_push_time("unxed/vtui", sha),
+                             datetime.fromisoformat(timestamp.replace("Z", "+00:00")))
+
+    def test_push_time_covers_commits_without_their_own_quick_run(self):
+        # quick создаётся на вершину push'а: у остальных коммитов того же land собственного прогона
+        # нет (unxed/f4, 60 из 78 коммитов многокоммитных push'ей за 18-20-10-2026). Старые даты
+        # коммиттера таких коммитов не должны возвращать ложный инцидент (unxed/vtui#205).
+        tip = "f5140571f7c245a0f0c9847df92a5e7646eb1c21"
+        runs = [{"head_branch": train.STAGING, "head_sha": tip, "event": "push",
+                 "created_at": "2026-10-19T06:46:15Z"}]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": runs}) as api:
+            got = train.staging_push_time("unxed/vtui", ["a" * 40, "b" * 40, tip])
+        self.assertEqual(got, datetime(2026, 10, 19, 6, 46, 15, tzinfo=timezone.utc))
+        self.assertIn("quick.yml/runs?branch=lunobot/staging&event=push", api.call_args.args[0])
+
+    def test_push_time_is_the_earliest_push_of_the_waiting_commits(self):
+        # Накопление: старый push ещё не уехал в main, свежий land не обнуляет возраст.
+        runs = [
+            {"head_branch": train.STAGING, "head_sha": "d" * 40, "event": "push",
+             "created_at": "2026-10-19T06:46:15Z"},
+            {"head_branch": train.STAGING, "head_sha": "c" * 40, "event": "push",
+             "created_at": "2026-10-19T03:00:00Z"},
+        ]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": runs}):
+            got = train.staging_push_time("unxed/vtui", ["c" * 40, "d" * 40])
+        self.assertEqual(got, datetime(2026, 10, 19, 3, 0, tzinfo=timezone.utc))
+
+    def test_push_time_api_error_or_no_run_gives_none(self):
+        for body in ({"message": "API rate limit exceeded"}, {"workflow_runs": []}, None):
+            with mock.patch.object(train, "api", return_value=body):
+                self.assertIsNone(train.staging_push_time("unxed/vtui", ["a" * 40]))
+
+    def test_oldest_arrival_falls_back_to_committer_date_without_push_run(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("a" * 40, "docs", now - timedelta(hours=3)),
+                   self.commit("b" * 40, "docs", now - timedelta(hours=1))]
+        with mock.patch.object(train, "api", return_value={"workflow_runs": []}):
+            self.assertEqual(train.oldest_staging_arrival("o/r", commits), now - timedelta(hours=3))
+
+    def test_old_commits_of_one_multi_commit_land_use_push_time_and_no_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("a" * 40, "parked", now - timedelta(hours=20)),
+                   self.commit("b" * 40, "parked", now - timedelta(hours=19)),
+                   self.commit("c" * 40, "parked", now - timedelta(hours=18))]
+        result, output = self.check_stuck(commits, push_time=now - timedelta(minutes=10))
+        self.assertEqual(result, 0)
+        self.assertIn("3 коммит(ов) ждут main; старший — 0.2 ч", output)
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_without_push_run_old_committer_date_still_triggers_incident(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("a" * 40, "old", now - timedelta(hours=4))]
+        result, output = self.check_stuck(commits, push_time=None)
+        self.assertEqual(result, 1)
+        self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
 
     def test_recent_train_in_flight_does_not_trigger_old_staging_incident(self):
         now = datetime.now(timezone.utc)
@@ -1693,6 +1734,45 @@ class ReadsCloseFilesTest(unittest.TestCase):
                 seen = self.resource_warnings(lambda: result.extend(train.staged_repos()))
             self.assertEqual(seen, [])
             self.assertEqual(result, ["unxed/f4"])
+
+
+class TransitWarnRevertedTouchTest(unittest.TestCase):
+    def test_reverted_touch_commit_does_not_warn(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 1931 | 3 | в пути | 2 | 2026-10-19T00:00:00Z |\n")
+            original = "a" * 40
+            commits = [
+                {"sha": original, "commit": {"message": "Show milliseconds\n\nTouch: #1931"}},
+                {"sha": "b" * 40, "commit": {"message": f'Revert "Show milliseconds"\n\nThis reverts commit {original}.\n'}},
+            ]
+            with mock.patch.object(train, "triage_path", return_value=path), \
+                 mock.patch.object(train, "api_list", return_value=commits), \
+                 mock.patch.object(train, "tried_since") as tried:
+                with mock.patch("builtins.print") as output:
+                    train.transit_warn("unxed/f4")
+            tried.assert_not_called()
+            output.assert_not_called()
+
+    def test_unreverted_touch_commit_still_warns(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 7 | 3 | в пути | 2 | 2026-10-19T00:00:00Z |\n")
+            commits = [{"sha": "a" * 40, "commit": {"message": "step\n\nTouch: #7"}}]
+            with mock.patch.object(train, "triage_path", return_value=path), \
+                 mock.patch.object(train, "api_list", return_value=commits), \
+                 mock.patch.object(train, "tried_since", return_value=False), \
+                 mock.patch("builtins.print") as output:
+                train.transit_warn("unxed/f4")
+            self.assertTrue(any("#7" in str(call) for call in output.call_args_list))
 
 
 class RevertedLaterInTrainTest(unittest.TestCase):

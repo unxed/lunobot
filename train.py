@@ -302,6 +302,36 @@ def quick_runs(repo):
     return sorted(rs, key=lambda r: r["created_at"], reverse=True)
 
 
+def staging_push_time(repo, shas):
+    """Время прибытия работы в staging: самый ранний push-прогон quick, чья вершина — один из
+    `shas` (строка или коллекция SHA), либо None, если такого прогона нет или API не ответил.
+
+    `quick` создаётся на вершину push'а, а не на каждый его коммит: из пяти коммитов одного
+    `land` свой прогон есть только у последнего, а дата коммиттера остаётся временем создания
+    коммита в клоне автора (land без rebase её не меняет). Поэтому «когда коммит попал в
+    staging» = первый push-прогон, чья вершина этот коммит или его потомок (вершина push'а,
+    выше по ветке). Берём минимум по всем коммитам впереди main: старейший из них приехал в
+    этом или более раннем push'е (unxed/vtui#205: коммит от 03:28 приземлён в 06:46; на
+    unxed/f4 в 60 из 78 коммитов многокоммитных push'ей за 18–20-10-2026 собственного прогона нет)."""
+    wanted = {shas} if isinstance(shas, str) else set(shas)
+    data = api(f"repos/{repo}/actions/workflows/quick.yml/runs?branch={STAGING}&event=push&per_page=100",
+               check=False)
+    if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
+        return None
+    pushes = [r for r in data["workflow_runs"] if r.get("head_branch") == STAGING
+              and r.get("head_sha") in wanted and r.get("event") == "push" and r.get("created_at")]
+    if not pushes:
+        return None
+    return min(datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) for r in pushes)
+
+
+def oldest_staging_arrival(repo, own):
+    """Когда в staging приехал старейший из коммитов `own`: время push (см. staging_push_time),
+    иначе дата коммиттера как оценка (push без кода — только .md/docs — quick не запускает)."""
+    return staging_push_time(repo, [c["sha"] for c in own]) or min(
+        datetime.fromisoformat(c["commit"]["committer"]["date"].replace("Z", "+00:00")) for c in own)
+
+
 def staging_health(repo):
     """green | pending | healing | red, и подробности.
 
@@ -1370,35 +1400,15 @@ def heal(repo):
     return 0
 
 
-def staging_push_time(repo, sha):
-    """Return the push time recorded by quick for this exact staging commit, if present."""
-    data = api(f"repos/{repo}/actions/runs?branch={STAGING}&head_sha={sha}&event=push&per_page=100",
-               check=False)
-    if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
-        return None
-    runs = [run for run in data["workflow_runs"]
-            if run.get("name") == "quick" and run.get("event") == "push"
-            and run.get("head_branch") == STAGING and run.get("head_sha") == sha
-            and run.get("created_at")]
-    if not runs:
-        return None
-    return min(datetime.fromisoformat(run["created_at"].replace("Z", "+00:00")) for run in runs)
-
-
-def staging_land_time(repo, commit):
-    """Use the exact staging push time; older commits may lack a quick run, so fall back."""
-    return staging_push_time(repo, commit["sha"]) or datetime.fromisoformat(
-        commit["commit"]["committer"]["date"].replace("Z", "+00:00"))
-
-
 def stuck(repo):
     """Метрика результата, а не активности: как долго УЖЕ ПРИЗЕМЛЁННАЯ работа ждёт main.
     Флот может выглядеть очень занятым (десятки land, поезд за поездом) и при этом не
     доставлять ничего — именно так прошли 9.5 часов 28-09-2026.
 
-    Меряется возраст самого старого коммита staging, которого нет в main. Для точной вершины
-    коммита используем время push-прогона quick; если такого прогона нет (например, docs-only
-    push его не запускает), остаётся дата коммиттера как оценка. Не возраст вершины main: поезд
+    Меряется возраст самого старого коммита staging, которого нет в main: от первого push-прогона
+    quick, чья вершина этот коммит или его потомок (`staging_push_time`); нет такого прогона
+    (push только с .md/docs) — от даты коммиттера, это лишь оценка: она не момент land, land
+    без rebase её не меняет. Не возраст вершины main: поезд
     вливается fast-forward'ом, коммиты сохраняют старые даты, и «main стоит N часов»
     показывало бы застой сразу после мержа; а в проекте, где main долго не нужен был, один
     свежий коммит в staging поднимал бы ложный инцидент."""
@@ -1439,7 +1449,7 @@ def stuck(repo):
                             print(f"поезд #{train['number']} проверяется {train_hours:.1f} ч; "
                                   "ожидание штатное")
                             return 0
-                        oldest = min(staging_land_time(repo, c) for c in own)
+                        oldest = oldest_staging_arrival(repo, own)
                         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
                         print(f"в staging {len(own)} коммит(ов) ждут main впереди поезда "
                               f"#{train['number']} (проверяется {train_hours:.1f} ч); "
@@ -1457,7 +1467,7 @@ def stuck(repo):
         print("staging не впереди main — приземлённая работа вся в main")
         return 0
     if hours is None:
-        oldest = min(staging_land_time(repo, c) for c in own)
+        oldest = oldest_staging_arrival(repo, own)
         hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
     label = "поезд идёт" if train_in_flight else "старший"
     print(f"в staging {len(own)} коммит(ов) ждут main; {label} — {hours:.1f} ч")
@@ -1808,6 +1818,9 @@ def transit_warn(repo):
         return
     since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
     commits = api_list(f"repos/{repo}/commits?sha=main&since={since}&per_page=100")
+    # A Touch commit later reverted on main no longer represents work awaiting user feedback.
+    # GitHub's revert message contains the original SHA; use the same parser as train bisect.
+    commits = [c for i, c in enumerate(commits) if not reverted_later_in_train(commits, i)]
     stale = sorted(n for n in transit & own_numbers(repo, commits) if not tried_since(repo, n, commits))
     if stale:
         print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
