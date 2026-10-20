@@ -1683,11 +1683,19 @@ def unreverted_commits(commits):
     доехавшего изменения нельзя: например, #1931 получил ложное предупреждение, когда
     71c1a4f был откачен коммитом 6c11081c.
     """
+    # Список от новых к старым (так отдаёт API). Откат, который сам откачен более новым
+    # коммитом (`git revert <Staging-Revert>` при повторном применении шага, § 7.2 п. 5),
+    # не считается: иначе исходный коммит с `Touch:` пропал бы из предупреждения, хотя его код
+    # снова в main. Ссылка на коммит может быть короткой — сравниваем по префиксу.
     reverted = set()
     for commit in commits:
+        sha = commit.get("sha") or ""
+        if any(sha.startswith(r) for r in reverted):
+            continue
         message = commit.get("commit", {}).get("message", "")
         reverted.update(re.findall(r"(?im)^This reverts commit ([0-9a-f]{7,40})\.?$", message))
-    return [commit for commit in commits if commit.get("sha") not in reverted]
+    return [commit for commit in commits
+            if not any((commit.get("sha") or "").startswith(r) for r in reverted)]
 
 
 def triage_path(repo):

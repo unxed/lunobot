@@ -1191,6 +1191,25 @@ class TransitWarnRevertTest(unittest.TestCase):
 
         self.assertNotIn("ПРЕДУПРЕЖДЕНИЕ", output.getvalue())
 
+    def test_reverted_revert_keeps_original_touch(self):
+        orig = "a" * 40
+        rev1 = "b" * 40
+        rev2 = "c" * 40
+        commits = [  # от новых к старым, как отдаёт API
+            {"sha": rev2, "commit": {"message": f"Revert \"Revert X\"\n\nThis reverts commit {rev1}."}},
+            {"sha": rev1, "commit": {"message": f"Revert \"X\"\n\nThis reverts commit {orig}."}},
+            {"sha": orig, "commit": {"message": "X\n\nTouch: #1931"}},
+        ]
+        self.assertEqual([c["sha"] for c in train.unreverted_commits(commits)], [rev2, orig])
+
+    def test_short_sha_revert_reference(self):
+        orig = "a" * 40
+        commits = [
+            {"sha": "b" * 40, "commit": {"message": f"Revert \"X\"\n\nThis reverts commit {orig[:8]}."}},
+            {"sha": orig, "commit": {"message": "X\n\nTouch: #1931"}},
+        ]
+        self.assertEqual([c["sha"] for c in train.unreverted_commits(commits)], ["b" * 40])
+
 
 class CheckSectionTest(unittest.TestCase):
     TOUCH = "\n\nTouch: unxed/f4#912\n"
