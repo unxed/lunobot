@@ -1745,6 +1745,45 @@ class ReadsCloseFilesTest(unittest.TestCase):
             self.assertEqual(result, ["unxed/f4"])
 
 
+class TransitWarnRevertedTouchTest(unittest.TestCase):
+    def test_reverted_touch_commit_does_not_warn(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 1931 | 3 | в пути | 2 | 2026-10-19T00:00:00Z |\n")
+            original = "a" * 40
+            commits = [
+                {"sha": original, "commit": {"message": "Show milliseconds\n\nTouch: #1931"}},
+                {"sha": "b" * 40, "commit": {"message": f'Revert "Show milliseconds"\n\nThis reverts commit {original}.\n'}},
+            ]
+            with mock.patch.object(train, "triage_path", return_value=path), \
+                 mock.patch.object(train, "api_list", return_value=commits), \
+                 mock.patch.object(train, "tried_since") as tried:
+                with mock.patch("builtins.print") as output:
+                    train.transit_warn("unxed/f4")
+            tried.assert_not_called()
+            output.assert_not_called()
+
+    def test_unreverted_touch_commit_still_warns(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 7 | 3 | в пути | 2 | 2026-10-19T00:00:00Z |\n")
+            commits = [{"sha": "a" * 40, "commit": {"message": "step\n\nTouch: #7"}}]
+            with mock.patch.object(train, "triage_path", return_value=path), \
+                 mock.patch.object(train, "api_list", return_value=commits), \
+                 mock.patch.object(train, "tried_since", return_value=False), \
+                 mock.patch("builtins.print") as output:
+                train.transit_warn("unxed/f4")
+            self.assertTrue(any("#7" in str(call) for call in output.call_args_list))
+
+
 class RevertedLaterInTrainTest(unittest.TestCase):
     def test_revert_after_step_is_found(self):
         a, b, c = "a" * 40, "b" * 40, "c" * 40
