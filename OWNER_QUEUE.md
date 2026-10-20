@@ -97,6 +97,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
 Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 20-10-2026 22:45:59 UTC (воркер ae1b9d6b; таблица платформ и план после шага 2; шаги 1–2 FreeBSD — у Лунобот-1 node 801452e4fd3b9a26f8e6f02c, PR unxed/dn#167, не дублировать)
+Прогресс 20-10-2026 22:51:57 UTC: проба платформ (freebsd x64/aarch64, netbsd, openbsd, dragonfly, haiku, macos arm64/x64, linux armhf/riscv64) — ветка tmp/19d3/dn166-plat-1020-2245, прогон https://github.com/unxed/dn/actions/runs/39511037412; план шагов 3–4 FreeBSD готовится (status/166.md).
 
 ## account-216
 Заметка владельца: https://github.com/unxed/lunobot/issues/216
