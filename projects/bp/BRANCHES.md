@@ -3,5 +3,3 @@
 Журнал намерений создания веток под lunobot/; записи сверяются с GitHub.
 
 17-10-2026 21:56 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/pr/bp3-46a` для https://github.com/unxed/bp/issues/3
-
-20-10-2026 04:56:14 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/pr/bp3-d8-embed-ci` для https://github.com/unxed/bp/issues/3
