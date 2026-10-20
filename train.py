@@ -755,7 +755,11 @@ def pick_green(repo, main_sha, staging_sha, runs):
                 and compare(repo, r["head_sha"], staging_sha)["status"] in ("ahead", "identical"):
             return r
     # Вершина — слияние main без кода сверх зелёного первого родителя: quick на ней не запускался
-    # (paths-ignore), но она покрыта прогоном родителя (merge_covered).
+    # (paths-ignore), но она покрыта прогоном родителя (merge_covered). Свой завершённый прогон у
+    # вершины есть (запуск руками) и он не зелёный — родителем не покрываем: с красной вершины поезд
+    # не режется никогда (§ 7.2 п. 0), её лечит heal.
+    if any(r.get("head_sha") == staging_sha for r in runs):
+        return None
     tip = merge_covered(repo, staging_sha, runs)
     if tip:
         c = compare(repo, main_sha, staging_sha)

@@ -764,6 +764,15 @@ class MergeCoveredTest(unittest.TestCase):
             got = train.pick_green("o/r", "main", "tip", self.RUNS)
         self.assertEqual(got["head_sha"], "tip")
 
+    def test_pick_green_skips_covered_merge_tip_with_own_red_run(self):
+        def compare(repo, base, head):
+            return {"ahead_by": 2, "behind_by": 0 if head == "tip" else 4, "status": "ahead"}
+        runs = [{"conclusion": "failure", "head_sha": "tip", "html_url": "r", "created_at": "t2"},
+                *self.RUNS]
+        with mock.patch.object(train, "api", self.fake_api(["p1", "m"], [])), \
+                mock.patch.object(train, "compare", side_effect=compare):
+            self.assertIsNone(train.pick_green("o/r", "main", "tip", runs))
+
 
 class EnsureQuickOnTipTest(unittest.TestCase):
     def tip(self, minutes):
