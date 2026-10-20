@@ -172,6 +172,11 @@ class PrivateAccountingTest(unittest.TestCase):
                     "«stale-1: действие»\n")
         self.assertNotIn("stale-1", [i for i, _, _ in self.stale_queue(dispatch)])
 
+    def test_stale_queue_claim_must_sit_inside_one_line_of_quotes(self):
+        # незакрытая «ёлочка» в одной строке и закрывающая в другой не склеиваются в чужой захват
+        dispatch = "20-10-2026 09:00:00 запись «без закрытия stale-1\nещё строка с » другим текстом\n"
+        self.assertIn("stale-1", [i for i, _, _ in self.stale_queue(dispatch)])
+
     def test_check_prints_stale_queue_event_once_per_repeat_window(self):
         with patch.object(fleet_watch, "sh", return_value=(0, "")), \
              patch.object(fleet_watch, "captures", return_value=[("p", None, "x")] * 4), \
@@ -187,7 +192,6 @@ class PrivateAccountingTest(unittest.TestCase):
         self.assertIn("ПРОТУХ:", text)
         self.assertIn("stale-1", text)
         self.assertIn("ПРОТУХ очередь stale-1", last)
-
 
     def test_janitor_uses_trailer_not_deleted_actor(self):
         log = ("@@LUNOBOT-COMMIT@@100\tЛунобот-1 (node a721a6d1487257292ae00780; LNX)\n"

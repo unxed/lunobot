@@ -137,7 +137,7 @@ def stale_queue(now):
         if not key or not states or not states[-1].strip().startswith("взял в работу"):
             continue
         ident = key.group(1)
-        if re.search(rf"«[^»]*(?<![\w-]){re.escape(ident)}(?![\w-])[^»]*»", dispatch):
+        if re.search(rf"«[^»\n]*(?<![\w-]){re.escape(ident)}(?![\w-])[^»\n]*»", dispatch):
             continue
         last = queue_last_trace(text)
         if last is not None and now - last > QUEUE_STALE:
