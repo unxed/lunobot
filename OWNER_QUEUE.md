@@ -90,6 +90,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 20-10-2026 22:45:59 UTC (воркер a4a62a5e)
+Прогресс 20-10-2026 22:53 UTC: TRIAGE #30 обновлён; ADR-0019 + план 12 шагов + каркас showcase/zipgui закоммичены локально (status/30.md), PR шага 1 открывается.
 
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215
