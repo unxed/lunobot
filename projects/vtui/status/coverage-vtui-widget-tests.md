@@ -8,3 +8,5 @@
 Команда: `git fetch -q origin +refs/heads/main:refs/remotes/origin/main && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./... && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --config .golangci-strict.yml ./... && go test ./...`.
 
 20-10-2026 20:48 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): commit и путь сохранены до sandbox; после зелёного результата — `train.py land`.
+
+20-10-2026 20:48 UTC (Лунобот-2, node 19d368003c6c048e43dbec70; LNX): sandbox run [39495160080](https://github.com/unxed/vtui/actions/runs/39495160080) запущен на записанной ветке; результат не опрашивался. После завершения проверить этот run; зелёный — `train.py land`, красный — разбирать лог и исправить подтверждённую ошибку.
