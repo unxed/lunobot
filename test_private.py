@@ -3,6 +3,7 @@
 import os
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -111,6 +112,82 @@ class PrivateAccountingTest(unittest.TestCase):
         self.assertEqual(names, ["sample"])
         self.assertEqual(len(taken), 1)
         self.assertEqual(free, ["sample#2(п4)"])
+
+    QUEUE = (
+        "шапка\n--\n"
+        "## stale-1\nСостояние: взял в работу — Лунобот-2 (node n; LNX), 15-10-2026 12:00:00 UTC\n"
+        "Прогресс 15-10-2026 16:46:34 UTC (Лунобот-2): шаг\n"
+        "Доп. проверка 15-10-2026 18:10 UTC: ещё шаг\n"
+        "Доп. шаг 15-10-2026 (без времени): запись только с датой\n"
+        "--\n"
+        "## fresh-2\nПрогресс 20-10-2026 09:30 UTC\n"
+        "Состояние: взял в работу — Лунобот-2 (node n; LNX), 15-10-2026 12:00:00 UTC\n"
+        "--\n"
+        "## tracked-3\nСостояние: взял в работу — Лунобот-1 (node n; LNX), 15-10-2026 12:00:00 UTC\n"
+        "--\n"
+        "## tracked-3-other\nСостояние: взял в работу — Лунобот-1 (node n; LNX), 15-10-2026 12:00:00 UTC\n"
+        "--\n"
+        "## waiting-4\nСостояние: ждёт владельца, не брать; 01-10-2026\n"
+        "--\n"
+        "## free-5\nСостояние: свободно\n"
+        "--\n"
+        "## notime-6\nСостояние: взял в работу — Лунобот-2\n"
+        "--\n"
+        "## lastwins-7\nСостояние: взял в работу — Лунобот-2, 01-10-2026 10:00:00 UTC\n"
+        "Состояние: ждёт владельца — вопрос; 02-10-2026 10:00:00 UTC\n"
+    )
+    NOW = datetime(2026, 10, 20, 10, 0, 0, tzinfo=timezone.utc)
+
+    def stale_queue(self, dispatch, queue=QUEUE, now=NOW):
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "OWNER_QUEUE.md").write_text(queue, encoding="utf-8")
+            project = Path(directory, "projects", "sample")
+            project.mkdir(parents=True)
+            project.joinpath("DISPATCH.md").write_text(dispatch, encoding="utf-8")
+            with patch.object(fleet_watch, "ROOT", directory), \
+                 patch.object(fleet_watch, "projects", return_value=["sample"]):
+                return fleet_watch.stale_queue(now)
+
+    def test_stale_queue_flags_only_untracked_claims_without_traces(self):
+        dispatch = (
+            "20-10-2026 09:55:00 Я Лунобот-1 (node n; LNX), взял кастомную задачу "
+            "«tracked-3: действие» по § 8 [urgent: по § 4 п. 1 — поручение владельца]\n")
+        found = self.stale_queue(dispatch)
+        # tracked-3 держит живой захват; tracked-3-other не путается с ним по префиксу id;
+        # fresh-2 — след 20-10 09:30 моложе 90 минут; ждёт владельца/свободно/без метки — не трогаем
+        self.assertEqual([i for i, _, _ in found], ["stale-1", "tracked-3-other"])
+        # дата без времени считается концом суток: последний след stale-1 — 15-10 23:59:59
+        self.assertEqual(found[0][1], datetime(2026, 10, 15, 23, 59, 59, tzinfo=timezone.utc))
+
+    def test_stale_queue_threshold_is_ninety_minutes(self):
+        queue = ("шапка\n--\n## x-1\nСостояние: взял в работу — Лунобот-2, "
+                 "20-10-2026 08:30:00 UTC\n")
+        at = lambda minute: self.stale_queue("", queue,
+                                             datetime(2026, 10, 20, 10, minute, 0, tzinfo=timezone.utc))
+        self.assertEqual(at(0), [])  # ровно 90 минут — ещё живой
+        self.assertEqual([i for i, _, _ in at(1)], ["x-1"])
+
+    def test_stale_queue_keepalive_line_with_block_id_counts_as_live(self):
+        dispatch = ("20-10-2026 09:59:00 Я Лунобот-2, работаю над кастомной задачей "
+                    "«stale-1: действие»\n")
+        self.assertNotIn("stale-1", [i for i, _, _ in self.stale_queue(dispatch)])
+
+    def test_check_prints_stale_queue_event_once_per_repeat_window(self):
+        with patch.object(fleet_watch, "sh", return_value=(0, "")), \
+             patch.object(fleet_watch, "captures", return_value=[("p", None, "x")] * 4), \
+             patch.object(fleet_watch, "staged_repos", return_value=[]), \
+             patch.object(fleet_watch, "stale_queue", return_value=[
+                 ("stale-1", self.NOW - timedelta(hours=5), "взял в работу — Лунобот-2")]):
+            last = {}
+            with patch("builtins.print") as shown:
+                fleet_watch.check("n", 4, last)
+                fleet_watch.check("n", 4, last)
+        self.assertEqual(shown.call_count, 1)
+        text = shown.call_args[0][0]
+        self.assertIn("ПРОТУХ:", text)
+        self.assertIn("stale-1", text)
+        self.assertIn("ПРОТУХ очередь stale-1", last)
+
 
     def test_janitor_uses_trailer_not_deleted_actor(self):
         log = ("@@LUNOBOT-COMMIT@@100\tЛунобот-1 (node a721a6d1487257292ae00780; LNX)\n"
