@@ -608,7 +608,8 @@ def rollup(repo, number):
     # (05-10-2026 поезд unxed/f4#1756: staging 12 ч, main стоял на codecov/project).
     material = [c for c in checks
                 if not (c.get("name") or "").lower().startswith("codecov/")]
-    pending = [c for c in material if c.get("status", "COMPLETED") != "COMPLETED"
+    pending = [c for c in material if
+               (c.get("status", "COMPLETED") != "COMPLETED" and not c.get("conclusion"))
                or c.get("state") == "PENDING"]
     failed = [c for c in material if (c.get("conclusion") or c.get("state"))
               in ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")]
@@ -1690,6 +1691,28 @@ def own_numbers(repo, commits):
     return {int(k.split("#")[1]) for k in tickets(repo, commits) if k.startswith(f"{repo}#")}
 
 
+def unreverted_commits(commits):
+    """Исключает Touch-коммиты, которые явно откачены другим коммитом из того же окна.
+
+    GitHub сохраняет исходный коммит в истории main после revert. Считать его признаком
+    доехавшего изменения нельзя: например, #1931 получил ложное предупреждение, когда
+    71c1a4f был откачен коммитом 6c11081c.
+    """
+    # Список от новых к старым (так отдаёт API). Откат, который сам откачен более новым
+    # коммитом (`git revert <Staging-Revert>` при повторном применении шага, § 7.2 п. 5),
+    # не считается: иначе исходный коммит с `Touch:` пропал бы из предупреждения, хотя его код
+    # снова в main. Ссылка на коммит может быть короткой — сравниваем по префиксу.
+    reverted = set()
+    for commit in commits:
+        sha = commit.get("sha") or ""
+        if any(sha.startswith(r) for r in reverted):
+            continue
+        message = commit.get("commit", {}).get("message", "")
+        reverted.update(re.findall(r"(?im)^This reverts commit ([0-9a-f]{7,40})\.?$", message))
+    return [commit for commit in commits
+            if not any((commit.get("sha") or "").startswith(r) for r in reverted)]
+
+
 def triage_path(repo):
     return os.path.join(ACCOUNTING, "projects", repo.split("/")[1], "TRIAGE.md")
 
@@ -1818,10 +1841,9 @@ def transit_warn(repo):
         return
     since = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - TRANSIT_WINDOW_H * 3600))
     commits = api_list(f"repos/{repo}/commits?sha=main&since={since}&per_page=100")
-    # A Touch commit later reverted on main no longer represents work awaiting user feedback.
-    # GitHub's revert message contains the original SHA; use the same parser as train bisect.
-    commits = [c for i, c in enumerate(commits) if not reverted_later_in_train(commits, i)]
-    stale = sorted(n for n in transit & own_numbers(repo, commits) if not tried_since(repo, n, commits))
+    effective = unreverted_commits(commits)
+    stale = sorted(n for n in transit & own_numbers(repo, effective)
+                   if not tried_since(repo, n, effective))
     if stale:
         print(f"ПРЕДУПРЕЖДЕНИЕ: `в пути`, но коммиты уже в main (за {TRANSIT_WINDOW_H} ч) — "
               f"нет «Пробуйте!»: {', '.join(f'#{n}' for n in stale)}. Разнеси «Пробуйте!» "

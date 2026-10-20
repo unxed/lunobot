@@ -987,6 +987,24 @@ class MainRedRunRerunTest(unittest.TestCase):
 
 
 class RollupRestRerunTest(unittest.TestCase):
+    def test_terminal_conclusion_wins_over_stale_in_progress_status(self):
+        output = ('{"statusCheckRollup":[{"name":"vendorHash matches go.mod/go.sum",'
+                  '"status":"IN_PROGRESS","conclusion":"SUCCESS"}]}')
+        with mock.patch.object(train, "run", return_value=_proc(0, output)):
+            checks, pending, failed, cancelled = train.rollup("o/r", 5)
+        self.assertEqual(checks[0]["name"], "vendorHash matches go.mod/go.sum")
+        self.assertEqual(pending, [])
+        self.assertEqual(failed, [])
+        self.assertEqual(cancelled, [])
+
+    def test_terminal_failure_with_stale_in_progress_status_is_failed_not_pending(self):
+        output = ('{"statusCheckRollup":[{"name":"check",'
+                  '"status":"IN_PROGRESS","conclusion":"FAILURE"}]}')
+        with mock.patch.object(train, "run", return_value=_proc(0, output)):
+            checks, pending, failed, cancelled = train.rollup("o/r", 5)
+        self.assertEqual(pending, [])
+        self.assertEqual(failed, [checks[0]])
+
     def test_failed_check_from_rest_can_be_rerun(self):
         def api(path, *args, check=True):
             if path.endswith("/pulls/5"):
@@ -1200,6 +1218,50 @@ class TriedSinceTest(unittest.TestCase):
     def test_ticket_without_commits_is_not_tried(self):
         with mock.patch.object(train, "api", return_value=[{"body": "Пробуйте!", "created_at": "2026-10-10T02:00:00Z"}]):
             self.assertFalse(train.tried_since("unxed/f4", 8, self.commits))
+
+
+class TransitWarnRevertTest(unittest.TestCase):
+    def test_reverted_touch_does_not_warn_as_landed(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "TRIAGE.md")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("| 1931 | 3 | в пути | 12 | 2026-10-19T14:00:00Z |\n")
+            commits = [
+                {"sha": "71c1a4fd2c0aca06237c491fa9c530216a9f19dc",
+                 "commit": {"message": "Show milliseconds\n\nTouch: #1931"}},
+                {"sha": "6c11081c94dbcb39ecb491bb08da95e773b8a1b1",
+                 "commit": {"message": "Revert \"Show milliseconds\"\n\n"
+                                     "This reverts commit 71c1a4fd2c0aca06237c491fa9c530216a9f19dc."}},
+            ]
+            output = io.StringIO()
+            with mock.patch.object(train, "triage_path", return_value=path), \
+                 mock.patch.object(train, "api_list", return_value=commits), \
+                 contextlib.redirect_stdout(output):
+                train.transit_warn("unxed/f4")
+
+        self.assertNotIn("ПРЕДУПРЕЖДЕНИЕ", output.getvalue())
+
+    def test_reverted_revert_keeps_original_touch(self):
+        orig = "a" * 40
+        rev1 = "b" * 40
+        rev2 = "c" * 40
+        commits = [  # от новых к старым, как отдаёт API
+            {"sha": rev2, "commit": {"message": f"Revert \"Revert X\"\n\nThis reverts commit {rev1}."}},
+            {"sha": rev1, "commit": {"message": f"Revert \"X\"\n\nThis reverts commit {orig}."}},
+            {"sha": orig, "commit": {"message": "X\n\nTouch: #1931"}},
+        ]
+        self.assertEqual([c["sha"] for c in train.unreverted_commits(commits)], [rev2, orig])
+
+    def test_short_sha_revert_reference(self):
+        orig = "a" * 40
+        commits = [
+            {"sha": "b" * 40, "commit": {"message": f"Revert \"X\"\n\nThis reverts commit {orig[:8]}."}},
+            {"sha": orig, "commit": {"message": "X\n\nTouch: #1931"}},
+        ]
+        self.assertEqual([c["sha"] for c in train.unreverted_commits(commits)], ["b" * 40])
 
 
 class CheckSectionTest(unittest.TestCase):
