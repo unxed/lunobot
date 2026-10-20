@@ -82,3 +82,24 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: шаги unxed/bp#56 влиты в main с зелёным CI, SPEC v0.7 — по критерию шага 16; сверка планов unxed/dn#87 и unxed/bp#3 записана в тикетах.
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 20-10-2026 21:49:25 UTC
 Прогресс 20-10-2026 21:53:22 UTC: шаг 1 (реестр рисков в safe/SPEC.md §8) — PR unxed/bp#57, коммит 8f2aceb, CI идёт; следующий — шаг 2 (каркас bpvet) после влития.
+
+## account-214
+Заметка владельца: https://github.com/unxed/lunobot/issues/214
+Проект: goWidgets
+Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
+Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
+Состояние: свободно
+
+## account-215
+Заметка владельца: https://github.com/unxed/lunobot/issues/215
+Проект: dn
+Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
+Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
+Состояние: свободно (шаг 1 unxed/dn#166 уже в работе у Лунобот-1 node 801452e4fd3b9a26f8e6f02c по projects/dn/DISPATCH.md, PR unxed/dn#167 — не дублировать)
+
+## account-216
+Заметка владельца: https://github.com/unxed/lunobot/issues/216
+Проект: f4
+Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
+Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
+Состояние: свободно
