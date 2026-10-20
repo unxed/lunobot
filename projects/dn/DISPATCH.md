@@ -7,5 +7,3 @@
 20-10-2026 19:16:01 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/dn/issues/90 (шаг 7, часть 7б — FISH и SFTP через ssh: rebase на main, PR) [pr]
 
 20-10-2026 19:42:07 Я Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), взял задачу https://github.com/unxed/dn/issues/90 (шаг 7, часть 7в-1 — TRemoteDrive и реестр адресов sh:// sftp:// ftp://, общий для 7в и 12a; только просмотр, без меню) [pr]
-
-20-10-2026 20:13:31 Я Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «влить зелёный PR unxed/dn#164» по § 5 п. 3 [urgent: по § 5 п. 3 — зелёный PR из CI.md]
