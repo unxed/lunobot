@@ -2,7 +2,8 @@
 
 Этот файл — в учёте, а не в репозитории tv3: правило 3 `CLAUDE.md` tv3 запрещает утверждения о происхождении кода в
 коде, документах и коммитах tv3. Здесь — как пишется модуль и что записывается о каждом шаге. В tv3 (код, коммит, PR,
-тикет) о происхождении не пишется ничего, кроме обязательного заголовка `Translated from magiblot/tvision @ b4831e2`.
+тикет) о происхождении не пишется ничего, кроме обязательного заголовка `Translated from magiblot/tvision @ b4831e2`
+(у терминальных модулей — `Translated from magiblot/tvterm @ 210eb23`, п. 4).
 
 Цель (слово владельца): воспроизведение magiblot/tvision @ `b4831e2` на Free Pascal на классах, с нашими доработками,
 с понятным происхождением. Каждое правило ниже отвечает на вопрос «откуда в этом файле эта строка».
@@ -56,6 +57,8 @@ Free Pascal на классах, имена — по `docs/API-NAMES.md` (пра
   (`sp`), DOS Navigator и `unxed/dn`, far2l (код), веб-поиск и чтение кода Turbo Vision где бы то ни было;
 - исходники тестов tv3 (они тоже унаследованы и пока не разобраны; поведение исполнитель берёт из magiblot и
   `tests.txt`, а результат тестов — из CI, п. 5);
+- libvterm в любом виде (`deps/libvterm` tvterm, его копии и пакеты, документация его внутреннего устройства) и вообще
+  всё, что не названо входом п. 2 (у терминальных модулей — `room/tvterm/` и документы стандартов);
 - любые инструменты сети (`gh`, `curl`, WebFetch, WebSearch) и чтение файлов вне каталога `room/`.
 
 Исполнителя запускай типом агента, у которого есть только файловые инструменты (Read, Write, Edit, Glob, Grep), если
@@ -77,12 +80,32 @@ sha blob'а в реестр) вместо `magiblot/`; код far2l не чит�
   tvtermoswin, tvtermstub.inc, tvtermunix.inc, tvtermwin.inc, tvustr, tvvtext, tvwild, tvwordnav, tvxlat. Тесты `tests/`
   из tv — тоже S30, на пониженных порогах.
 
-**Источники по модулям** (правило 1 `CLAUDE.md` tv3: единственный чужой источник — magiblot/tvision):
+**Источники по модулям** (правило 1 `CLAUDE.md` tv3: чужие источники — magiblot/tvision @ b4831e2 и, по решению
+владельца «Разрешаю tvterm» (https://github.com/unxed/lunobot/issues/240#issuecomment-6325342435), magiblot/tvterm @
+`210eb23564da06c358d2623388939bb02f7f3419` — правила tv3 правит unxed/tv3#16; до его влития tvterm исполнителю не давать):
 - модули, у которых есть пара в magiblot/tvision @ b4831e2 — её файлы (п. 2.1);
-- TvVt, TvVtRun, TvVtKeys, TvVtView, TvPty (эмулятор терминала и pty; у magiblot/tvision их нет) — только стандарты:
-  xterm «Control Sequences» (ctlseqs), ECMA-48, DEC STD 070; сначала они кладутся в `tools/audit/facts/` tv3 как
-  разрешённые документы (правило 4: каждый называет свой источник) отдельным PR, затем — вход исполнителя вместо
-  `magiblot/`. magiblot/tvterm и libvterm — НЕ источник (это не magiblot/tvision);
+- терминальные модули — C++ magiblot/tvterm @ 210eb23 (только его `include/tvterm/*.h` и `source/tvterm-core/*`; каталог
+  `room/tvterm/`, sha blob'ов в реестр, `gh api … 'repos/magiblot/tvterm/contents/<путь>?ref=210eb23564da06c358d2623388939bb02f7f3419'`)
+  плюс стандарты (xterm «Control Sequences» (ctlseqs), ECMA-48, DEC STD 070 — документами `tools/audit/facts/` tv3,
+  правило 4: каждый называет свой источник; они кладутся отдельным PR до шага TvVt). Заголовок переведённого файла —
+  `Translated from magiblot/tvterm @ 210eb23` со списком файлов C++ и ссылкой на `COPYRIGHT.tvterm`: шапки этих модулей
+  на `main` такой строки не имеют — оркестратор дописывает её в шапку `interface.pas` до запуска (механика, п. 1), и
+  interface сверяется с этой шапкой. Соответствие (сверено по заголовкам `include/tvterm/` и `vtermemu.cc`, 21-10-2026):
+  - TvPty — `include/tvterm/pty.h`, `source/tvterm-core/pty.cc` (`createPty`, `PtyMaster`: чтение, запись, размер, конец);
+  - TvVtView — `include/tvterm/termview.h`, `termwnd.h`, `termframe.h`, `termctrl.h`, `termemu.h` и их `.cc` в
+    `source/tvterm-core/` (вид, окно, рамка, контроллер pty+эмулятор, `TerminalState`/`TerminalSurface`, выделение);
+  - TvVtKeys — из `source/tvterm-core/vtermemu.cc` только преобразование событий TV (клавиша, модификаторы, мышь) в вызовы
+    эмулятора; БАЙТЫ последовательностей — по xterm ctlseqs (в tvterm их порождает libvterm);
+  - TvVtRun — пары нет (запуск программы на весь экран); `termctrl.h`/`termctrl.cc` — для общей части (pty + эмулятор,
+    чтение, конец программы), остальное — interface и стандарты;
+  - TvVt (эмулятор) — **только стандарты**: ядро эмуляции tvterm — отдельная библиотека libvterm (`deps/libvterm`,
+    функции `vterm_*`), владелец разрешил ТОЛЬКО tvterm, libvterm — НЕ источник, пока владелец не скажет иное. Из tvterm
+    для TvVt можно лишь его собственный код, у которого есть часть в TvVt: история (`VTermEmulator::Scrollback`,
+    `vtermemu.h`/`vtermemu.cc`) и обмен с видом (`TerminalState`, `termemu.h`); разбор последовательностей, экран, режимы,
+    ответы — по стандартам;
+  - TvVtExt (`tvvtext`, не из tv, S30) — сторона терминала расширений far2l: только `VTExts.md` (правило 2, как TvFar2l);
+    у tvterm расширений far2l нет — tvterm не вход;
+  - `demo/tvterm.pas` (не из tv, S30) — пара `source/tvterm/app.cc`, `desk.cc`, `wnd.cc` tvterm, если S30 решит переносить;
 - TvFar2l — только `VTExts.md` ветки `extsdocs` unxed/far2l (п. 3), код far2l не читать;
 - модули без пары и без стандарта (TvDos, TvLocale, TvMem, TvTermOs, TvUnix — платформенные слои) — по interface,
   `docs/ASYNC.md`, документации ОС/RTL Free Pascal (не TV-кода) и поведению по тестам; список таких входов шаг пишет в реестр.
@@ -143,6 +166,9 @@ Inputs, all in this directory and nothing else:
   deps/*.pas     - the interface sections of the units it uses.
   magiblot/      - the C++ sources of magiblot/tvision at <sha> that this unit corresponds to. The behaviour of every
                    routine follows them.
+  tvterm/        - (terminal units, instead of magiblot/) the C++ sources of magiblot/tvterm at <sha>; libvterm is
+                   not among the inputs: what tvterm leaves to it follows the standards in standards/.
+  standards/     - (terminal units) the documents of the standards (xterm control sequences, ECMA-48, DEC STD 070).
   API-NAMES.md   - how C++ names and forms map to the Pascal names of this library.
   tests.txt      - the test programs of this unit and what each checks.
   ci.txt         - (only on a retry) the failing tests and their messages.
@@ -154,7 +180,7 @@ header.
 Rules:
 - Read only the files of this directory. Do not use the network, a shell, or any file outside it.
 - Do not reproduce code you remember from Turbo Vision, Free Vision, Borland Pascal, the Free Pascal packages,
-  DOS Navigator or far2l. Write each routine from the C++ source in front of you and the interface.
+  DOS Navigator, far2l or libvterm. Write each routine from the C++ source in front of you and the interface.
 - Do not add comments about where the code comes from.
 - Where the C++ behaviour cannot be expressed with the given interface, say so in the report; do not change the
   interface.
