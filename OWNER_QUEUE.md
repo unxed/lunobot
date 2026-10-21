@@ -65,8 +65,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: f4
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 21:28:03 UTC
-Прогресс 21-10-2026 17:41:24 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер aa1e3ed653e63c20b)): спека FAR2L_COMPAT 0.2 влита (unxed/f4#2147, -draft снят), пересчёт 4K/5K в unxed/f4#2115; следующие части — 4C и 5C (буфер обмена), сводка 4S — после 4D.
+Состояние: свободно
+Прогресс 21-10-2026 21:41:54 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a0fda2bc2dc659a7f)): части 4C и 5C (буфер обмена) готовы — https://github.com/unxed/f4/issues/2115#issuecomment-6327071568, https://github.com/unxed/f4/issues/2115#issuecomment-6327174722; тикеты unxed/vtui#241, #242, unxed/f4#2152, #2153, unxed/dn#177, #178, unxed/tv3#21, #22; следующие части — 4P и 5P (протоколы клиента).
 
 ## account-218
 Заметка владельца: https://github.com/unxed/lunobot/issues/218
