@@ -253,6 +253,154 @@ class AcctLineRouteTest(GitCase):
         self.assertEqual(self.remote_refs(), [])
 
 
+class TombstoneTest(GitCase):
+    """Облачная сессия не умеет удалять ветки (прокси: «hung up», 403): захват снимается меткой."""
+
+    def blocked_delete(self):
+        real = claims._push_retry
+
+        def push(repo, remote, specs):
+            if any(new is None for _, new, _ in specs):
+                return False, [], True  # удаление ветки прокси обрывает без ответа
+            return real(repo, remote, specs)
+        return push
+
+    def drop_blocked(self, *args, **kw):
+        real, claims._push_retry = claims._push_retry, self.blocked_delete()
+        try:
+            return self.quiet(claims.drop, *args, **kw)
+        finally:
+            claims._push_retry = real
+
+    def subjects(self):
+        claims.fetch(self.b)
+        return {c["key"]: c["line"] for c in claims.refs(self.b, "f4", released=True)}
+
+    def test_drop_falls_back_to_tombstone_and_readers_do_not_see_it(self):
+        self.quiet(claims.take, self.a, "f4", line(1))
+        self.assertEqual(self.drop_blocked(self.b, "f4", F4.format(1), ME), 0, self.out)
+        self.assertIn("меткой", self.out)
+        self.assertEqual(self.remote_refs(), ["refs/claims/f4/unxed-f4-1"])  # ветка осталась, но с меткой
+        self.assertTrue(self.subjects()["unxed-f4-1"].startswith(claims.RELEASED))
+        claims.fetch(self.b)
+        self.assertEqual(claims.refs(self.b, "f4"), [])
+        self.assertEqual(claims.records(self.b, "f4"), [])
+
+    def test_drop_does_not_tombstone_on_lease_race(self):
+        self.quiet(claims.take, self.a, "f4", line(1))
+        claims.fetch(self.b)
+        cs = claims.refs(self.b, "f4")
+        self.assertEqual(self.quiet(claims.keepalive, self.a, "f4", F4.format(1), ME), 0, self.out)  # продлили между чтением и снятием
+        ok, rejected, net, how = claims.release(self.b, "origin", cs)
+        self.assertFalse(ok)
+        self.assertEqual(how, "удалено")
+        self.assertTrue(rejected)
+        claims.fetch(self.b)
+        self.assertFalse(claims.refs(self.b, "f4", released=True)[0]["released"])
+
+    def test_take_over_tombstone_same_key_by_anyone(self):
+        self.quiet(claims.take, self.a, "f4", line(1))
+        self.drop_blocked(self.b, "f4", F4.format(1), ME)
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1, who=THEM)), 0, self.out)
+        claims.fetch(self.a)
+        recs = claims.refs(self.a, "f4")
+        self.assertEqual([c["line"] for c in recs], [line(1, who=THEM)])
+        self.assertFalse(recs[0]["released"])
+        # а теперь это снова живой чужой захват
+        self.assertEqual(self.quiet(claims.take, self.a, "f4", line(1)), 1)
+
+    def test_note_key_retaken_over_tombstone(self):
+        note = f"{ago(20)} Я {ME}, прекращаю работу: команда владельца"
+        later = f"{ago(10)} Я {ME}, считаю цель достигнутой"
+        self.quiet(claims.take, self.a, "f4", note)
+        self.assertEqual(self.drop_blocked(self.b, "f4", f"note-1-{NODE}", ME), 0, self.out)
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", later), 0, self.out)
+        claims.fetch(self.a)
+        self.assertEqual(claims.records(self.a, "f4"), [later])
+
+    def test_take_other_key_over_tombstone_directory_waits_for_janitor(self):
+        part = line(1, tail=" (часть 2 из 3) [land]")
+        self.quiet(claims.take, self.a, "f4", part)
+        self.drop_blocked(self.b, "f4", F4.format(1), ME, all_=True)
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1)), 1)
+        self.assertIn("ещё не убрана", self.out)
+        self.assertNotIn("занято", self.out)
+
+    def test_janitor_deletes_tombstones_in_every_namespace(self):
+        import janitor
+        self.quiet(claims.take, self.a, "f4", line(1))
+        self.quiet(claims.take, self.a, "учёт", custom("триаж 900–931", route="[urgent: по § 5 п. 4 — учётный шаг]"))
+        claims.fetch(self.b)
+        real, claims._push_retry = claims._push_retry, self.blocked_delete()
+        try:
+            for project in ("f4", "учёт"):
+                ok, _, _, how = claims.release(self.b, "origin", claims.refs(self.b, project))
+                self.assertEqual((ok, how), (True, "помечено"))
+        finally:
+            claims._push_retry = real
+        self.assertEqual(len(self.remote_refs()), 2)
+        old_root = janitor.ROOT
+        janitor.ROOT = type(old_root)(self.b)
+        try:
+            claims._fetched.clear()
+            claims.fetch(self.b)
+            now = time.time()
+            self.assertEqual(self.quiet(janitor.sweep_refs, "f4", {}, now), 1)
+            self.assertEqual(self.quiet(janitor.sweep_refs, "учёт", {}, now), 1)
+        finally:
+            janitor.ROOT = old_root
+        self.assertEqual(self.remote_refs(), [])
+
+
+    # review unxed/lunobot#239: гонки вокруг метки
+    def tombstone(self, n=1):
+        self.quiet(claims.take, self.a, "f4", line(n))
+        self.assertEqual(self.drop_blocked(self.b, "f4", F4.format(n), ME), 0, self.out)
+
+    def test_take_over_tombstone_with_stale_local_cache(self):
+        # клон a ещё видит живой захват (метку не получал) — take всё равно занимает ключ, без ложного «занято»
+        self.tombstone()
+        self.assertEqual(self.quiet(claims.take, self.a, "f4", line(1, who=THEM)), 0, self.out)
+        claims.fetch(self.b)
+        self.assertEqual([c["line"] for c in claims.refs(self.b, "f4")], [line(1, who=THEM)])
+
+    def test_take_over_tombstone_that_janitor_deleted_meanwhile(self):
+        # b видит метку, но ветку уже удалили: lease на метку не проходит, второй круг берёт ключ заново
+        self.tombstone()
+        claims.fetch(self.a)
+        c = claims.refs(self.a, "f4", released=True)[0]
+        self.assertTrue(claims._push_retry(self.a, "origin", [(c["ref"], None, c["sha"])])[0])
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1, who=THEM)), 0, self.out)
+        claims.fetch(self.a)
+        self.assertEqual([c["line"] for c in claims.refs(self.a, "f4")], [line(1, who=THEM)])
+
+    def test_janitor_keeps_claim_taken_over_tombstone_after_its_read(self):
+        # janitor прочитал метку, бот занял ключ поверх неё: удаление по lease на sha метки не проходит
+        import janitor
+        self.tombstone()
+        claims.fetch(self.a)
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1, who=THEM)), 0, self.out)
+        old_root = janitor.ROOT
+        janitor.ROOT = type(old_root)(self.a)
+        try:
+            self.quiet(janitor.sweep_refs, "f4", {}, time.time())
+        finally:
+            janitor.ROOT = old_root
+        claims._fetched.clear()
+        claims.fetch(self.b)
+        self.assertEqual([c["line"] for c in claims.refs(self.b, "f4")], [line(1, who=THEM)])
+
+    def test_keepalive_drop_and_release_skip_tombstone(self):
+        import release
+        self.tombstone()
+        self.assertNotEqual(self.quiet(claims.keepalive, self.a, "f4", F4.format(1), ME), 0)
+        self.assertNotEqual(self.quiet(claims.drop, self.a, "f4", F4.format(1), ME), 0)
+        code = self.quiet(release.main, ["--number", "1", "--node", NODE, "--platform", "LNX", "--repo", self.a])
+        self.assertEqual(code, 0, self.out)
+        self.assertNotIn("unxed-f4-1", self.out)
+        claims.fetch(self.a)
+        self.assertTrue(claims.refs(self.a, "f4", released=True)[0]["released"])
+
 class ReleaseAndJanitorTest(GitCase):
     def test_release_drops_own_refs_only(self):
         import release
@@ -261,6 +409,19 @@ class ReleaseAndJanitorTest(GitCase):
         code = self.quiet(release.main, ["--number", "1", "--node", NODE, "--platform", "LNX", "--repo", self.b])
         self.assertEqual(code, 0, self.out)
         self.assertEqual(self.remote_refs(), ["refs/claims/f4/unxed-f4-2"])
+
+    def test_release_falls_back_to_tombstone_when_branch_cannot_be_deleted(self):
+        import release
+        self.quiet(claims.take, self.a, "f4", line(1, worker="aaaa1111"))
+        real, claims._push_retry = claims._push_retry, TombstoneTest.blocked_delete(self)
+        try:
+            code = self.quiet(release.main, ["--number", "1", "--node", NODE, "--platform", "LNX", "--repo", self.b])
+        finally:
+            claims._push_retry = real
+        self.assertEqual(code, 0, self.out)
+        self.assertIn("СНЯТО", self.out)
+        claims.fetch(self.b)
+        self.assertEqual(claims.refs(self.b), [])
 
     def test_janitor_drops_silent_owner_and_writes_view(self):
         import janitor

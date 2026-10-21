@@ -191,13 +191,16 @@ def sweep_refs(project, alive, now):
     срочных по § 5 п. 2). Продление — дата коммиттера ref-коммита. Снятие — удаление с lease на
     прочитанный sha: захват, продлённый между чтением и удалением, уцелеет."""
     groups = {}
-    for c in claims.refs(ROOT, project):
+    for c in claims.refs(ROOT, project, released=True):
         groups.setdefault(c["sha"], []).append(c)
     gone = []
     for sha, cs in groups.items():
         c = cs[0]
         idle = (now - c["ts"]) / 60
-        if c["key"] == "freeze":
+        if c["released"]:
+            # снят меткой (облачная сессия не умеет удалять ветки, claims.release): ветку убираем сразу
+            dead = True
+        elif c["key"] == "freeze":
             dead = idle > FREEZE_KEEP_MIN
         elif c["key"].startswith("note-"):
             dead = idle > NOTE_KEEP_MIN
@@ -211,8 +214,8 @@ def sweep_refs(project, alive, now):
             gone.append(cs)
     if not gone:
         return 0
-    print(f"{project}: refs/claims снято {len(gone)} — владелец молчит дольше {SILENT_MIN} мин или захват "
-          f"не продлевали дольше {HARD_SILENT_MIN} мин ({URGENT_SILENT_MIN} мин у срочных по § 5 п. 2)")
+    print(f"{project}: refs/claims снято {len(gone)} — метка «снято», владелец молчит дольше {SILENT_MIN} мин "
+          f"или захват не продлевали дольше {HARD_SILENT_MIN} мин ({URGENT_SILENT_MIN} мин у срочных по § 5 п. 2)")
     for cs in gone:
         print("   ", cs[0]["line"][:100])
     if not DRY:
@@ -227,7 +230,7 @@ def sweep_other_refs(index, alive, now):
     (`alive`), без веток рабочего репозитория."""
     listed = set(re.findall(r"^\d+\.\s*\[([^\]]+)\]", index, re.M))
     return sum(sweep_refs(name, alive, now)
-               for name in sorted({c["project"] for c in claims.refs(ROOT)} - listed))
+               for name in sorted({c["project"] for c in claims.refs(ROOT, released=True)} - listed))
 
 
 def write_views(root=None):
