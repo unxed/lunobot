@@ -49,7 +49,7 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: goWidgets
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:04:12 UTC
+Состояние: свободно
 Прогресс 21-10-2026 16:42:21 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер abb8a0d9634510f70): шаг 3 влит 3811fbb (PR unxed/goWidgets#33, zipper v0.1.179), «что попробовать» в unxed/goWidgets#30. Дальше — шаг 4a (ADR-0020 Table, core + headless) по «План шагов 4–12» в projects/goWidgets/status/30.md.
 
 ## account-215
