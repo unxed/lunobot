@@ -65,7 +65,7 @@ class HoldsTest(unittest.TestCase):
 
     def test_real_passports_parse(self):
         import os
-        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "projects")
+        root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "projects")
         for p in sorted(os.listdir(root)):
             path = os.path.join(root, p, "PROJECT.md")
             if os.path.exists(path):

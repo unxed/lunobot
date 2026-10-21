@@ -84,11 +84,11 @@ release_claims() {
   if timeout 120 gh repo clone "${ACCOUNTING_REPO}" "${tmp}/accounting" -- --depth=50 -q >/dev/null 2>&1 \
      && git -C "${tmp}/accounting" config user.name "Лунобот-${BOT_NUMBER}" \
      && git -C "${tmp}/accounting" config user.email lunobot@users.noreply.github.com \
-     && timeout 120 python3 "${tmp}/accounting/release.py" --number "${BOT_NUMBER}" --reason "${reason}" \
+     && timeout 120 python3 "${tmp}/accounting/tools/release.py" --number "${BOT_NUMBER}" --reason "${reason}" \
           2>&1 | tee -a "${LOG_DIR}/lunobot.log"; then
     CLAIMS_DIRTY=0
     if [[ -n "${log_file}" ]]; then
-      timeout 120 python3 "${tmp}/accounting/journal.py" round "${log_file}" --number "${BOT_NUMBER}" \
+      timeout 120 python3 "${tmp}/accounting/tools/journal.py" round "${log_file}" --number "${BOT_NUMBER}" \
         --runner "$(basename "$0")" --model "${MODEL}" --round "${round_num}" --exit "${exit_code}" \
         --duration "${duration}" >>"${LOG_DIR}/lunobot.log" 2>&1 \
         || log "WARNING: round metrics not journaled"

@@ -31,13 +31,13 @@ jobs:
         with:
           python-version: '3.12'
       - name: Проверить страницу пульта
-        run: python3 -m unittest discover -p 'test_*.py'
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
       - name: Собрать страницу
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p _site
-          python3 status.py --html > _site/index.html
+          python3 tools/status.py --html > _site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

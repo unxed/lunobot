@@ -89,7 +89,7 @@
 
 - держит средством долгого наблюдения своей среды (§ 13; где его нет — фоновый процесс с
   логом) процесс-часы: раз в 5 минут строка `ЧАСЫ <время UTC>` и вывод
-  `python3 /tmp/lunobot-<номер>/accounting/fleet_watch.py --node <узел> --number <номер>
+  `python3 /tmp/lunobot-<номер>/accounting/tools/fleet_watch.py --node <узел> --number <номер>
   --min <потолок воркеров> --once` (ПРОСТОЙ / КРАСНОЕ / ПРОТУХ), например
   `while :; do echo "ЧАСЫ $(date -u '+%d-%m-%Y %H:%M:%S')"; python3 … --once; sleep 300; done`;
   строка ЧАСЫ делает тишину видимой;

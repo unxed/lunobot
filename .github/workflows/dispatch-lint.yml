@@ -26,15 +26,15 @@ jobs:
             # представление refs/claims пишет janitor.py; захват проверяет claims.py take до создания ref
             grep -q "генерируется janitor.py из refs/claims" "$f" && continue
             echo "== $f"
-            python3 check_dispatch.py "$f" --added-only || status=1
+            python3 tools/check_dispatch.py "$f" --added-only || status=1
           done
           exit $status
       - name: Ссылки на разделы инструкции в шапках
         if: always()
-        run: python3 check_refs.py
+        run: python3 tools/check_refs.py
       - name: Формат OWNER_QUEUE.md
         if: always()
-        run: python3 check_owner_queue.py
+        run: python3 tools/check_owner_queue.py
       - name: Метки времени в status
         if: always()
-        run: python3 check_status_times.py
+        run: python3 tools/check_status_times.py

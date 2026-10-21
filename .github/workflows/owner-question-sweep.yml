@@ -26,4 +26,4 @@ jobs:
       - name: Подмести записи
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 owner_questions.py sweep
+        run: python3 tools/owner_questions.py sweep

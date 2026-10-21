@@ -43,7 +43,7 @@ jobs:
           git config user.name  'lunobot-janitor'
           git config user.email 'lunobot-janitor@users.noreply.github.com'
           for attempt in 1 2 3; do
-            python3 janitor.py
+            python3 tools/janitor.py
             if [ -z "$(git status --porcelain)" ]; then
               echo "нечего коммитить"
               exit 0

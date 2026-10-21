@@ -8,8 +8,8 @@
 
 ```
 gh repo clone <учётный-репозиторий> /tmp/lunobot-<номер>/work/<слаг>/accounting -- --depth=50
-python3 /tmp/lunobot-<номер>/work/<слаг>/accounting/sweep.py --number <номер>           # только показать
-python3 /tmp/lunobot-<номер>/work/<слаг>/accounting/sweep.py --number <номер> --apply   # убрать, в фоне (`run_in_background: true`)
+python3 /tmp/lunobot-<номер>/work/<слаг>/accounting/tools/sweep.py --number <номер>           # только показать
+python3 /tmp/lunobot-<номер>/work/<слаг>/accounting/tools/sweep.py --number <номер> --apply   # убрать, в фоне (`run_in_background: true`)
 ```
 
 Запускай `sweep.py` из одноразового клона учёта в каталоге шага, а не из `/tmp/lunobot-<номер>/accounting`: он строит все пути от каталога скрипта и `--number` и делает `git fetch` в клоне, где лежит сам; в основном клоне это на минуты блокирует `pull` и `acct_line.py` (§ 8), то есть постановку захватов (18-10-2026 11:35–11:43Z захват второго воркера ставили из запасного клона).

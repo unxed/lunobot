@@ -99,7 +99,7 @@
 `.github/workflows/owner-question.yml` (job падает, комментарий не создаётся). Один вопрос — одно
 уведомление; текст — сам вопрос с достаточным контекстом, а детали лежат в комментарии по ссылке.
 Задав такой вопрос, сразу вызови
-`python3 /tmp/lunobot-<номер>/accounting/notify_owner.py <ссылка на комментарий-вопрос> --ticket <owner/repo#N> --text "<вопрос одной фразой, до 400 символов, заканчивается «?»>" --repo <учётный-репозиторий>`:
+`python3 /tmp/lunobot-<номер>/accounting/tools/notify_owner.py <ссылка на комментарий-вопрос> --ticket <owner/repo#N> --text "<вопрос одной фразой, до 400 символов, заканчивается «?»>" --repo <учётный-репозиторий>`:
 workflow `owner-question` добавит запись с упоминанием владельца в единственный тикет «Вопросы
 владельцу» (в стандартной установке — unxed/lunobot#29). `--repo` обязателен: без него скрипт
 пишет в публичный `unxed/lunobot`, а ссылки и тексты закрытого проекта туда попадать не должны
@@ -149,12 +149,12 @@ shell развернёт их как подстановку команды, и �
 правки комментариев, описания PR, тела тикетов, создание PR и тикетов боты отправляют **только** так:
 
 ```
-python3 /tmp/lunobot-<номер>/accounting/gh_post.py comment <owner/repo> <номер> <файл>
-python3 /tmp/lunobot-<номер>/accounting/gh_post.py edit    <owner/repo> <id комментария> <файл>
-python3 /tmp/lunobot-<номер>/accounting/gh_post.py pr-body <owner/repo> <номер PR> <файл>
-python3 /tmp/lunobot-<номер>/accounting/gh_post.py issue-body <owner/repo> <номер тикета> <файл>
-python3 /tmp/lunobot-<номер>/accounting/gh_post.py issue   <owner/repo> <файл> [--label <метка>]  # 1-я строка — заголовок
-python3 /tmp/lunobot-<номер>/accounting/gh_post.py pr      <owner/repo> <head> <base> <файл>  # 1-я строка — заголовок
+python3 /tmp/lunobot-<номер>/accounting/tools/gh_post.py comment <owner/repo> <номер> <файл>
+python3 /tmp/lunobot-<номер>/accounting/tools/gh_post.py edit    <owner/repo> <id комментария> <файл>
+python3 /tmp/lunobot-<номер>/accounting/tools/gh_post.py pr-body <owner/repo> <номер PR> <файл>
+python3 /tmp/lunobot-<номер>/accounting/tools/gh_post.py issue-body <owner/repo> <номер тикета> <файл>
+python3 /tmp/lunobot-<номер>/accounting/tools/gh_post.py issue   <owner/repo> <файл> [--label <метка>]  # 1-я строка — заголовок
+python3 /tmp/lunobot-<номер>/accounting/tools/gh_post.py pr      <owner/repo> <head> <base> <файл>  # 1-я строка — заголовок
 ```
 
 Скрипт (1) читает файл как строгий UTF-8 и не отправляет ничего (код 2), если в тексте вне
@@ -163,7 +163,7 @@ python3 /tmp/lunobot-<номер>/accounting/gh_post.py pr      <owner/repo> <he
 с файлом: не совпало — переписывает, а не помогло — удаляет комментарий и выходит с кодом 1.
 Код 2 или 1 значит, что сломана среда, а не текст: не пытайся «обойти» гейт другим способом
 отправки. Выставь в shell `export LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONUTF8=1` (в Windows ещё
-`chcp 65001`), заново запиши файл и проверь его `python3 gh_post.py check <файл>`. `gh issue comment`, `gh pr
+`chcp 65001`), заново запиши файл и проверь его `python3 tools/gh_post.py check <файл>`. `gh issue comment`, `gh pr
 create/edit --body…` и MCP-инструменты комментариев для текста не на чистом ASCII не используй.
 Исключение — `notify_owner.py` (вопросы владельцу), у него свой путь.
 

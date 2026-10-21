@@ -2046,7 +2046,7 @@ class ReadsCloseFilesTest(unittest.TestCase):
             with open(os.path.join(root, "f4", "PROJECT.md"), "w", encoding="utf-8") as f:
                 f.write("- Код: https://github.com/unxed/f4\n")
             result = []
-            with mock.patch.object(train, "__file__", os.path.join(tmp, "train.py")), \
+            with mock.patch.object(train, "__file__", os.path.join(tmp, "tools", "train.py")), \
                  mock.patch.object(train, "api", return_value={"commit": {}}):
                 seen = self.resource_warnings(lambda: result.extend(train.staged_repos()))
             self.assertEqual(seen, [])
