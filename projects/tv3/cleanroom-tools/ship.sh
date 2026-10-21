@@ -21,7 +21,7 @@ git -C $G push -q -u origin lunobot/pr/$u-rw 2>&1 | grep -v '^remote' || true
 H=$(git -C $G rev-parse HEAD)
 printf '%s\n\n%s\n\n%s\n\n%s\n' "$U: new implementation (#12, $st)" "Step $st of #12: a new implementation section of \`$U\`. The interface section is unchanged byte for byte." "Checks: \`ci\` on the exact head; \`tools/audit/run.sh\` on the head in the sandbox CI with the extra checks of the plan, posted here before merging." "*Lunobot-1 (node 19d368003c6c048e43dbec70; LNX; Claude Opus 5.5; subagent)*" > $W/drafts/pr-$u.md
 PR=$(python3 gh_post.py pr unxed/tv3 lunobot/pr/$u-rw main $W/drafts/pr-$u.md | tail -1); echo "PR $PR head $H old $OLD"
-sed -e "s/<m>/$u/" -e "s/<sha main>/$OLD/" $W/extra.tmpl > $W/extra-$u.sh
+sed -e "s/<m>/$u/" -e "s/<sha main>/$OLD/" $A/projects/tv3/cleanroom-tools/extra.tmpl > $W/extra-$u.sh
 gh workflow run tv3-audit.yml --repo unxed/sandbox --ref main -f repo=unxed/tv3 -f refs="main $H" -f extra="$(cat $W/extra-$u.sh)"
 sleep 10
 AR=$(gh run list --repo unxed/sandbox --workflow tv3-audit.yml --limit 1 --json databaseId --jq '.[0].databaseId')
