@@ -67,23 +67,25 @@ sha blob'а в реестр) вместо `magiblot/`; код far2l не чит�
 
 ## 4. Модули и порядок
 
-Список (план unxed/tv3#12, S2–S28; владелец считает унаследованных модулей 28): `TvGeom` (S2, пилот), затем `TvMem`,
-`TvSys`, `TvKeys`, `TvEvents`, `TvObjs`, `TvTermIo`, `TvTermOs`, `TvUnix`, `TvViews`, `TvWindow`, `TvMenus`, `TvApp`,
-`TvDialog`, `TvInput`, `TvCluster`, `TvList`, `TvHist`, `TvValid`, `TvMsgBox`, `TvFileDlg`, `TvChDir`, `TvColorSel`,
-`TvHelp`, `TvVtView`, `TvFar2l`.
+**Состав — все 50 файлов `src/`, пришедших из tv** (факты основного инстанса по копии tv у владельца, HEAD `c9bb5c4` до
+переписывания: в его `src/` 50 файлов, все есть в tv3; решение 21-10-2026 — переносятся ВСЕ, вопрос unxed/lunobot#240 снят):
+- 46 модулей Pascal (порядок — п. 9) и 2 включаемых файла кода `tvapppal.inc`, `tvdefs.inc` (идут с модулем, который их
+  включает: `tvapppal.inc` — с TvApp, `tvdefs.inc` — отдельным шагом после S29, это настройки компилятора);
+- 2 таблицы `tvcp.inc`, `tvwidth.inc` — генератором, шаг S29.
+- Не из tv (идут в S30, аудит «по памяти»): tvactions, tvappdir, tvascii, tvcharset (.pas/.inc), tvclipcmd, tvcrc, tvcstr,
+  tvdosnames, tvformat, tvgadgets, tvglyphs, tvini, tvkeyname, tvpath, tvproc, tvtermosbase, tvtermosnone, tvtermosunix,
+  tvtermoswin, tvtermstub.inc, tvtermunix.inc, tvtermwin.inc, tvustr, tvvtext, tvwild, tvwordnav, tvxlat. Тесты `tests/`
+  из tv — тоже S30, на пониженных порогах.
 
-**Сверка списка — первый шаг S2 (до пилота):** 14 файлов `src/` с заголовком `Translated from magiblot/tvision` в
-списке не названы (`tvansi`, `tvcell`, `tvclipcmd`, `tvcodepg`, `tvcolors`, `tvdrawbuf`, `tvfiles`, `tvmouse`,
-`tvscreen`, `tvtext`, `tvtextview`, `tvtimer`, `tvutf8`, `tvutil`), а у 5 из списка (`tvmem`, `tvsys`, `tvtermos`,
-`tvvtview`, `tvfar2l`) заголовка нет (status/12.md, «Находка»). Корневой коммит tv3 `652bd98` внёс все файлы `src/`
-разом, поэтому «пришёл из tv» по истории tv3 не определить. Правило: переписывается объединение обоих списков
-(40 модулей), кроме тех, про которые владелец скажет «не из tv» — вопрос владельцу через менеджера с этим списком;
-до ответа порядок идёт по объединению, начиная с модулей обоих списков.
-
-Порядок — ядро цикла событий первым (зависимости `TvEvents`: `TvKeys`, `TvGeom`, `TvUtf8`; затем `TvEvents`, `TvSys`); `TvApp` (`TProgram.GetEvent`, `Idle`) — как только перенесены его зависимости по `uses` (`TvViews`, `TvWindow`, `TvMenus` …), до того старый `TvApp` зовёт новый `TvSys`. Дальше — снизу вверх по графу `uses`: модуль идёт после всех модулей tv3, которые он использует (обе секции).
-Граф строит скрипт по `main` (`grep -A30 -iE '^\s*uses' src/*.pas`, имена модулей `Tv*`), циклы через implementation
-разрываются: модуль, использующий другой только в implementation, может идти раньше. Итоговый порядок — в п. 9 этого
-файла (заполняет S2 до пилота), шаги S3… идут по нему.
+**Источники по модулям** (правило 1 `CLAUDE.md` tv3: единственный чужой источник — magiblot/tvision):
+- модули, у которых есть пара в magiblot/tvision @ b4831e2 — её файлы (п. 2.1);
+- TvVt, TvVtRun, TvVtKeys, TvVtView, TvPty (эмулятор терминала и pty; у magiblot/tvision их нет) — только стандарты:
+  xterm «Control Sequences» (ctlseqs), ECMA-48, DEC STD 070; сначала они кладутся в `tools/audit/facts/` tv3 как
+  разрешённые документы (правило 4: каждый называет свой источник) отдельным PR, затем — вход исполнителя вместо
+  `magiblot/`. magiblot/tvterm и libvterm — НЕ источник (это не magiblot/tvision);
+- TvFar2l — только `VTExts.md` ветки `extsdocs` unxed/far2l (п. 3), код far2l не читать;
+- модули без пары и без стандарта (TvDos, TvLocale, TvMem, TvTermOs, TvUnix — платформенные слои) — по interface,
+  `docs/ASYNC.md`, документации ОС/RTL Free Pascal (не TV-кода) и поведению по тестам; список таких входов шаг пишет в реестр.
 
 ## 5. Ход шага (один модуль — один PR tv3)
 
@@ -163,54 +165,9 @@ every place where you departed from the C++ behaviour and why.
 
 ## 9. Порядок модулей по `uses`
 
-Построено S2 (21-10-2026) по `main` `73c212e`: граф `uses` обеих секций всех `src/*.pas`, топологическая сортировка
-объединения (40 модулей), ядро цикла первым; циклов нет. `*` — модуль с заголовком перевода вне списка плана (ждёт
-ответа владельца, unxed/lunobot#240). Номер — порядковый; шаг S<n+1>. Модули вне объединения, от которых зависят
-перечисленные (их не переписываем, пока S30 не скажет иное): tvappdir, tvclip, tvdosnames, tvformat, tvglyphs, tvpath,
-tvpty, tvtermosbase, tvtermosnone, tvtermosunix, tvtermoswin, tvvt, tvvtext, tvvtkeys, tvwordnav, tvxlat.
-
-```
-1 TvGeom (S2, пилот)
-2 TvKeys
-3 TvUtf8 *
-4 TvEvents — TvGeom, TvKeys, TvUtf8
-5 TvSys — TvEvents, TvKeys, TvUtf8 (ядро: WaitForEvents, WakeUp, очередь задач, таймеры; `const TvAsyncCore = True`)
-6 TvColors *
-7 TvAnsi * — TvColors
-8 TvCodePg * — TvUtf8
-9 TvCell * — TvCodePg, TvColors
-10 TvText * — TvCell, TvCodePg, TvColors, TvUtf8
-11 TvDrawBuf * — TvCell, TvColors, TvText, TvUtf8
-12 TvUtil * — TvCodePg, TvEvents, TvKeys, TvText, TvUtf8
-13 TvObjs — TvUtil
-14 TvScreen * — TvCell, TvColors, TvGeom, TvSys
-15 TvTimer * — TvScreen, TvSys
-16 TvViews — 11 модулей выше
-17 TvMenus — … TvViews
-18 TvWindow — … TvViews
-19 TvApp — … TvMenus, TvWindow (TProgram.GetEvent, Idle по docs/ASYNC.md)
-20 TvDialog — … TvWindow
-21 TvFiles * — TvObjs, TvUtil
-22 TvMsgBox — TvApp, TvDialog
-23 TvValid — TvMsgBox
-24 TvInput — … TvValid
-25 TvList — … TvDialog, TvWindow
-26 TvHist — … TvInput, TvList
-27 TvFileDlg — … TvFiles, TvHist
-28 TvChDir — … TvFileDlg
-29 TvClipCmd *
-30 TvCluster — … TvDialog
-31 TvColorSel — … TvCluster, TvList
-32 TvFar2l — TvUtf8 (по VTExts.md)
-33 TvHelp — … TvWindow
-34 TvMem — TvCell, TvCodePg, TvColors, TvEvents, TvScreen, TvSys
-35 TvMouse * — TvEvents, TvGeom, TvSys
-36 TvTermIo — TvCodePg, TvEvents, TvFar2l, TvKeys, TvUtf8
-37 TvTermOs
-38 TvTextView * — … TvWindow
-39 TvUnix — … TvClipCmd, TvMouse, TvTermIo, TvTermOs, TvViews
-40 TvVtView — … TvApp, TvDialog, TvMsgBox
-```
+Построено 21-10-2026 по `main` tv3 (граф `uses` обеих секций, топологическая сортировка, ядро цикла первым; циклов
+нет), 46 модулей из tv; шаг S<n+1> для номера n: 1. TvGeom, 2. TvKeys, 3. TvUtf8, 4. TvEvents, 5. TvSys, 6. TvColors, 7. TvAnsi, 8. TvCodePg, 9. TvCell, 10. TvText, 11. TvDrawBuf, 12. TvUtil, 13. TvObjs, 14. TvClip, 15. TvScreen, 16. TvTimer, 17. TvViews, 18. TvMenus, 19. TvWindow, 20. TvApp, 21. TvDialog, 22. TvFiles, 23. TvMsgBox, 24. TvValid, 25. TvInput, 26. TvList, 27. TvHist, 28. TvFileDlg, 29. TvChDir, 30. TvCluster, 31. TvColorSel, 32. TvMouse, 33. TvDos, 34. TvFar2l, 35. TvHelp, 36. TvLocale, 37. TvMem, 38. TvPty, 39. TvTermIo, 40. TvTermOs, 41. TvTextView, 42. TvUnix, 43. TvVt, 44. TvVtKeys, 45. TvVtRun, 46. TvVtView. Пересчитывать при каждом изменении `uses` (скрипт — запись
+21-10-2026 в status/12.md).
 
 ## Шаги вне плана tv3, нужные протоколу
 
@@ -230,6 +187,10 @@ tvpty, tvtermosbase, tvtermosnone, tvtermosunix, tvtermoswin, tvvt, tvvtext, tvv
    промпт-обёртка: «Your working directory is <room>. Use only Read, Write and Edit, only inside it. No Bash, network,
    gh, git; do not read outside it. Read PROMPT.md and do what it says; output out/<m>.pas. Nobody compiles it during
    the task. Final message: the report of PROMPT.md, plus how long it took and what was unclear.» Ждать уведомления.
+3a. Перед запуском: все файлы C++, которые называет interface модуля (комментарии вида `drivers2.cpp: ctrlToArrow`,
+   `grep -oE '[a-z0-9_]+\.(cpp|h)' interface.pas`), — в `magiblot/`; заголовок модуля бывает неполным (S3, TvKeys: без
+   `drivers2.cpp` исполнитель написал `CtrlToArrow` по памяти — файл выброшен, второй запуск с полным набором). В обёртку
+   промпта: «routine without C++ source among the inputs — leave `begin end;` and say so; never from memory».
 4. Отчёт: каждый прочитанный файл внутри `room/` (иначе — выбросить, новый исполнитель). `diff` interface — пусто.
 5. Ветка `lunobot/pr/<m>-rw` от свежего `main` (BRANCHES.md до неё), файл в `src/`, коммит:
    `<Модуль>: new implementation` / тело «A new implementation section …; the interface is unchanged. tests/t_<..>.pas
