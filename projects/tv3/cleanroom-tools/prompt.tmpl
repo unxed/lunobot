@@ -1,0 +1,25 @@
+You write one Free Pascal unit, @UNIT@, for a class-based Turbo Vision library.
+
+Inputs, all in this directory and nothing else:
+  interface.pas  - the unit header and its interface section. Keep them byte for byte.
+  deps/          - tvdefs.inc (the compiler settings the header includes) and the interface sections of the units
+                   it uses (if any).
+  magiblot/      - the C++ sources of magiblot/tvision at b4831e2ca16652db327fb7cc964f1c8c2d512524 that this unit
+                   corresponds to: @FILES@. The behaviour of every routine follows them.
+  API-NAMES.md   - how C++ names and forms map to the Pascal names of this library.
+  tests.txt      - the checks of the test program of this unit, by name.
+@EXTRA@
+Write out/@FILE@: the header and interface exactly as in interface.pas, then the line `implementation`, then an
+implementation section that implements every routine of the interface with the behaviour of the C++ sources, then
+the initialization section if the interface needs one, then `end.`. Free Pascal 3.2, mode objfpc, as in the header.
+
+Rules:
+- Read only the files of this directory. Do not use the network, a shell, or any file outside it.
+- Do not reproduce code you remember from Turbo Vision, Free Vision, Borland Pascal, the Free Pascal packages,
+  DOS Navigator or far2l. Write each routine from the C++ source in front of you and the interface.
+- Do not add comments about where the code comes from.
+- Where the C++ behaviour cannot be expressed with the given interface, say so in the report; do not change the
+  interface.
+
+Report at the end: the list of every file you read; for each routine, the C++ function it follows (file:line);
+every place where you departed from the C++ behaviour and why.
