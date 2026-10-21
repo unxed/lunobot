@@ -113,13 +113,13 @@ sha blob'а в реестр) вместо `magiblot/`; код far2l не чит�
    имя из magiblot), (б) стандартная идиома Pascal (цикл, `case`, `inherited`, `Free`), (в) общий факт (код клавиши,
    цвет, таблица стандарта) — ложные, с причиной; (г) заимствование — модуль выбрасывается целиком и пишется заново
    новым исполнителем с пометкой в промпте, какой фрагмент не повторять (без самого фрагмента — только место и
-   поведение). Нужен режим `mode=lowered` в `tv3-audit.yml` unxed/sandbox — шаг S1b ниже.
+   поведение). Запуск — п. 10.6 (вход `extra`).
 3. **Сходство с прежней реализацией** — `borrow-audit.py --max` новой implementation против старой implementation того
    же модуля (`main` до PR), обе секции вырезаны от `implementation` до конца. Печатается самая длинная цепочка raw/ren.
    Флаг: raw ≥ 24 или ren ≥ 200 (стандартные пороги): классификатор разбирает каждое такое место как в п. 6.2;
    общий результат — число и длина цепочек — в реестр. Ожидаемо высокое сходство коротких процедур (геттеры, `Assign`)
    — не флаг, если цепочка внутри одной процедуры длиной до 40 токенов и процедура повторяет поведение magiblot строка
-   в строку. Нужен режим `mode=prev` в `tv3-audit.yml` — S1b.
+   в строку. Запуск — п. 10.6.
 4. **CI tv3** — `ci` (`linux`, `pty`, `generated`) зелёный на точном SHA.
 5. **Поведение** — тесты модуля проходят; расхождение с magiblot, найденное исполнителем (его отчёт), — в реестр и в
    описание PR (по существу поведения, без слов о происхождении).
@@ -214,8 +214,59 @@ tvpty, tvtermosbase, tvtermosnone, tvtermosunix, tvtermoswin, tvvt, tvvtext, tvv
 
 ## Шаги вне плана tv3, нужные протоколу
 
-- **S1b (Л2)** — `tv3-audit.yml` в unxed/sandbox: вход `mode` (`standard` — как сейчас; `lowered` — п. 6.2 по входу
-  `paths`, ref-список — фильтр `list.txt` по `bp7tv/`, `fpc/packages/fv/`, `fpcmain/packages/fv/`, `--raw-k 16
-  --ren-k 100`; `prev` — п. 6.3 по входу `unit`: implementation модуля на `refs[0]` против implementation на
-  `refs[1]`, `--max`). Готово: три прогона на `main` tv3 с `paths=src/tvgeom.pas`/`unit=tvgeom` завершены, вывод
-  каждого режима в журнале прогона, артефакт удалён; ссылки — в status/12.md.
+- **S1b** — сделан минимумом в пилоте S2: вход `extra` в `tv3-audit.yml` unxed/sandbox (`45c9a2d`), команда — п. 10.6.
+
+## 10. Чек-лист оркестратора (S3+, Лунобот-2; классификация — Лунобот-1)
+
+Проверено пилотом S2 (TvGeom, unxed/tv3#15). Порядок модулей — п. 9; один модуль — один круг.
+
+1. Захват: `claims.py take tv3 "<UTC> Я <id>, взял кастомную задачу «account-240: S<n> <Модуль>» по § 8 [urgent: по § 4 п. 1 — поручение владельца]"`.
+2. Каталог `room-<модуль>/` в каталоге шага, только входы п. 2: `interface.pas` (`sed -n '1,/^implementation/p' src/<m>.pas | sed '$d'`),
+   `deps/tvdefs.inc` и `deps/<unit>.pas` (interface-секции модулей из `uses`, той же командой), `magiblot/<файлы>` (п. 2.1,
+   sha blob'а — `gh api "repos/magiblot/tvision/contents/<путь>?ref=b4831e2ca16652db327fb7cc964f1c8c2d512524" --jq .sha`),
+   `API-NAMES.md`, для ядра — `ASYNC.md`, `tests.txt` (имена проверок теста модуля: `grep -oE "Check\([^;]*'[^']+'\)" tests/t_<..>.pas`,
+   по строке «имя — что ожидается» словами оркестратора, без кода), `PROMPT.md` (п. 8, имена подставить), пустой `out/`.
+3. Исполнитель — инструмент запуска субагента (тип general-purpose; типа только с файловыми инструментами в среде нет),
+   промпт-обёртка: «Your working directory is <room>. Use only Read, Write and Edit, only inside it. No Bash, network,
+   gh, git; do not read outside it. Read PROMPT.md and do what it says; output out/<m>.pas. Nobody compiles it during
+   the task. Final message: the report of PROMPT.md, plus how long it took and what was unclear.» Ждать уведомления.
+4. Отчёт: каждый прочитанный файл внутри `room/` (иначе — выбросить, новый исполнитель). `diff` interface — пусто.
+5. Ветка `lunobot/pr/<m>-rw` от свежего `main` (BRANCHES.md до неё), файл в `src/`, коммит:
+   `<Модуль>: new implementation` / тело «A new implementation section …; the interface is unchanged. tests/t_<..>.pas
+   checks the behaviour. Part of #12 (step S<n>).» + трейлер `Co-Authored-By`. Запрещены слова о происхождении
+   («written again», «as tvision does», «ported», «clean», «from scratch», «not copied»); поведение — фактами.
+6. PR (`gh_post.py pr`), строка CI.md, затем аудит с доп. проверками одной командой:
+   `gh workflow run tv3-audit.yml --repo unxed/sandbox --ref main -f repo=unxed/tv3 -f refs="main <sha головы>" -f extra="$(cat extra.sh)"`,
+   где `extra.sh` — текст ниже с подставленными `M=<m>` и `OLD=<sha main>`:
+   ```
+   set -u; M=<m>; OLD=<sha main>; L=/tmp/low; mkdir -p $L/old $L/new; grep -E "/(bp7tv|fpc/packages/fv|fpcmain/packages/fv)/" "$CORPORA/list.txt" > $L/ref.txt; echo "== lowered (raw 16, ren 100) vs bp7tv and fv"; python3 tools/audit/borrow-audit.py --cache "$CORPORA/index" --ref $L/ref.txt --allowed "$CORPORA/allowed.txt" --raw-k 16 --ren-k 100 src/$M.pas; echo "lowered exit $?"; git show $OLD:src/$M.pas | sed -n "/^implementation/,\$p" > $L/old/$M.pas; sed -n "/^implementation/,\$p" src/$M.pas > $L/new/$M.pas; echo $L/old/$M.pas > $L/prev.txt; echo "== prev"; python3 tools/audit/borrow-audit.py --cache $L/cache --ref $L/prev.txt --max $L/new/$M.pas; echo "prev exit $?"
+   ```
+7. Результат: `run_log.py unxed/sandbox <id> --job audit` — строки `AUDIT PASS|FAIL` по ревизиям, `keys … missing`,
+   блок `== lowered` и `== prev`; выдержки обеих сторон — `gh run download <id> --repo unxed/sandbox -n tv3-audit`
+   (`2-sheet.txt`), после чтения артефакт удалить. Всё это — в status/12.md записью «ждёт классификации Л1» со ссылками.
+8. Классификация (Л1) — п. 6.2 плюс класс **(д) прямой перевод строки разрешённого источника**: окно — токены строки
+   magiblot (`file:line` назвать) в синтаксисе Pascal с именами, которые фиксирует API, и больше ничего; любой другой
+   текст на Pascal, переводящий ту же строку, даёт те же токены. Это ложное срабатывание. Стандартный FAIL такого класса —
+   строка в `tools/audit/known.txt` того же PR (формат шапки файла: comparison, tokens, window, reference:line, ссылка на
+   комментарий-разбор в PR, причина техническими словами), затем повторный аудит: `AUDIT PASS` и 0 новых ключей.
+   Разбор — комментарием в PR (формат — unxed/tv3#15), без слов о происхождении. Сходство с прежней implementation:
+   флаг только для цепочки ≥ 24, которую НЕ диктуют строка C++ и interface (совпал выбор, которого C++ не задаёт:
+   порядок проверок, вспомогательная процедура, имя локальной переменной); продиктованная — запись в реестр, не флаг.
+9. Зелёный `ci` + `AUDIT PASS` на одной голове — влить merge-коммитом, прогон main отменить (PR не отставал), отметить шаг
+   в unxed/tv3#12, «Реестр» (п. 7), строки CI.md/BRANCHES.md снять, захват снять.
+
+## 11. Итоги пилота S2 (TvGeom, 21-10-2026)
+
+- Исполнитель: 66 с, 53 тыс. токенов, 8 вызовов; файл с первого раза собрался и прошёл `ci` (5 job'ов). Трения: Glob/Grep
+  в среде исполнителя нет (не нужны: входы названы поимённо); правил файл через Edit — разрешено (п. 10.3); `tests.txt` с
+  одними именами проверок не дал ему граничных значений, а старые имена в метках теста (`PointAdd`) путали — поэтому в
+  п. 10.2 «имя — что ожидается» словами.
+- Стандартный аудит дал FAIL, которого у прежней реализации не было: `TRect.Contains` в порядке операндов magiblot
+  совпал на 43 токена с `dn214/_defines.pas:829`. Прямой перевод маленьких методов API совпадает с другими переводами той
+  же строки — это ожидаемо и на крупных модулях (FV и DN переводят тот же Borland TV). Отсюда класс (д) и known.txt в
+  том же PR (п. 10.8).
+- Пониженный аудит: 1 попадание (`TPoint.<>` против `bp7tv/DRAGDROP.PAS:51`, 23 токена) — класс (д).
+- Сходство с прежней implementation: 87 токенов (`TRect.Intersect`, `if … then …` вместо `max`) — продиктовано C++ без
+  `Math`; правило флага уточнено (п. 10.8).
+- Пробел S1b закрыт минимумом: вход `extra` в `tv3-audit.yml` (unxed/sandbox `45c9a2d`); отдельные режимы `lowered`/`prev`
+  не нужны — команда п. 10.6.
