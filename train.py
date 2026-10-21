@@ -579,24 +579,6 @@ def rollup_rest(repo, number):
     return checks
 
 
-def green_train_covering(repo, staging_sha):
-    """Return an open train whose green checks already cover the staging tip.
-
-    A train in this state is the normal last step before main: its staging
-    commits are not missing from main because the merge is still pending.  It
-    must not make ``stuck`` report an incident based on the age of the oldest
-    commit.  Pending, failed, cancelled, or empty rollups deliberately do not
-    suppress the incident.
-    """
-    pr = train_pr(repo)
-    if not pr or pr["head"]["sha"] != staging_sha:
-        return None
-    checks, pending, failed, cancelled = rollup(repo, pr["number"])
-    if checks and not pending and not failed and not cancelled:
-        return pr
-    return None
-
-
 def rollup(repo, number):
     p = run("gh", "pr", "view", str(number), "--repo", repo,
             "--json", "statusCheckRollup", check=False)
@@ -1465,15 +1447,48 @@ def stuck(repo):
     свежий коммит в staging поднимал бы ложный инцидент."""
     main = api(f"repos/{repo}/branches/main")["commit"]["sha"]
     staging = api(f"repos/{repo}/branches/{STAGING}")["commit"]["sha"]
-    green_train = green_train_covering(repo, staging)
-    if green_train:
-        print(f"staging tip уже покрыт зелёным поездом #{green_train['number']} — ждёт merge в main")
-        return 0
     train = train_pr(repo)
     hours = None
     if train:
         checks, pending, failed, cancelled = rollup(repo, train["number"])
-        if pending and not failed and not cancelled:
+        if checks and not pending and not failed and not cancelled:
+            # Зелёный, ещё не влитый поезд: матрица прошла, влить его — дело следующего tick.
+            # Коммиты самого поезда в возраст не входят, как у поезда в пути (21-10-2026,
+            # unxed/f4#2121: поезд зелёный, после нарезки в staging два свежих land, а health
+            # считал compare(main, staging) с коммитами поезда — ложный «ИНЦИДЕНТ ПРОЦЕССА»).
+            # Но сам зелёный поезд старше STUCK_HOURS — инцидент независимо от коммитов впереди
+            # головы: tick его не вливает (нет права merge, § 13.2, отказ API, ошибка вливания),
+            # main стоит (review unxed/lunobot#222; как «поезд проверяется дольше двух часов»).
+            # Сюда же попадает поезд, покрывающий точную вершину staging: прежний ранний выход
+            # «staging tip уже покрыт зелёным поездом» возвращал 0 при любом возрасте поезда.
+            created = datetime.fromisoformat(train["created_at"].replace("Z", "+00:00"))
+            train_hours = (datetime.now(timezone.utc) - created).total_seconds() / 3600
+            if train_hours > STUCK_HOURS:
+                print(f"поезд #{train['number']} зелёный, но не влит {train_hours:.1f} ч")
+                print(f"ИНЦИДЕНТ ПРОЦЕССА: зелёный поезд не вливается дольше {STUCK_HOURS} ч. "
+                      "§ 4 «ретро круга»: найти, почему tick не вливает поезд, влить его и "
+                      "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
+                return 1
+            if train["head"]["sha"] == staging:
+                ahead = {"status": "identical", "commits": []}
+            else:
+                ahead = compare(repo, train["head"]["sha"], staging)
+            if ahead.get("status") in ("ahead", "identical"):
+                own = exclude_reverted([c for c in ahead["commits"] if len(c["parents"]) == 1])
+                if not own:
+                    print(f"поезд #{train['number']} зелёный, ждёт влития tick — ожидание штатное")
+                    return 0
+                oldest = oldest_staging_arrival(repo, own)
+                hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
+                print(f"в staging {len(own)} коммит(ов) ждут main впереди зелёного поезда "
+                      f"#{train['number']} (ждёт влития tick); старший — {hours:.1f} ч")
+                if hours > STUCK_HOURS:
+                    print(f"ИНЦИДЕНТ ПРОЦЕССА: приземлённая работа ждёт main дольше {STUCK_HOURS} ч. "
+                          "§ 4 «ретро круга»: найти, почему не едет поезд, починить конвейер и "
+                          "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
+                    return 1
+                return 0
+        elif pending and not failed and not cancelled:
             created = datetime.fromisoformat(train["created_at"].replace("Z", "+00:00"))
             train_hours = (datetime.now(timezone.utc) - created).total_seconds() / 3600
             if train["head"]["sha"] == staging:
