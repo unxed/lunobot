@@ -1,4 +1,0 @@
-# unxed/dn — релиз v2.20-alpha.2 (§ 7.7)
-
-- 21-10-2026 12:20 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер afd7ee5e): срез 08b155297d8d2c58be5d596713674d8538fbf0ce (вершина main; 67 check-runs без failure, push-прогоны dn, dn-linux, dn-windows, layout, toolchain — success; открытых bug p1–2 в TRIAGE нет). Аннотированный тег v2.20-alpha.2 (561bb73) запушен; релиз создаёт `release.yml`.
-- Осталось: когда релиз появится (`gh api repos/unxed/dn/releases/tags/v2.20-alpha.2`), поставить заметки: `python3 gh_post.py check projects/dn/status/release-v2.20-alpha.2-notes.md && gh release edit v2.20-alpha.2 --repo unxed/dn --notes-file projects/dn/status/release-v2.20-alpha.2-notes.md`, прочесть тело обратно (`gh api repos/unxed/dn/releases/tags/v2.20-alpha.2 --jq .body`) и сравнить с файлом; затем удалить оба файла.
