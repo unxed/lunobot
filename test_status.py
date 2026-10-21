@@ -158,5 +158,47 @@ class GitHubRestFallbackTest(unittest.TestCase):
         self.assertIn("Открытых тикетов: недоступно", titles)
 
 
+class ShortenKeepsLinksFlatTest(unittest.TestCase):
+    """Ссылка в записи учёта остаётся одной ссылкой: адрес, что уже стоит в `[подпись](адрес)`,
+    и хеш внутри адреса коммита второй раз ссылкой не становятся."""
+
+    REPO = "example/project"
+    SHA = "0123456789abcdef0123456789abcdef01234567"
+
+    def shorten(self, text):
+        with patch.dict(status.RUN_NUMBERS, {"39601384825": 6144}):
+            return status.shorten(text, self.REPO)
+
+    def test_a_linked_run_stays_as_written(self):
+        url = f"https://github.com/{self.REPO}/actions/runs/39601384825"
+        self.assertEqual(self.shorten(f"прогон [#6144]({url})"), f"прогон [#6144]({url})")
+
+    def test_a_bare_run_url_becomes_one_link(self):
+        url = f"https://github.com/{self.REPO}/actions/runs/39601384825"
+        self.assertEqual(self.shorten(url), f"[прогон #6144]({url})")
+
+    def test_linked_and_bare_pull_urls_in_one_line(self):
+        a = f"https://github.com/{self.REPO}/pull/5"
+        b = f"https://github.com/{self.REPO}/pull/6"
+        self.assertEqual(self.shorten(f"[PR #5]({a}) и {b}"), f"[PR #5]({a}) и [PR #6]({b})")
+
+    def test_a_commit_url_is_linked_once(self):
+        url = f"https://github.com/{self.REPO}/commit/{self.SHA}"
+        self.assertEqual(self.shorten(url), f"[`0123456`]({url})")
+        self.assertEqual(self.shorten(f"[`abc1234`]({url})"), f"[`abc1234`]({url})")
+
+    def test_a_bare_hash_still_becomes_a_commit_link(self):
+        self.assertEqual(self.shorten(f"коммит {self.SHA}"),
+                         f"коммит [`0123456`](https://github.com/{self.REPO}/commit/{self.SHA})")
+
+    def test_no_link_inside_a_link_in_a_ci_row(self):
+        row = ("21-10-2026 12:52:13 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), main, "
+               "коммит `3d2f691`, прогон "
+               f"[#6144](https://github.com/{self.REPO}/actions/runs/39601384825)")
+        with patch.dict(status.RUN_NUMBERS, {"39601384825": 6144}):
+            line = status.ci_line(row, self.REPO)
+        self.assertNotIn("]([", line)
+
+
 if __name__ == "__main__":
     unittest.main()
