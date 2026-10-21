@@ -100,8 +100,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: vtui
 Поручение: срочно довести до мержа открытый PR unxed/vtui#207.
 Критерий: PR #207 влит в main после проверки обязательного CI.
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 22:11:38 UTC
-Прогресс 21-10-2026 22:25:42 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): пауза ради mcommander; winkeys#2 влит + тег v0.1.2, тег unxed/gogpu v0.53.1-drag.1-altgr.1; дальше vtinput#12 → v0.1.12 → #243/#207 (шаги в projects/vtui/status/207.md).
+Состояние: ждёт владельца — токен бота не пишет в unxed/vtinput (push 403), нужен для unxed/vtinput#12 → v0.1.12 → unxed/vtui#207; шаги — projects/vtui/status/207.md
+Прогресс 21-10-2026 22:50:20 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): winkeys#2 влит + v0.1.2, тег unxed/gogpu v0.53.1-drag.1-altgr.1; vtinput#12 — ревью ок, коммит с winkeys v0.1.2 готов, push в unxed/vtinput 403.
 
 --
 
