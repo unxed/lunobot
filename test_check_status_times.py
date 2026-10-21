@@ -27,5 +27,20 @@ class FutureStampTest(unittest.TestCase):
         self.assertEqual(gate.future_stamps("31-02-2027 10:00 UTC", NOW), [])
 
 
+class LocalPathTest(unittest.TestCase):
+    def test_tmp_clone_path_is_reported(self):
+        line = ("21-10-2026 01:07 UTC (Лунобот-1): шаг 2 припаркован — клон "
+                "`/tmp/lunobot-1/work/dn87-2-1020-2245/dn`, sha `a83aaf7`")
+        self.assertEqual(gate.local_paths(line), ["/tmp/lunobot-1/work/dn87-2-1020-2245/dn"])
+
+    def test_branch_record_passes(self):
+        line = ("21-10-2026 01:07 UTC (Лунобот-1): шаг 2 припаркован — unxed/dn, ветка "
+                "`tmp/19d3/dn87-2-1020-2245`, sha `a83aaf76307f666e5da388a587174509145a3695`")
+        self.assertEqual(gate.local_paths(line), [])
+
+    def test_other_tmp_paths_are_not_state(self):
+        self.assertEqual(gate.local_paths("тест пишет в /tmp/f4-test, а не в рабочий каталог"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

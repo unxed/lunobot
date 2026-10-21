@@ -20,6 +20,8 @@ mkdir -p "${LOG_DIR}"
 ACTIVE_PID=""
 ACTIVE_PGID=""
 ACTIVE_TAIL_PID=""
+ACCOUNTING_REPO="${LUNOBOT_ACCOUNTING:-unxed/lunobot}"
+CLAIMS_DIRTY=0   # 1 — круг запускался, а его захваты ещё не сняты
 
 # ── ротация логов ────────────────────────────────────────────────────
 rotate_logs() {
@@ -58,6 +60,25 @@ wait_token_reset() {
   log "Quota wait complete, retrying..."
 }
 
+# ── снять захваты круга (LUNOBOT.md § 1: круг раннера — сессия, после него захватов нет) ──
+# Свежий одноразовый клон учёта, а не /tmp/lunobot-<N>/accounting: круг могли убить посреди git в нём.
+release_claims() {
+  local reason="$1" tmp rc=0
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/lunobot-release.XXXXXX")" || return 1
+  if timeout 120 gh repo clone "${ACCOUNTING_REPO}" "${tmp}/accounting" -- --depth=50 -q >/dev/null 2>&1 \
+     && git -C "${tmp}/accounting" config user.name "Лунобот-${BOT_NUMBER}" \
+     && git -C "${tmp}/accounting" config user.email lunobot@users.noreply.github.com \
+     && timeout 120 python3 "${tmp}/accounting/release.py" --number "${BOT_NUMBER}" --reason "${reason}" \
+          2>&1 | tee -a "${LOG_DIR}/lunobot.log"; then
+    CLAIMS_DIRTY=0
+  else
+    rc=1
+    log "WARNING: claims of Lunobot-${BOT_NUMBER} not released; janitor.py will drop them later"
+  fi
+  rm -rf -- "${tmp:?}"
+  return "${rc}"
+}
+
 stop_active_round() {
   local signal_name="$1"
   local exit_status="$2"
@@ -81,6 +102,9 @@ stop_active_round() {
     kill -TERM "${ACTIVE_TAIL_PID}" 2>/dev/null || true
     wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
   fi
+  if (( CLAIMS_DIRTY )); then
+    release_claims "раннер остановлен (${signal_name})" || true
+  fi
   exit "${exit_status}"
 }
 
@@ -97,7 +121,7 @@ run_round() {
   curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md" \
     -o "/tmp/lunobot-1/LUNOBOT.md" || { log "ERROR: cannot fetch LUNOBOT.md"; return 1; }
 
-  local prompt="Ты — Лунобот-1 (Nemotron 3 Ultra). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-1/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. Ответь кратко итогом круга."
+  local prompt="Ты — Лунобот-1 (Nemotron 3 Ultra). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-1/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. После круга раннер снимет все захваты твоего id (release.py, LUNOBOT.md § 1): незаконченное оставь запушенной веткой с записью в status (§ 7.5), не в /tmp. Ответь кратко итогом круга."
 
   log "Starting opencode (model: ${MODEL}) ..."
   cd "${WORKDIR}"
@@ -111,6 +135,7 @@ run_round() {
     -- "$prompt" \
     >"${log_file}" 2>&1 &
   ACTIVE_PID=$!
+  CLAIMS_DIRTY=1
   ACTIVE_PGID="$(ps -o pgid= -p "${ACTIVE_PID}" 2>/dev/null | tr -d ' ' || true)"
   tail --pid="${ACTIVE_PID}" -n +1 -f "${log_file}" &
   ACTIVE_TAIL_PID=$!
@@ -124,6 +149,7 @@ run_round() {
   ACTIVE_PGID=""
   wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
   ACTIVE_TAIL_PID=""
+  release_claims "круг ${round_num} раннера $(basename "$0") окончен (код ${exit_code})" || true
 
   if check_token_limit "${log_file}"; then
     log "DETECTED: Token limit / rate limit in round output"

@@ -181,6 +181,23 @@ class OverlapTest(unittest.TestCase):
             "«красный поезд #1968» по § 5 п. 2 [urgent: по § 5 п. 2 — красный поезд]"])
         self.assertIn("пересечение", found)
 
+    def test_red_staging_taken_by_two_runners_overlaps(self):
+        # раннеры Лунобота-1 и Лунобота-2 начинают круг вместе и оба видят красный quick
+        found = kinds([
+            f"21-10-2026 12:00:10 Я Лунобот-1 (node {NODE}; LNX; воркер a1b2c3d4), взял кастомную задачу "
+            "«красный staging f4: TestCopy» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]",
+            f"21-10-2026 12:00:40 Я Лунобот-2 (node {NODE}; LNX; воркер e5f6a7b8), взял кастомную задачу "
+            "«красный quick на lunobot/staging» по § 5 п. 2 [urgent: по § 5 п. 2 — красный quick]"])
+        self.assertIn("пересечение", found)
+
+    def test_main_stall_taken_twice_overlaps(self):
+        found = kinds([
+            f"21-10-2026 12:00:10 Я Лунобот-1 (node {NODE}; LNX), взял кастомную задачу "
+            "«застой main f4» по § 5 п. 2 [urgent: по § 5 п. 2 — застой main]",
+            f"21-10-2026 12:00:40 Я Лунобот-1 (node {OTHER}; LNX), взял кастомную задачу "
+            "«застой main: поезд #2121 не влит» по § 5 п. 2 [urgent: по § 5 п. 2 — застой main]"])
+        self.assertIn("пересечение", found)
+
     def test_red_main_of_different_commits_does_not_overlap(self):
         found = kinds([
             f"15-10-2026 19:21:20 Я Лунобот-2 (node {NODE}; LNX), взял кастомную задачу "

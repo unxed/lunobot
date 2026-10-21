@@ -1223,6 +1223,88 @@ class RollupRestRerunTest(unittest.TestCase):
         api.assert_called_once_with("repos/o/r/actions/runs/42/rerun-failed-jobs", "-X", "POST")
 
 
+class QueuedTrainCiTest(unittest.TestCase):
+    """Поезд, чей прогон ещё в очереди, не зелёный (21-10-2026, unxed/f4#2128): на его sha уже
+    лежали зелёные check-runs quick со staging, а своих check-runs у поезда ещё не было."""
+    ROLLUP = ('{"statusCheckRollup":[{"name":"quick","status":"COMPLETED",'
+              '"conclusion":"SUCCESS"}]}')
+
+    def fake_api(self, runs):
+        def api(path, *args, check=True):
+            if path.endswith("/pulls/7"):
+                return {"head": {"sha": "dd27884", "ref": "lunobot/train/f4/x"}}
+            if "actions/runs" in path:
+                return {"workflow_runs": runs}
+            return {}
+        return api
+
+    def roll(self, runs):
+        with mock.patch.object(train, "run", return_value=_proc(0, self.ROLLUP)), \
+                mock.patch.object(train, "api", side_effect=self.fake_api(runs)):
+            return train.rollup("o/r", 7)
+
+    STAGING_RUN = {"name": "quick", "head_branch": "lunobot/staging", "status": "completed"}
+
+    def test_queued_train_run_is_pending(self):
+        runs = [self.STAGING_RUN,
+                {"name": "build", "head_branch": "lunobot/train/f4/x", "status": "queued"}]
+        checks, pending, failed, cancelled = self.roll(runs)
+        self.assertEqual([c["name"] for c in pending], ["build"])
+
+    def test_no_run_of_the_train_branch_is_pending(self):
+        checks, pending, failed, cancelled = self.roll([self.STAGING_RUN])
+        self.assertEqual(len(pending), 1)
+
+    def test_completed_train_run_is_green(self):
+        runs = [self.STAGING_RUN,
+                {"name": "build", "head_branch": "lunobot/train/f4/x", "status": "completed"}]
+        checks, pending, failed, cancelled = self.roll(runs)
+        self.assertEqual((pending, failed, cancelled), ([], [], []))
+
+    def step(self, runs):
+        pr = {"number": 7, "head": {"sha": "dd27884", "ref": "lunobot/train/f4/x"}}
+        calls = []
+
+        def run(*argv, check=True):
+            calls.append(argv)
+            if argv[:3] == ("gh", "pr", "view"):
+                return _proc(0, self.ROLLUP)
+            return _proc(0, "")
+        with mock.patch.object(train, "train_pr", return_value=pr), \
+                mock.patch.object(train, "run", side_effect=run), \
+                mock.patch.object(train, "api", side_effect=self.fake_api(runs)), \
+                mock.patch.object(train, "should_cancel_main_run", return_value=False), \
+                contextlib.redirect_stdout(io.StringIO()) as out:
+            try:
+                train.train_step("o/r", "sign")
+            except Exception:  # дальше fast-forward этому тесту не важен
+                pass
+        ff = [a for a in calls if "repos/o/r/git/refs/heads/main" in a]
+        return ff, out.getvalue()
+
+    def test_train_step_does_not_fast_forward_a_queued_train(self):
+        runs = [self.STAGING_RUN,
+                {"name": "build", "head_branch": "lunobot/train/f4/x", "status": "queued"}]
+        ff, out = self.step(runs)
+        self.assertEqual(ff, [])
+        self.assertIn("в пути", out)
+
+    def test_train_step_fast_forwards_a_green_train(self):
+        runs = [self.STAGING_RUN,
+                {"name": "build", "head_branch": "lunobot/train/f4/x", "status": "completed"}]
+        ff, out = self.step(runs)
+        self.assertEqual(len(ff), 1)
+
+    def test_train_step_without_checks_is_in_transit(self):
+        pr = {"number": 7, "head": {"sha": "s"}}
+        with mock.patch.object(train, "train_pr", return_value=pr), \
+                mock.patch.object(train, "rollup", return_value=([], [], [], [])), \
+                mock.patch.object(train, "run") as run, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.train_step("o/r", "sign"), 0)
+        run.assert_not_called()
+
+
 class ApiErrorBodyTest(unittest.TestCase):
     """Тело ошибки GitHub вместо списка (лимит запросов) не роняет tried_since и transit_warn."""
 

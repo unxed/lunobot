@@ -579,6 +579,27 @@ def rollup_rest(repo, number):
     return checks
 
 
+def own_ci_pending(repo, number):
+    """Прогоны Actions самой ветки поезда, которые ещё не завершились, как pending-проверки.
+    Пока прогон поезда стоит `queued`, check-runs у него ещё нет, а на том же sha уже лежат
+    зелёные check-runs `quick` с push в staging: statusCheckRollup видел только их, и поезд
+    выглядел зелёным — health писал «ждёт влития», а tick влил бы его без полной матрицы
+    (21-10-2026, unxed/f4#2128). Ни одного прогона ветки поезда — поезд ещё не начал
+    проверяться, тоже pending. Ответ API не того вида — [] (прежнее поведение)."""
+    pr = api(f"repos/{repo}/pulls/{number}", check=False)
+    head = pr.get("head") if isinstance(pr, dict) else None
+    if not isinstance(head, dict) or not head.get("sha") or not head.get("ref"):
+        return []
+    data = api(f"repos/{repo}/actions/runs?head_sha={head['sha']}&per_page=100", check=False)
+    if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
+        return []
+    own = [r for r in data["workflow_runs"] if r.get("head_branch") == head["ref"]]
+    if not own:
+        return [{"name": f"CI ветки {head['ref']} ещё не создан", "status": "QUEUED"}]
+    return [{"name": r.get("name") or "", "status": (r.get("status") or "queued").upper()}
+            for r in own if r.get("status") != "completed"]
+
+
 def rollup(repo, number):
     p = run("gh", "pr", "view", str(number), "--repo", repo,
             "--json", "statusCheckRollup", check=False)
@@ -586,6 +607,7 @@ def rollup(repo, number):
         checks = json.loads(p.stdout)["statusCheckRollup"]
     else:
         checks = rollup_rest(repo, number)
+    checks = checks + own_ci_pending(repo, number)
     # codecov/* — informational (f4/vtui PROJECT.md): ждут вечно и блокируют tick
     # (05-10-2026 поезд unxed/f4#1756: staging 12 ч, main стоял на codecov/project).
     material = [c for c in checks
@@ -1959,7 +1981,8 @@ def train_step(repo, sign):
         else:
             print(f"поезд #{n}: {len(cancelled)} проверок отменены (не упали) — перезапустил")
         return 0
-    if pending:
+    if pending or not checks:
+        # Без единой проверки поезд не зелёный, а ещё не проверялся (21-10-2026, unxed/f4#2128).
         print(f"поезд #{n} в пути: {len(pending)} из {len(checks)} проверок ещё идут")
         return 0
     ff = run("gh", "api", "-X", "PATCH", f"repos/{repo}/git/refs/heads/main",

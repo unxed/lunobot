@@ -173,9 +173,10 @@ def hard_stale(blocks_, now):
     def limit(key):
         return URGENT_SILENT_MIN if key in urgent else HARD_SILENT_MIN
 
-    # строка с припаркованным коммитом (§ 1) живёт, пока коммит не приземлят
+    # припаркованный коммит живёт в запушенной ветке и status/ (§ 7.5), а не в захвате: строка
+    # с ним снимается по тем же срокам (раньше она жила вечно и держала шаг за клоном в /tmp)
     return [b for b in blocks_
-            if re.search(WHO, b) and "припаркован" not in b and row_key(b) in latest
+            if re.search(WHO, b) and row_key(b) in latest
             and (now - latest[row_key(b)]) / 60 > limit(row_key(b))]
 
 
@@ -229,10 +230,11 @@ def main():
                 if any(b is s_ for s_ in stale):
                     gone.append(b)
                     continue
-                # живость — по узлу, а не по номеру: при смене номера (= смене модели, § 4)
-                # захваты узла переписываются под новый id, и старый номер не значит «мёртв»
-                ts = max((t for (num_, node_), t in alive.items() if node_ == m.group(2)),
-                         default=None)
+                # живость — по номеру и узлу: на одном узле параллельно работают Лунобот-1 и
+                # Лунобот-2 (обычный режим — два раннера, § 4), и живой второй не продлевает
+                # захваты умершего первого. При смене номера (§ 4) захваты переписываются под
+                # новый id тем же коммитом, так что старый номер к тому времени захватов не держит.
+                ts = alive.get((m.group(1), m.group(2)))
                 silent = (now - ts) / 60 if ts else SILENT_MIN + 1
                 (gone if silent > SILENT_MIN else kept).append(b)
             total += save(f, kept, gone, f"владелец молчит дольше {SILENT_MIN} мин или строку не "
