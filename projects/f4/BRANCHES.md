@@ -9,5 +9,3 @@
 21-10-2026 15:01:17 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/urgent/2098-sync` для https://github.com/unxed/f4/pull/2098 (sync PR человека с main, § 5 п. 3)
 
 21-10-2026 15:01:17 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/urgent/2110-sync` для https://github.com/unxed/f4/pull/2110 (sync PR человека с main, § 5 п. 3)
-
-21-10-2026 15:23:24 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/urgent/2115-spec` для https://github.com/unxed/f4/issues/2115
