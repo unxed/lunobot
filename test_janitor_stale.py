@@ -37,10 +37,11 @@ class HardStale(unittest.TestCase):
         self.assertRegex(b, janitor.WHO)
         self.assertEqual(janitor.hard_stale([b], NOW), [b])
 
-    def test_parked_commit_row_is_kept(self):
+    def test_parked_commit_row_goes_stale_like_any_other(self):
+        # припаркованное живёт в ветке и status/ (§ 7.5), захват не вечен
         b = row("16-10-2026 04:10:04", "взял задачу https://github.com/unxed/tv3/issues/3 "
                 "(припаркованный коммит 53675ad) [pr]")
-        self.assertEqual(janitor.hard_stale([b], NOW), [])
+        self.assertEqual(janitor.hard_stale([b], NOW), [b])
 
     def test_urgent_row_goes_stale_after_45_minutes(self):
         b = row("16-10-2026 16:10:00", "взял кастомную задачу «красный staging f4» по § 5 п. 2 "

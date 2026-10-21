@@ -5,9 +5,15 @@
 сдвигает хронологию и ломает проверки возраста. Для DISPATCH.md то же ловит check_dispatch.py
 (ошибка «время»); status-файлы раньше не проверял никто.
 
+Второй гейт того же прохода — [локальный путь]: новая строка status не называет каталог в /tmp местом,
+где лежит работа (`/tmp/lunobot-<N>/…`). Учёт stateless: /tmp не переживает перезапуск узла и не
+виден другим узлам, поэтому незаконченный шаг записывается веткой на GitHub и sha (§ 7.5), а не
+путём клона (21-10-2026: десятки записей «коммит в клоне /tmp/lunobot-2/work/…», которые мог
+приземлить только тот же номер на том же узле). Старые записи гейт не судит, только добавленные.
+
   check_status_times.py              только строки, добавленные последним коммитом (как --added-only у check_dispatch.py)
-  check_status_times.py --all        все строки всех projects/*/status/*.md
-Код возврата 1 — есть метка позже текущего UTC (допуск 60 с на разницу часов).
+  check_status_times.py --all        все строки всех projects/*/status/*.md (только метки времени)
+Код возврата 1 — есть метка позже текущего UTC (допуск 60 с на разницу часов) или новая строка с путём в /tmp.
 """
 from __future__ import annotations
 
@@ -19,6 +25,7 @@ from pathlib import Path
 
 STAMP = re.compile(r"\b(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})(?::(\d{2}))?\s+UTC\b")
 SLACK = timedelta(seconds=60)
+LOCAL_PATH = re.compile(r"/tmp/lunobot-\d+\S*")
 
 
 def future_stamps(text: str, now: datetime) -> list[str]:
@@ -33,6 +40,11 @@ def future_stamps(text: str, now: datetime) -> list[str]:
         if stamp > now + SLACK:
             result.append(match.group(0))
     return result
+
+
+def local_paths(text: str) -> list[str]:
+    """Пути в /tmp/lunobot-<N>/… из text: место работы так не записывают (§ 7.5)."""
+    return [m.group(0).rstrip("`).,;:»") for m in LOCAL_PATH.finditer(text)]
 
 
 def added_lines(root: Path) -> list[tuple[str, str]]:
@@ -52,19 +64,24 @@ def added_lines(root: Path) -> list[tuple[str, str]]:
 def main() -> int:
     root = Path(__file__).resolve().parent
     now = datetime.now(timezone.utc)
-    if "--all" in sys.argv[1:]:
+    added = "--all" not in sys.argv[1:]
+    if not added:
         lines = [(str(path.relative_to(root)), line)
                  for path in sorted(root.glob("projects/*/status/*.md"))
                  for line in path.read_text(encoding="utf-8").splitlines()]
     else:
         lines = added_lines(root)
-    bad = 0
+    bad = paths = 0
     for name, line in lines:
         for stamp in future_stamps(line, now):
             print(f"ГЕЙТ [время] {name}: метка {stamp} позже текущего UTC {now:%d-%m-%Y %H:%M:%S}: {line[:90]}")
             bad += 1
-    print(f"проверено строк: {len(lines)}, меток из будущего: {bad}")
-    return 1 if bad else 0
+        for path in local_paths(line) if added else []:
+            print(f"ГЕЙТ [локальный путь] {name}: {path} — /tmp не хранит состояние; запушь коммит в "
+                  f"ветку tmp/<4 hex узла>/<слаг> и запиши репозиторий, ветку и sha (§ 7.5): {line[:90]}")
+            paths += 1
+    print(f"проверено строк: {len(lines)}, меток из будущего: {bad}, локальных путей: {paths}")
+    return 1 if bad or paths else 0
 
 
 if __name__ == "__main__":

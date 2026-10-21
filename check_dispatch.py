@@ -114,6 +114,11 @@ def part_id(line):
 # Инцидент без тикета: «красный поезд #1968», «красный main d5f1ef202» (§ 5 п. 2) — у него нет ссылки
 # на тикет, а чинить его одновременно двум сеансам незачем.
 INCIDENT = re.compile(r"красн\w*\s+(?:поезд\s*#(\d+)|main\s+([0-9a-f]{7,40})\b)", re.I)
+# Инцидент конвейера проекта без sha: «красный staging f4», «красный quick на lunobot/staging», «застой main»
+# (§ 5 п. 2). Файл DISPATCH.md — один проект, поэтому ключ без имени проекта. Раннеры Лунобота-1 и
+# Лунобота-2 начинают круг почти одновременно и оба видят тот же красный staging; текст задачи у них
+# разный, и без нормализации гейт пропускал вторую починку одной причины.
+PIPELINE = re.compile(r"(красн\w*\s+(?:quick\s+(?:на\s+)?)?(?:lunobot/)?staging)|(застой\w*\s+main)", re.I)
 
 
 def refs(text):
@@ -129,6 +134,8 @@ def refs(text):
     found |= {f"{o}/{r}#{n}".lower() for o, r, n in REF_SHORT.findall(text)}
     for train, sha in INCIDENT.findall(text):
         found.add(f"поезд#{train}" if train else f"main@{sha[:7].lower()}")
+    for staging, stall in PIPELINE.findall(text):
+        found.add("staging" if staging else "застой-main")
     return found
 
 
