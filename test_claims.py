@@ -283,6 +283,27 @@ class ReleaseAndJanitorTest(GitCase):
         self.assertIn(line(2, who=THEM), view)
         self.assertNotIn(line(1), view)
 
+    def test_janitor_sweeps_claims_outside_index(self):
+        # unxed/lunobot#230: захват «учёт» и проекта без строки в INDEX.md цикл по INDEX.md не видел
+        import janitor
+        self.quiet(claims.take, self.a, "учёт", custom("проба учёта", route="[urgent: по § 4 п. 1 — x]"))
+        self.quiet(claims.take, self.a, "archives", line(3))
+        self.quiet(claims.take, self.a, "f4", line(4))
+        self.quiet(claims.take, self.a, "учёт", custom("живой", who=THEM, route="[urgent: по § 4 п. 1 — x]"))
+        old_root = janitor.ROOT
+        janitor.ROOT = type(old_root)(self.b)
+        try:
+            claims.fetch(self.b)
+            now = time.time()
+            index = "1. [f4](f4/PROJECT.md)\n"
+            self.assertEqual(self.quiet(janitor.sweep_other_refs, index, {("2", OTHER): now}, now), 2)
+        finally:
+            janitor.ROOT = old_root
+        left = self.remote_refs()
+        self.assertIn("refs/claims/f4/unxed-f4-4", left)  # проект INDEX.md — не его забота
+        self.assertEqual([r for r in left if "/f4/" not in r], [r for r in left if "/учёт/" in r])
+        self.assertEqual(len(left), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

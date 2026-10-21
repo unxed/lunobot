@@ -220,6 +220,16 @@ def sweep_refs(project, alive, now):
     return len(gone)
 
 
+def sweep_other_refs(index, alive, now):
+    """Снять протухшие ref-захваты вне проектов INDEX.md: «учёт» (поручения OWNER_QUEUE.md без проекта) и
+    репозитории-зависимости без строки в INDEX.md (§ 2). Цикл по INDEX.md их не видел, и захват умершего
+    воркера там не снимался никогда (21-10-2026, unxed/lunobot#230). Живость — по учёту и продлению ref
+    (`alive`), без веток рабочего репозитория."""
+    listed = set(re.findall(r"^\d+\.\s*\[([^\]]+)\]", index, re.M))
+    return sum(sweep_refs(name, alive, now)
+               for name in sorted({c["project"] for c in claims.refs(ROOT)} - listed))
+
+
 def write_views(root=None):
     """projects/*/DISPATCH.md — представление refs/claims (после claims.fetch). Пишет только
     изменившиеся файлы; коммит делает workflow (или вызвавший)."""
@@ -349,6 +359,9 @@ def main():
 
         # 4. комментарии, дошедшие до GitHub кашей из «?» (кодировка сломалась по дороге)
         mojibake(d, repo)
+
+    if on_refs:
+        total += sweep_other_refs(index, seen, now)
 
     if on_refs:
         claims._fetched.clear()

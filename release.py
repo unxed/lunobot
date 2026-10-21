@@ -200,6 +200,10 @@ def main(argv=None):
         print(f"--node: нужен 24-значный hex, получено {node!r}", file=sys.stderr)
         return 2
     sign = f"Лунобот-{a.number} (node {node}; {a.platform or platform_code()})"
+    if not a.dry_run:
+        # конец круга: уборка и пульс не ждут cron (janitor_kick.py, unxed/lunobot#230)
+        import janitor_kick
+        janitor_kick.spawn(a.repo)
     try:
         for _ in range(3):
             if attempt(a.repo, a.number, node, sign, a.reason, a.dry_run) == "ok":

@@ -30,23 +30,33 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Захваты — refs/claims/* (claims.py): janitor.py сам делает fetch '+refs/claims/*:refs/claims/*',
-      # снимает протухшие удалением ref с lease (нужен contents: write — он выше) и пишет
-      # projects/*/DISPATCH.md как представление; шаг «Сохранить» коммитит изменившиеся представления.
-      - name: Подмести учёт
+      # Захваты — ветки claims/** (claims.py): janitor.py сам делает fetch и снимает протухшие удалением ref с lease
+      # (нужен contents: write — он выше), пишет projects/*/DISPATCH.md как представление и HEALTH.md (pulse.py).
+      # Боты пишут в main учёта десятки раз в час, и `git pull --rebase` коммита janitor может упасть на конфликте
+      # (21-10-2026, прогон 39633482610: projects/dn/CI.md — весь коммит с HEALTH.md и представлениями пропал).
+      # Поэтому при конфликте — откат на свежий main и пересчёт janitor.py заново (он идемпотентен), до трёх раз.
+      # Запуск: cron — страховка (GitHub исполняет его раз в 2–5 часов), основной — пинок флота (janitor_kick.py).
+      - name: Подмести учёт и сохранить
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 janitor.py
-
-      - name: Сохранить
         run: |
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "нечего коммитить"
-            exit 0
-          fi
           git config user.name  'lunobot-janitor'
           git config user.email 'lunobot-janitor@users.noreply.github.com'
-          git add -A projects HEALTH.md   # HEALTH.md — пульс петли самоулучшения (pulse.py)
-          git commit -am 'lunobot-janitor: подмёл учёт'
-          git pull --rebase -q
-          git push
+          for attempt in 1 2 3; do
+            python3 janitor.py
+            if [ -z "$(git status --porcelain)" ]; then
+              echo "нечего коммитить"
+              exit 0
+            fi
+            git add -A projects
+            if [ -f HEALTH.md ]; then git add HEALTH.md; fi   # пульс петли самоулучшения (pulse.py)
+            git commit -qm 'lunobot-janitor: подмёл учёт'
+            if git pull --rebase -q && git push -q; then
+              exit 0
+            fi
+            echo "попытка $attempt: main учёта ушёл вперёд с конфликтом — пересчитываю на свежем main"
+            git rebase --abort 2>/dev/null || true
+            git fetch -q origin main
+            git reset -q --hard origin/main
+          done
+          exit 1
