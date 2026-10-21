@@ -95,17 +95,6 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:09:13 UTC
 Прогресс 21-10-2026 23:06:55 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): сверил свежие unxed/lunobot#240 и projects/tv3/status/12.md: владелец отменил S31 с одним корневым коммитом; S7 будет в unxed/tv3-new только после N1. Перед ним Л1 должен обновить план, CLEANROOM.md и status/12.md; текущая запись «S7 TvColors» устарела, захват снят, код не менял.
 
-
-## account-241
-Заметка владельца: https://github.com/unxed/lunobot/issues/241
-Проект: vtui
-Поручение: срочно довести до мержа открытый PR unxed/vtui#207.
-Критерий: PR #207 влит в main после проверки обязательного CI.
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:09:13 UTC
-Прогресс 21-10-2026 22:50:20 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): winkeys#2 влит + v0.1.2, тег unxed/gogpu v0.53.1-drag.1-altgr.1; vtinput#12 — ревью ок, коммит с winkeys v0.1.2 готов, push в unxed/vtinput 403.
-
---
-
 ## account-243
 Заметка владельца: https://github.com/unxed/lunobot/issues/243
 Проект: учёт (PR владельца в чужой upstream joncampbell123/dosbox-x)
