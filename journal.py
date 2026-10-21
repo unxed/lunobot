@@ -76,7 +76,7 @@ def validate(rec):
                                             for f in fr):
             problems.append("рефлексия: friction — список {\"tag\", \"text\"} (пустой список — тоже ответ)")
     from gh_post import check_text
-    for value in _strings(rec):
+    for value in _strings({k: v for k, v in rec.items() if k != "tail"}):  # хвост лога — как есть
         why = check_text(value) if value.strip() else ""
         if why:
             problems.append(f"кодировка: {why}: {value[:60]!r}")
@@ -171,6 +171,7 @@ def metrics(path, fmt=None):
             except (ValueError, AttributeError):
                 continue
     m = {"log_format": fmt}
+    said = []  # собственные слова бота (текст ассистента), без вывода инструментов: учёт публичный
     if fmt == "claude":
         results, usage = [], Counter()
         for line in text.splitlines():
@@ -181,13 +182,21 @@ def metrics(path, fmt=None):
             if j.get("type") == "result":
                 results.append(j)
             if j.get("type") == "assistant":
+                for c in (j.get("message") or {}).get("content") or []:
+                    if c.get("type") == "text" and c.get("text", "").strip():
+                        said.append(c["text"].strip())
+                    elif c.get("type") == "tool_use":
+                        said.append(f"▶ {c.get('name')} {json.dumps(c.get('input'), ensure_ascii=False)[:160]}")
                 u = (j.get("message") or {}).get("usage") or {}
                 for k in ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"):
                     usage[k] += u.get(k) or 0
         if results:
             m["cost_usd"] = round(max(r.get("total_cost_usd") or 0 for r in results), 4)
             m["turns"] = sum(r.get("num_turns") or 0 for r in results)
-            m["result"] = (results[0].get("result") or "")[:600]
+            # итог круга — ПОСЛЕДНИЙ result: `claude -p` дожидается фоновых воркеров и продолжает по их
+            # уведомлениям, первый result — лишь промежуточная остановка («жду отчёт воркера»)
+            m["result"] = (results[-1].get("result") or "")[:600]
+            m["resumes"] = len(results) - 1
         m["tokens"] = dict(usage)
     # лимит — только по итогу круга и строкам вне JSON (stderr среды), не по выводу инструментов
     if fmt == "claude":
@@ -196,6 +205,9 @@ def metrics(path, fmt=None):
         plain = re.sub(r"\x1b\[[0-9;]*m", "", text)
         tail = "\n".join(l for l in plain.splitlines() if re.match(r"\W*Error\b", l))
     m["rate_limited"] = bool(re.search(r"(?i)usage limit|hit your limit|rate.?limit|429 Too Many|overloaded|quota exceeded", tail))
+    if fmt != "claude":
+        said = tail.splitlines()
+    m["_said"] = said
     m["errors"] = len(re.findall(r"(?i)\b(traceback|cannot lock ref|\[rejected\]|\[remote rejected\])", text))
     return m
 
@@ -222,6 +234,13 @@ def digest(recs):
                      f"{statistics.median(dur):.0f} | {sum(cost):.2f} | "
                      f"{statistics.median(cost) if cost else 0:.2f} | {useful} |" if dur else
                      f"| {runner} | {model} | {len(rs)} | — | — | {sum(cost):.2f} | — | {useful} |")
+    bad = [r for r in rounds if r.get("tail")]
+    if bad:
+        lines += ["", "## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова", ""]
+        for r in bad[-10:]:
+            lines.append(f"- {r['ts']} {r.get('runner')} круг {r.get('round')}, код {r.get('exit')}"
+                         f"{', лимит' if r.get('rate_limited') else ''}:")
+            lines += [f"  > {l[:200]}" for l in r["tail"].splitlines()[-5:]]
     tags = defaultdict(list)
     for r in refl:
         for f in r.get("friction") or []:
@@ -272,7 +291,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         if a.op == "metrics":
-            print(json.dumps(metrics(a.path, a.format), ensure_ascii=False))
+            m = metrics(a.path, a.format)
+            m.pop("_said", None)
+            print(json.dumps(m, ensure_ascii=False))
             return 0
         if a.op == "round":
             import node
@@ -282,7 +303,13 @@ def main(argv=None):
                    "round": int(a.round) if a.round else None, "exit": int(a.exit) if a.exit else None,
                    "duration_s": int(a.duration) if a.duration else None}
             if a.path and os.path.exists(a.path):
-                rec.update(metrics(a.path, a.format))
+                m = metrics(a.path, a.format)
+                said = m.pop("_said", [])
+                bad = rec.get("exit") not in (0, None) or m.get("rate_limited") or not m.get("result", "x")
+                if bad and said:
+                    # неудачный круг: хвост — чтобы причину видел разбор рефлексии с любого узла (полный лог на диске раннера)
+                    rec["tail"] = "\n".join(said[-15:])[-4000:]
+                rec.update(m)
             return add(a.repo, sign, {k: v for k, v in rec.items() if v is not None}, a.remote)
         if a.op == "add":
             raw = open(a.file, encoding="utf-8").read() if a.file else (a.json or "{}")

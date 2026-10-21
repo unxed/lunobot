@@ -1,0 +1,25 @@
+name: tests
+
+# Юнит-тесты скриптов учёта (claims.py, journal.py, train.py, гейты). Раньше их гоняли только локально,
+# и бот, правивший скрипт, мог сломать их незаметно (EVOLUTION.md, 21-10-2026). Только при изменении
+# кода: обычные записи учёта (status/, TRIAGE.md, OWNER_QUEUE.md) тесты не запускают.
+on:
+  push:
+    paths: ['**.py', '.github/workflows/tests.yml']
+  pull_request:
+    paths: ['**.py', '.github/workflows/tests.yml']
+  workflow_dispatch:
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Юнит-тесты
+        env:
+          GH_TOKEN: ''   # тесты не должны ходить в GitHub: всё на локальных bare-репозиториях и заглушках
+          PYTHONUTF8: '1'
+        run: python3 -m unittest discover -p 'test_*.py'

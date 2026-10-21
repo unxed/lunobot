@@ -100,6 +100,32 @@ class JournalGitTest(unittest.TestCase):
         self.assertEqual(events, [("take", False), ("drop", True)])
 
 
+class RoundTailTest(JournalGitTest):
+    def log(self, lines):
+        path = os.path.join(self.tmp.name, "round.log")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(json.dumps(x, ensure_ascii=False) for x in lines))
+        return path
+
+    def run_round(self, exit_code):
+        path = self.log([{"type": "system", "subtype": "init"},
+                         {"type": "assistant", "message": {"content": [{"type": "text", "text": "чиню staging"}]}},
+                         {"type": "user", "message": {"content": [{"type": "tool_result", "content": "секрет инструмента"}]}},
+                         {"type": "result", "num_turns": 3, "total_cost_usd": 1.0, "result": "итог"}])
+        self.quiet(journal.main, ["round", path, "--sign", SIGN1, "--runner", "r", "--model", "m",
+                                  "--round", "3", "--exit", str(exit_code), "--duration", "60", "--repo", self.a])
+        return journal.read(self.b, kind="round")[-1]
+
+    def test_failed_round_keeps_own_words_not_tool_output(self):
+        r = self.run_round(124)
+        self.assertIn("чиню staging", r["tail"])
+        self.assertNotIn("секрет", r["tail"])
+        self.assertIn("Неудачные круги", journal.digest([r]))
+
+    def test_good_round_has_no_tail(self):
+        self.assertNotIn("tail", self.run_round(0))
+
+
 class MetricsTest(unittest.TestCase):
     def write(self, text):
         f = tempfile.NamedTemporaryFile("w", delete=False, suffix=".log", encoding="utf-8")
