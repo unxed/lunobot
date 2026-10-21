@@ -7,3 +7,5 @@
 20-10-2026 06:55:31 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/pr/dn40-5b1 для https://github.com/unxed/dn/issues/40
 
 21-10-2026 20:28:49 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/pr/tvutf8-rw` для https://github.com/unxed/tv3/issues/12
+
+21-10-2026 20:39:25 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/pr/tvevents-rw` для https://github.com/unxed/tv3/issues/12
