@@ -109,6 +109,12 @@ class GateTest(unittest.TestCase):
         self.assertIsNotNone(oq.check_question("Блокирует unxed/f4#12: подпишете ли CLA?"))
         self.assertIsNotNone(oq.check_question("Блокирует PR #7: создадите ли его вручную?"))
 
+    def test_work_question_with_access_words_rejected(self):
+        # review unxed/lunobot#246: «запись в», «доступ» вне прав бота не делают вопрос о работе вопросом о правах
+        self.assertIsNotNone(oq.check_question("Блокирует unxed/f4#5: нужно ли добавить запись в CHANGELOG?"))
+        self.assertIsNotNone(oq.check_question("Блокирует PR #5: стоит ли сделать запись в README о сборке?"))
+        self.assertIsNotNone(oq.check_question("Блокирует PR #5: нужно ли покрыть тестами доступ к меню?"))
+
     def test_rights_without_question_or_blocker_rejected(self):
         self.assertIsNotNone(oq.check_question("Блокирует unxed/vtui#207: нужен доступ к unxed/gogpu."))
         self.assertIsNotNone(oq.check_question("Нужен ли боту доступ на push в unxed/gogpu?"))
