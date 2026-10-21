@@ -19,6 +19,7 @@
 - Прогоны `main` после мержа не отменять (исключение из § 7.3, как у vtui): `nightly.yml` публикует коммит `main`, только
   когда все его push-прогоны `dn-linux`, `dn`, `dn-windows`, `dos-utf8` завершились успехом; отменённый прогон оставляет
   `nightly` без исправления, которое «Пробуйте!» предлагает проверить (14-10-2026, PR unxed/dn#43).
+- Платформы (unxed/dn#166, пробы 39511037412 и 39511629649, 20-10-2026; таблица — комментарий 6305062661 в тикете): FreeBSD x86_64 — шаги 1–2 (pkg fpc 3.2.3, сборка `tools/build.sh freebsd64`, job `dn-freebsd.yml`); собираются родным fpc без правок исходников и рисуют панели — DragonFly 6.4 x86_64 (pkg fpc 3.2.3), macOS arm64 (brew fpc 3.2.2); собираются, запуск не проверен — NetBSD 10.1 x86_64 (pkgsrc fpc 3.2.2, нужен свой `fpc.cfg`), Linux armhf; не собираются — macOS x86_64 (ассемблер clang отвергает метки `goto` внутри `.cfi_startproc`, `arvidavt.pas` и ~55 файлов с `label`); нет компилятора в пакетах — Linux riscv64, FreeBSD aarch64, OpenBSD 7.8; Haiku r1beta5 — репозиторий HaikuPorts в VM не скачался (повторить на r1beta6). Порядок новых платформ: DragonFly → macOS arm64 → NetBSD, armhf; смоук «команда из командной строки» в пробе был сломан (красный и на Linux), его не считать результатом платформы.
 - Особенности: Pascal/FreePascal, исходники DN и TV разделены; сборка и проверки
   охватывают Linux x86_64/i386/ARM64, Windows win32/win64 с UTF-8 и code page,
   DOSBox-X и Windows ConPTY. Локальную сборку и тесты не считать доказательством:
