@@ -539,6 +539,9 @@ def main(argv=None):
             print(f"{a.op}: нужны <проект> и строка/ключ", file=sys.stderr)
             return 2
         project, text = a.args
+        # каждый захват и снятие пинают janitor.yml, если тот давно не шёл (janitor_kick.py, unxed/lunobot#230)
+        import janitor_kick
+        janitor_kick.spawn(a.repo)
         if a.op == "take":
             return take(a.repo, project, text, a.remote)
         if not a.sign or not SIGN.search(a.sign):
