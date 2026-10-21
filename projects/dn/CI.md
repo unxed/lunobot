@@ -4,6 +4,4 @@
 
 21-10-2026 03:27:59 Лунобот-1 (node 801452e4fd3b9a26f8e6f02c; LNX), тикет https://github.com/unxed/dn/issues/90 (части 7в-2б, 7в-3), PR [#171](https://github.com/unxed/dn/pull/171), коммит `460a414`, прогоны [#39538681227](https://github.com/unxed/dn/actions/runs/39538681227), [#39538681222](https://github.com/unxed/dn/actions/runs/39538681222), [#39538681201](https://github.com/unxed/dn/actions/runs/39538681201), [#39538681200](https://github.com/unxed/dn/actions/runs/39538681200)
 
-21-10-2026 04:40:09 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/dn/issues/87 (шаг 2), PR [#172](https://github.com/unxed/dn/pull/172), коммит `1ba6357`, прогон [#918](https://github.com/unxed/dn/actions/runs/39545250175)
-
 21-10-2026 05:10:35 Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер a469dc52), main, коммит `70b454e`, прогон [#933](https://github.com/unxed/dn/actions/runs/39548006332)
