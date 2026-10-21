@@ -11,6 +11,7 @@
 - Язык общения: английский (upstream-стиль репозитория)
 - CI: `Zipper Build & Release` (pull_request/push), обычный процесс без батчинга
   (батчинг — договорённость только для f4, см. LUNOBOT.md §7.2)
+- Релизы: тег v* → workflow (`build.yml`, job Create Official Release на push тега `v*.*.*`); схема: vX.Y.Z, патч +1 (последний `v0.1.178`, он Latest); плавающий `nightly` (job Update Nightly Release на push в `main`) — не трогать
 - Триаж тикетов заведён (`TRIAGE.md`, проверено `check_triage.py zipper` 28-09-2026 —
   полностью совпадает с GitHub, 3 открытых тикета). Запись про 9 нетронутых тикетов
   от 27-09-2026 устарела — репозиторий с тех пор подчищен.

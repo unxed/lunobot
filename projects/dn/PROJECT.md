@@ -8,6 +8,7 @@
 - Язык общения: по языку автора тикета
 - Режим публикации: PR
 - Отладка GitHub CI: да
+- Релизы: тег v* → workflow (`release.yml`: сборка и `gh release create --generate-notes`, тег с «-» — prerelease); схема: vX.Y[-alpha.N] (последний `v2.20-alpha.1`, prerelease, Latest нет); плавающий `nightly` (`nightly.yml` после зелёных push-прогонов `main`) — не трогать
 - Диагностические workflow: `dn.yml`, `dn-linux.yml`, `dn-windows.yml` и
   `class-migration.yml` через `workflow_dispatch`; отдельного `sandbox.yml` нет
 - Обязательная проверка: для изменений в DN используй PR-проверки `dn.yml`,
