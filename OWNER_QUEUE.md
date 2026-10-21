@@ -129,8 +129,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: oddyness (новый, unxed/oddyness)
 Поручение: завести паспорт и учёт unxed/oddyness по образцу, строку в INDEX.md, триаж; дальше — небольшие атомарные RUP-шаги.
 Критерий: паспорт и файлы учёта заведены, строка в INDEX.md, check_triage.py oddyness — код 0; первый атомарный шаг сделан или записан план.
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 21:44:32 UTC
-Прогресс 21-10-2026 22:05:00 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): паспорт и файлы учёта `projects/oddyness/` заведены, строка 13 в INDEX.md, `check_triage.py oddyness` — код 0 (тикетов нет); дальше — тикет-план карточек `plan.md` в unxed/oddyness и P01 (Go module, `version`, CI без CGO) PR.
+Состояние: ждёт владельца — токен флота не пишет в unxed/oddyness (HTTP 403): https://github.com/unxed/lunobot/issues/248#issuecomment-6327318259
+Прогресс 21-10-2026 21:50 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): учёт заведён (паспорт, INDEX.md, TRIAGE — код 0), план — projects/oddyness/status/plan.md; дальше P01 после доступа.
 
 --
 
