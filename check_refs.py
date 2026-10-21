@@ -40,8 +40,11 @@ def check(path, known):
 
 
 def main(argv):
-    with open(os.path.join(HERE, "LUNOBOT.md"), encoding="utf-8") as f:
-        known = sections(f.read())
+    known = set()
+    # разделы живут в ядре и в модулях (modules/*.md, решение 21-10-2026 — EVOLUTION.md)
+    for doc in [os.path.join(HERE, "LUNOBOT.md")] + sorted(glob.glob(os.path.join(HERE, "modules", "*.md"))):
+        with open(doc, encoding="utf-8") as f:
+            known |= sections(f.read())
     files = argv or sorted(
         p for name in ("DISPATCH", "CI", "BRANCHES")
         for p in glob.glob(os.path.join(HERE, "projects", "*", name + ".md")))
