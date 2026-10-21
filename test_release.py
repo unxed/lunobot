@@ -56,8 +56,8 @@ class PureTest(unittest.TestCase):
     def test_queue_frees_only_own_taken_blocks(self):
         new, freed = release.release_queue(QUEUE, release.owner(1, NODE), "Прогресс X: снят")
         self.assertEqual(freed, ["account-1"])
-        self.assertIn("## account-1\nПоручение: раз\nСостояние: свободно\nПрогресс X: снят\n"
-                      "Прогресс 21-10-2026 12:10:00 UTC (Лунобот-1): шаг 1\n", new)
+        # прежняя строка следа заменена новой: в блоке одна строка (check_owner_queue.py п. 5)
+        self.assertIn("## account-1\nПоручение: раз\nСостояние: свободно\nПрогресс X: снят\n\n--", new)
         self.assertIn("Состояние: взял в работу — Лунобот-2", new)
         self.assertIn("Состояние: ждёт владельца — вопрос; Лунобот-1", new)
 

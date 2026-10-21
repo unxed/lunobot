@@ -34,6 +34,7 @@ from acct_line import git  # noqa: E402
 
 RECORD = re.compile(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d ")
 QUEUE = "OWNER_QUEUE.md"
+TRACE = re.compile(r"^(Прогресс|Доп\. проверка|Доп\. шаг)\b")
 
 
 def platform_code(name=None):
@@ -85,7 +86,20 @@ def release_queue(text, who, trace):
             freed.append(block or "?")
             continue
         out.append(line)
-    return ("\n".join(out) if freed else text), freed
+    if not freed:
+        return text, freed
+    # в блоке остаётся одна строка следа — новая (check_owner_queue.py, п. 5); история — в тикете поручения
+    res, block = [], None
+    for line in out:
+        m = re.match(r"## (\S+)", line)
+        if m:
+            block = m.group(1)
+        elif line == "--":
+            block = None
+        elif block in freed and TRACE.match(line) and line != trace:
+            continue
+        res.append(line)
+    return "\n".join(res), freed
 
 
 def changes(repo, base, who, trace):
@@ -137,7 +151,7 @@ def attempt(repo, number, node, sign, reason, dry):
     git(repo, "fetch", "-q", "origin", "main")
     base = git(repo, "rev-parse", "FETCH_HEAD").stdout.strip()
     stamp = datetime.now(timezone.utc).strftime("%d-%m-%Y %H:%M:%S")
-    trace = f"Прогресс {stamp} UTC ({sign}): захват снят — {reason}; продолжать по записям «Прогресс» и status/."
+    trace = f"Прогресс {stamp} UTC ({sign}): захват снят — {reason}; продолжать по тикету поручения и status/."
     new, report = changes(repo, base, owner(number, node), trace)
     for r in report:
         print(("сниму " if dry else "снял ") + r)
