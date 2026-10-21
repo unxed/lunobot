@@ -1029,6 +1029,53 @@ class MainCancelledRunTest(unittest.TestCase):
             self.assertEqual(train.main_ci("o/r"), 0)
         self.assertTrue(any(p.endswith("/rerun") for p, _ in calls))
 
+    def _run_ff(self, head_runs):
+        calls = []
+        base = self._fake_api(1, calls)
+
+        def api(path, *args, check=True):
+            if path == "repos/o/r/actions/runs?head_sha=abc123def&per_page=100":
+                calls.append((path, args))
+                return {"workflow_runs": head_runs}
+            if path == "repos/o/r/commits/abc123def":
+                return {"commit": {"tree": {"sha": "T"}}, "parents": [{"sha": "p1"}]}
+            return base(path, *args, check=check)
+        with mock.patch.object(train, "api", side_effect=api), mock.patch("builtins.print") as pr:
+            rc = train.main_ci("o/r")
+        reran = any(p.endswith("/rerun") for p, _ in calls)
+        return rc, reran, [str(c.args[0]) for c in pr.call_args_list]
+
+    def test_cancelled_fast_forward_with_green_pull_request_run_is_not_rerun(self):
+        rc, reran, out = self._run_ff([
+            {"name": "CI", "event": "push", "status": "completed", "conclusion": "cancelled"},
+            {"name": "CI", "event": "pull_request", "status": "completed", "conclusion": "success"},
+            {"name": "quick", "event": "push", "status": "completed", "conclusion": "failure"},
+            {"name": "mojibake-guard", "event": "issue_comment", "status": "completed",
+             "conclusion": "failure"}])
+        self.assertEqual(rc, 0)
+        self.assertFalse(reran)
+        self.assertIn("main abc123def: прогон отменён, но полная матрица на этом sha уже зелёная в PR — "
+                      "повтор не нужен", out)
+
+    def test_cancelled_fast_forward_without_green_pull_request_run_is_rerun(self):
+        push = {"name": "CI", "event": "push", "status": "completed", "conclusion": "cancelled"}
+        for pr_runs in ([],
+                        [{"name": "CI", "event": "pull_request", "status": "completed", "conclusion": "failure"}],
+                        [{"name": "CI", "event": "pull_request", "status": "in_progress", "conclusion": None}],
+                        [{"name": "CI", "event": "pull_request", "status": "completed", "conclusion": "success"},
+                         {"name": "guard", "event": "pull_request", "status": "completed",
+                          "conclusion": "cancelled"}],
+                        [{"name": "CI", "event": "pull_request", "status": "completed", "conclusion": "skipped"}],
+                        [{"name": "quick", "event": "pull_request", "status": "completed",
+                          "conclusion": "success"}]):
+            with self.subTest(runs=pr_runs):
+                _, reran, _ = self._run_ff([push] + pr_runs)
+                self.assertTrue(reran)
+
+    def test_cancelled_fast_forward_api_error_is_rerun(self):
+        _, reran, _ = self._run_ff(None)
+        self.assertTrue(reran)
+
     def test_cancelled_again_is_not_rerun_forever(self):
         calls = []
         with mock.patch.object(train, "api", side_effect=self._fake_api(2, calls)):

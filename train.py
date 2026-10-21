@@ -1553,7 +1553,16 @@ def cancelled_main_is_expected(repo, head):
     проверен, повторять ~50 job'ов незачем (18-10-2026, unxed/f4#2083: merge-коммит 37fe96df8,
     прогон 39162354404 отменён по § 7.3, `health` перезапустил его). Возвращает sha зелёного
     родителя или None; любое сомнение (ошибка API, нет родителей, дерево не совпало, нет
-    зелёного прогона) — None, то есть прежнее поведение (rerun)."""
+    зелёного прогона) — None, то есть прежнее поведение (rerun).
+
+    Первый случай — fast-forward: `tick` влил поезд перемоткой и отменил прогон `main` (§ 7.2 п. 3),
+    а полная матрица на ЭТОМ ЖЕ sha уже прошла в PR поезда (§ 5 п. 2 (а) — «ничего не делай»).
+    Тогда на самом head есть прогоны полной матрицы с event `pull_request`, все `completed`
+    `success`/`skipped`, хотя бы один `success`; возвращается сам head (21-10-2026, поезд
+    unxed/f4#2128: `tick` отменил прогон 39597117331 на dd27884be, PR-прогон 39593208300 на том же
+    sha зелёный, а `health` перезапустил ~50 job'ов)."""
+    if full_matrix_green(repo, head, event="pull_request"):
+        return head
     commit = api(f"repos/{repo}/commits/{head}", check=False)
     if not isinstance(commit, dict):
         return None
@@ -1565,15 +1574,22 @@ def cancelled_main_is_expected(repo, head):
         pc = api(f"repos/{repo}/commits/{parent}", check=False)
         if not isinstance(pc, dict) or ((pc.get("commit") or {}).get("tree") or {}).get("sha") != tree:
             continue
-        data = api(f"repos/{repo}/actions/runs?head_sha={parent}&per_page=100", check=False)
-        if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
-            continue
-        full = [r for r in data["workflow_runs"] if r.get("name") not in ("quick", "sandbox")]
-        if (full and all(r.get("status") == "completed" and r.get("conclusion") in ("success", "skipped")
-                         for r in full)
-                and any(r.get("conclusion") == "success" for r in full)):
+        if full_matrix_green(repo, parent):
             return parent
     return None
+
+
+def full_matrix_green(repo, sha, event=None):
+    """На sha все прогоны полной матрицы (не quick/sandbox; при `event` — только этого события)
+    завершены `success`/`skipped` и хотя бы один `success`. Ошибка API или нет прогонов — False."""
+    data = api(f"repos/{repo}/actions/runs?head_sha={sha}&per_page=100", check=False)
+    if not isinstance(data, dict) or not isinstance(data.get("workflow_runs"), list):
+        return False
+    full = [r for r in data["workflow_runs"] if r.get("name") not in ("quick", "sandbox")
+            and (event is None or r.get("event") == event)]
+    return bool(full and all(r.get("status") == "completed" and r.get("conclusion") in ("success", "skipped")
+                             for r in full)
+                and any(r.get("conclusion") == "success" for r in full))
 
 
 def main_ci(repo):
@@ -1615,6 +1631,10 @@ def main_ci(repo):
         # Отменённый прогон на вершине main никто не повторит: новых push нет (09-10-2026: прогон
         # поезда #1841 отменился, tick печатал «cancelled» как норму, красный Race увидели через час).
         green = cancelled_main_is_expected(repo, head)
+        if green == head:
+            print(f"main {head[:9]}: прогон отменён, но полная матрица на этом sha уже зелёная в PR — "
+                  "повтор не нужен")
+            return 0
         if green:
             print(f"main {head[:9]}: прогон отменён, но дерево совпадает с зелёным {green[:9]} — "
                   "повтор не нужен")
