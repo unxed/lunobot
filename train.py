@@ -1720,6 +1720,7 @@ def tick(repo, sign):
     ensure_quick_on_tip(repo)
     rc = max(main_ci(repo), heal(repo))
     rc = max(rc, train_step(repo, sign))
+    tag_untagged_main(repo)
     # После шага поезда, а не до: поезд, который этот же tick влил, больше не «ждёт
     # main». До 11-10-2026 stuck() мерил staging против main до вливания и объявлял
     # инцидент, который тот же tick тут же снимал (f4 #1872: «2.2 ч» при уже зелёном
@@ -2020,9 +2021,30 @@ def should_cancel_main_run(repo):
     return repo not in PRESERVE_MAIN and not nightly_is_stale(repo)
 
 
-def tag_next(repo):
-    """Следующий последовательный тег vX.Y.Z на вершине main (если она ещё без тега)."""
+def tag_untagged_main(repo):
+    """Тег на вершине main проекта из TAG_AFTER_MERGE, влитой не этим tick (владелец, срочный PR,
+    другой путь): tag_next зовёт только ветка вливания поезда в train_step, и такая вершина
+    оставалась без тега, а f4 не мог подтянуть исправление (21-10-2026: vtui 679635b, поезд #238,
+    без тега 22:39Z–01:14Z). Только когда поезда в пути нет и все push-прогоны main на вершине
+    завершены зелёными; иначе молча ждём следующего tick. Возвращает поставленный тег или None."""
+    if repo not in TAG_AFTER_MERGE or train_pr(repo):
+        return None
     head = api(f"repos/{repo}/branches/main")["commit"]["sha"]
+    tags = api(f"repos/{repo}/tags?per_page=100") or []
+    if any(t["commit"]["sha"] == head for t in tags):
+        return None
+    runs = (api(f"repos/{repo}/actions/runs?branch=main&event=push&head_sha={head}&per_page=20",
+                check=False) or {}).get("workflow_runs") or []
+    if not runs or any(r.get("status") != "completed" or r.get("conclusion") != "success" for r in runs):
+        return None
+    print(f"{repo}: вершина main {head[:9]} зелёная и без тега — ставлю тег (TAG_AFTER_MERGE)")
+    return tag_next(repo, head)
+
+
+def tag_next(repo, head=None):
+    """Следующий последовательный тег vX.Y.Z на вершине main (если она ещё без тега).
+    `head` — проверенный sha вершины; не передан — берётся текущая вершина main."""
+    head = head or api(f"repos/{repo}/branches/main")["commit"]["sha"]
     tags = api(f"repos/{repo}/tags?per_page=100") or []
     if any(t["commit"]["sha"] == head for t in tags):
         return
@@ -2041,6 +2063,7 @@ def tag_next(repo):
         r = subprocess.CompletedProcess(r.args, 0, "", "")
     print(f"{repo}: тег {tag} на {head[:9]}" if r.returncode == 0 else
           f"{repo}: тег {tag} не создан: {r.stderr.strip()}")
+    return tag if r.returncode == 0 else None
 
 
 def push_tag(repo, tag, sha):
