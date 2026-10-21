@@ -14,6 +14,7 @@
   **far2l extensions мейнтейнер принимать отказался** (blue-panels/mcommander#347: «far2l extensions will not be added»);
   они целиком в открытом PR владельца blue-panels/mcommander#368. Не дублируй их новыми PR и не спорь в upstream — это решение
   владельца unxed/f4#2115 (уровень mcommander по спеке на `master` — без far2l extensions).
+- PR не трогать: #368 — решение владельца в чате основного инстанса 21-10-2026, передано менеджером (projects/mcommander/status/368.md) («владелец ведёт сам, не трогать»)
 - Режим публикации: PR (`lunobot/staging` и `quick.yml` нет; `train.py` не применяется)
 - Отладка GitHub CI: да (компилируемый C-проект; локально не собирать и не тестировать). Диагностика — push ветки
   `tmp/<4 hex узла>/<слаг>` в форк: `ci.yml` (сборки ubuntu/fedora/alpine/macos/solaris/termux/freebsd, `ci-man`) и
