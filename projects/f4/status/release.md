@@ -1,0 +1,13 @@
+# Релиз unxed/f4 v0.4.0-beta (§ 7.7)
+
+21-10-2026 11:13 UTC — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер abdc9f82): тег `v0.4.0-beta` (аннотированный, объект `85c782a`) запушен на срез `f99420adeb371106951f2b4af2bc09bb0fd754d0` (вершина `main`, fast-forward поезда unxed/f4#2127). Тег запустил полный прогон `build.yml` https://github.com/unxed/f4/actions/runs/39590346913; релиз создаст job `release` (softprops, `generate_release_notes: true`, не prerelease — станет Latest, как v0.3.0-beta сейчас; `nightly` не трогается).
+
+Потолок (а): по новой редакции § 7.7 «Выпуск» (unxed/lunobot#227, влита 11:10Z) голодающий кандидат потолок не ждёт; фактически на 11:13Z в unxed/f4, unxed/dn, unxed/vtui не шло ни одного полного прогона (CI `main` f4 39589351415 завершился `cancelled`; шёл только лёгкий `quick` чужой ветки `lunobot/urgent/main-race-8049d`), других тегов голодающих релизов в пути нет.
+
+Проверки среза: (1) sha в `main`; (2) check-runs на sha: 55 success, 5 skipped, 59 cancelled (отменённый затем прогон `main` 39589351415); полная матрица PR поезда 39585595063 на том же sha — success; (3) открытых `bug` p1–2 после v0.3.0-beta нет, «в пути» таких нет; p1–2 в TRIAGE: unxed/f4#2035 (проверяют), unxed/f4#1861 (решён) — в «Исправлениях»; unxed/f4#1376 (p2, создан 24-09, до тега, ждёт ответа) — «Известные проблемы»; (4) `status/*.md` о ломке формата/миграции/протокола без следующей части — ничего.
+
+Версия: v0.4.0-beta — минорная по схеме vX.Y.Z-<стадия>: в диапазоне 115 новых возможностей (тикеты `enhancement` и `feat`-PR: календарь, калькулятор, плагин git, IDE-режим, перетаскивание файлов, Markdown во вьюере и др.); стадия `beta` прежняя, `v1.0.0` — только по слову владельца.
+
+Заметки: `/tmp/lunobot-1/work/w-1021-1108/release-notes-v0.4.0-beta.md` (76961 байт, 115 «New», 190 «Fixes», «Known issues»; `gh_post.py check` — годится). Собраны скриптом из `git log v0.3.0-beta..f99420a`: `python3 -I scripts/collect.py f4.git 6ac4cf8e f99420a collected.json`, метки тикетов — `labels.tsv`, затем `python3 -I scripts/notes.py collected.json labels.tsv v0.4.0-beta v0.3.0-beta release-notes-v0.4.0-beta.md` (всё в `/tmp/lunobot-1/work/w-1021-1108/`). Язык: заголовки по-английски, как в существующих релизах; строки тикетов — дословно из `Проблема:`/`Исправление:` коммитов (по-русски), поэтому подпись кириллицей (гейт подписи § 9).
+
+Осталось: когда workflow создаст релиз — `gh release edit v0.4.0-beta -R unxed/f4 --notes-file /tmp/lunobot-1/work/w-1021-1108/release-notes-v0.4.0-beta.md` (Latest не менять), прочитать тело обратно (`gh api repos/unxed/f4/releases/tags/v0.4.0-beta --jq .body`), сравнить с файлом; затем удалить этот файл. Прогон тега красный — релиза не будет: разобрать по § 5 п. 2, тег не двигать без слова владельца.
