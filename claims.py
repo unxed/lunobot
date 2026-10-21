@@ -25,7 +25,11 @@
 `freeze`; «прекращаю работу»/«считаю цель» → `note-<N>-<узел>` (своя, перезаписывается).
 
 Продление — новый коммит с родителем-прежним и свежей датой коммиттера; живость захвата —
-дата коммиттера ref-коммита. `DISPATCH.md` больше не источник правды, а представление, которое
+дата коммиттера ref-коммита. Снятие — удаление ветки; если прокси не даёт её удалить (облачная
+сессия Claude Code: «hung up», HTTP 403), захват снимается меткой: новым коммитом в ту же ветку,
+чьё сообщение начинается с «СНЯТО » (обычное обновление ветки, его прокси пропускает). Снятый
+меткой захват свободен сразу: `refs()` и все читатели его не видят, `take` занимает ключ поверх
+метки, а ветку удалит `janitor.py` (Actions, где удаление разрешено). `DISPATCH.md` больше не источник правды, а представление, которое
 пишет `janitor.py`. Читатели берут записи через `records()`/`dispatch_text()` (после `fetch()`).
 Коды: 0 — сделано (или уже твоё), 1 — занято/гейт/нечего снимать, 2 — ошибка вызова или сети.
 """
@@ -63,6 +67,7 @@ WORKER = re.compile(r"воркер\s+([0-9a-f]{6,})")
 CUSTOM = re.compile(r"кастомн\w+ задач\w+\s*«([^»]+)»")
 FREEZE = "объявляю заморозку land проекта"
 NOTES = ("прекращаю работу", "считаю цель")
+RELEASED = "СНЯТО "          # начало сообщения коммита-метки: захват снят, ветку уберёт janitor.py
 TRANSLIT = dict(zip("абвгдеёжзийклмнопрстуфхцчшщъыьэюя",
                     "a b v g d e e zh z i y k l m n o p r s t u f h c ch sh sch _ y _ e yu ya".split()))
 HEADER = ("Представление: генерируется janitor.py из refs/claims учётного репозитория; вручную не "
@@ -169,8 +174,10 @@ def fetch(root=HERE, remote="origin"):
     return ok
 
 
-def refs(root=HERE, project=None):
-    """[{ref, project, key, sha, ts(unix), line, parent}] локальных refs/claims."""
+def refs(root=HERE, project=None, released=False):
+    """[{ref, project, key, sha, ts(unix), line, parent, released}] локальных refs/claims.
+    Захваты, снятые меткой (RELEASED), по умолчанию не отдаются — для читателей их нет;
+    `released=True` отдаёт и их (janitor.py удаляет такие ветки, `take` занимает ключ поверх метки)."""
     prefix = f"{NS}/{project}/" if project else f"{NS}/"
     r = git(root, "for-each-ref", prefix,
             "--format=%(refname)%00%(objectname)%00%(committerdate:unix)%00%(subject)%00%(parent)",
@@ -182,8 +189,11 @@ def refs(root=HERE, project=None):
         ref, sha, ts, subject, parent = row.split("\0")
         rest = ref[len(NS) + 1:]
         proj, _, key = rest.partition("/")
+        gone = subject.startswith(RELEASED)
+        if gone and not released:
+            continue
         out.append({"ref": ref, "project": proj, "key": key, "sha": sha, "ts": int(ts),
-                    "line": subject, "parent": parent})
+                    "line": subject, "parent": parent, "released": gone})
     return out
 
 
@@ -298,6 +308,27 @@ def _push_retry(repo, remote, specs):
     return False, [], True
 
 
+def release(repo, remote, cs):
+    """Снять захваты cs (записи refs()). Возвращает (ok, отклонённые ref, сетевой_сбой, как), как —
+    «удалено» или «помечено». Сначала удаление ветки; когда прокси его не пропускает (обрыв без
+    ответа сервера — сетевой сбой), — метка: новый коммит-потомок в ту же ветку с сообщением
+    «СНЯТО <UTC> <строка захвата>» и lease на прочитанный sha. Отказ по lease (захват продлили или уже
+    сняли) метку не ставит: это не прокси, а гонка."""
+    ok, rejected, net = _push_retry(repo, remote, [(c["ref"], None, c["sha"]) for c in cs])
+    if ok or not net:
+        return ok, rejected, net, "удалено"
+    by_sha = {}
+    for c in cs:
+        by_sha.setdefault(c["sha"], []).append(c)
+    specs = []
+    for sha, group in by_sha.items():
+        line = group[0]["line"]
+        new = _commit(repo, f"{RELEASED}{_stamp(time.time())} {line}", sign_of(line), parent=sha)
+        specs += [(c["ref"], new, sha) for c in group]
+    ok, rejected, net = _push_retry(repo, remote, specs)
+    return ok, rejected, net, "помечено"
+
+
 def _holders(repo, project, wanted):
     """Записи, мешающие ключам wanted: тот же ключ, ключ-«каталог» над ним или под ним."""
     _fetched.pop((repo, "origin"), None)
@@ -306,6 +337,21 @@ def _holders(repo, project, wanted):
     for c in refs(repo, project):
         for k in wanted:
             if c["key"] == k or k.startswith(c["key"] + "/") or c["key"].startswith(k + "/"):
+                out.append(c)
+                break
+    return out
+
+
+def _blockers(repo, project, wanted):
+    """Ветки снятых меткой захватов, что мешают ключам wanted как «каталог» над ключом или под ним
+    (тот же ключ не мешает: `take` занимает его поверх метки); git не даёт завести ref и каталог ref
+    с одним именем, пока janitor.py не удалил ветку-метку."""
+    out = []
+    for c in refs(repo, project, released=True):
+        if not c["released"]:
+            continue
+        for k in wanted:
+            if k.startswith(c["key"] + "/") or c["key"].startswith(k + "/"):
                 out.append(c)
                 break
     return out
@@ -361,7 +407,14 @@ def take(repo, project, line, remote="origin", unix=None, check=True):
         fetch(repo, remote)
     for _ in range(3):
         current = {c["key"]: c["sha"] for c in refs(repo, project)} if notes else {}
-        specs = [(f"{NS}/{project}/{k}", commit, current.get(k, "") if k in notes else "") for k in ks]
+        # ключ, чей захват снят меткой, занимаем поверх метки: потомок метки, lease на её sha
+        dead = {c["key"]: c["sha"] for c in refs(repo, project, released=True) if c["released"]}
+        specs = []
+        for k in ks:
+            if k in dead and k not in notes:
+                specs.append((f"{NS}/{project}/{k}", _commit(repo, line, sign, parent=dead[k], unix=unix), dead[k]))
+            else:
+                specs.append((f"{NS}/{project}/{k}", commit, current.get(k, "") if k in notes else ""))
         ok, rejected, net = _push_retry(repo, remote, specs)
         if ok:
             print("взято: " + ", ".join(project + "/" + k for k in ks))
@@ -374,6 +427,12 @@ def take(repo, project, line, remote="origin", unix=None, check=True):
             print("сеть: пуш ref не прошёл за 3 попытки", file=sys.stderr)
             return 2
         holders = _holders(repo, project, ks)
+        blockers = _blockers(repo, project, ks)
+        if blockers and not holders:
+            for b in blockers:
+                print(f"ветка снятого захвата {project}/{b['key']} ещё не убрана (её удаляет janitor.py, "
+                      f"раз в десять минут): повтори позже или возьми другую работу")
+            return 1
         if notes and not holders:
             continue  # своя заметка поменялась между чтением и пушем — ещё раз
         foreign = [h for h in holders if owner(h["line"]) != me]
@@ -449,10 +508,11 @@ def drop(repo, project, needle, sign=None, remote="origin", all_=False, foreign=
         for c in cs:
             print(f"   {c['key']}: {c['line'][:100]}")
         return 1
-    ok, rejected, net = _push_retry(repo, remote, [(c["ref"], None, c["sha"]) for c in cs])
+    ok, rejected, net, how = release(repo, remote, cs)
     if ok:
         if not quiet:
-            print("снято: " + ", ".join(project + "/" + c["key"] for c in cs))
+            print("снято: " + ", ".join(project + "/" + c["key"] for c in cs)
+                  + (" (меткой: ветку удалит janitor.py)" if how == "помечено" else ""))
         if sign is not None:  # бот, а не janitor: сколько держали — в журнал инстанса (journal.py)
             import journal
             first = {}

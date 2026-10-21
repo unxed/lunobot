@@ -137,8 +137,10 @@ def release_refs(repo, who, dry):
             print(("сниму " if dry else "снял ") + f"refs/claims/{c['project']}/{c['key']}: {c['line'][:110]}")
     if not mine or dry:
         return len(seen)
-    ok, rejected, net = claims._push_retry(repo, "origin", [(c["ref"], None, c["sha"]) for c in mine])
+    ok, rejected, net, how = claims.release(repo, "origin", mine)
     if ok:
+        if how == "помечено":
+            print("ветки захватов не удалить (прокси облачной сессии): захваты сняты меткой «СНЯТО», ветки удалит janitor.py")
         return len(seen)
     print("удаление ref не прошло: " + (", ".join(rejected) if rejected else "сеть"))
     return None
