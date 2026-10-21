@@ -75,10 +75,11 @@ wait_token_reset() {
   log "Quota wait complete, retrying..."
 }
 
-# ── снять захваты круга (LUNOBOT.md § 1: круг раннера — сессия, после него захватов нет) ──
+# ── после круга: снять захваты (LUNOBOT.md § 1: круг раннера — сессия, после него захватов нет)
+# и записать метрики круга в журнал инстанса (journal.py, § 4 п. 6: рефлексия).
 # Свежий одноразовый клон учёта, а не /tmp/lunobot-<N>/accounting: круг могли убить посреди git в нём.
 release_claims() {
-  local reason="$1" tmp rc=0
+  local reason="$1" log_file="${2:-}" round_num="${3:-}" exit_code="${4:-}" duration="${5:-}" tmp rc=0
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/lunobot-release.XXXXXX")" || return 1
   if timeout 120 gh repo clone "${ACCOUNTING_REPO}" "${tmp}/accounting" -- --depth=50 -q >/dev/null 2>&1 \
      && git -C "${tmp}/accounting" config user.name "Лунобот-${BOT_NUMBER}" \
@@ -86,6 +87,12 @@ release_claims() {
      && timeout 120 python3 "${tmp}/accounting/release.py" --number "${BOT_NUMBER}" --reason "${reason}" \
           2>&1 | tee -a "${LOG_DIR}/lunobot.log"; then
     CLAIMS_DIRTY=0
+    if [[ -n "${log_file}" ]]; then
+      timeout 120 python3 "${tmp}/accounting/journal.py" round "${log_file}" --number "${BOT_NUMBER}" \
+        --runner "$(basename "$0")" --model "${MODEL}" --round "${round_num}" --exit "${exit_code}" \
+        --duration "${duration}" >>"${LOG_DIR}/lunobot.log" 2>&1 \
+        || log "WARNING: round metrics not journaled"
+    fi
   else
     rc=1
     log "WARNING: claims of Lunobot-${BOT_NUMBER} not released; janitor.py will drop them later"
@@ -128,6 +135,7 @@ run_round() {
   local round_num="$1"
   local ts="$(date -u '+%Y%m%d-%H%M%S')"
   local log_file="${LOG_DIR}/round-${round_num}-${ts}.log"
+  local started=${SECONDS}
 
   log "=== Round ${round_num} START ==="
 
@@ -136,7 +144,7 @@ run_round() {
   curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md" \
     -o "/tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md" || { log "ERROR: cannot fetch LUNOBOT.md"; return 1; }
 
-  local prompt="Ты — Лунобот-${BOT_NUMBER} (${MODEL_LABEL}, effort ${EFFORT}). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. После круга раннер снимет все захваты твоего id (release.py, LUNOBOT.md § 1): незаконченное оставь запушенной веткой с записью в status (§ 7.5), не в /tmp. Ответь кратко итогом круга."
+  local prompt="Ты — Лунобот-${BOT_NUMBER} (${MODEL_LABEL}, effort ${EFFORT}). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. После круга раннер снимет все захваты твоего id (release.py, LUNOBOT.md § 1): незаконченное оставь запушенной веткой с записью в status (§ 7.5), не в /tmp. В ретро запиши рефлексию круга (journal.py, § 4 п. 6). Ответь кратко итогом круга."
 
   log "Starting claude (model: ${MODEL}, effort: ${EFFORT}) ..."
   cd "${WORKDIR}"
@@ -176,7 +184,8 @@ run_round() {
   ACTIVE_PGID=""
   wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
   ACTIVE_TAIL_PID=""
-  release_claims "круг ${round_num} раннера $(basename "$0") окончен (код ${exit_code})" || true
+  release_claims "круг ${round_num} раннера $(basename "$0") окончен (код ${exit_code})" \
+    "${log_file}" "${round_num}" "${exit_code}" "$((SECONDS - started))" || true
 
   if check_token_limit "${log_file}"; then
     log "DETECTED: Token limit / rate limit in round output"

@@ -353,6 +353,10 @@ def take(repo, project, line, remote="origin", unix=None, check=True):
         ok, rejected, net = _push_retry(repo, remote, specs)
         if ok:
             print("взято: " + ", ".join(project + "/" + k for k in ks))
+            if check:  # не перенос migrate: событие в журнал инстанса (история захватов, journal.py)
+                import journal
+                journal.try_add(repo, sign, {"kind": "claim", "event": "take", "project": project,
+                                             "keys": ks, "line": line}, remote)
             return 0
         if net:
             print("сеть: пуш ref не прошёл за 3 попытки", file=sys.stderr)
@@ -437,9 +441,27 @@ def drop(repo, project, needle, sign=None, remote="origin", all_=False, foreign=
     if ok:
         if not quiet:
             print("снято: " + ", ".join(project + "/" + c["key"] for c in cs))
+        if sign is not None:  # бот, а не janitor: сколько держали — в журнал инстанса (journal.py)
+            import journal
+            first = {}
+            for c in cs:
+                first.setdefault(c["sha"], c)
+            for c in first.values():
+                held = time.time() - _taken_at(repo, c)
+                journal.try_add(repo, sign, {"kind": "claim", "event": "drop", "project": project,
+                                             "line": c["line"], "foreign": foreign and not _same(sign, c["line"]),
+                                             "held_min": round(held / 60)}, remote)
         return 0
     print("снятие не прошло: " + (", ".join(rejected) + " (захват продлён или уже снят)" if rejected else "сеть"))
     return 2 if net else 1
+
+
+def _taken_at(repo, c):
+    """Время взятия захвата: метка строки (продления двигают дату коммиттера, но не метку)."""
+    m = TS.match(c["line"])
+    if m:
+        return datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
+    return c["ts"]
 
 
 # ── разовый перенос ────────────────────────────────────────────────────────────────────────
