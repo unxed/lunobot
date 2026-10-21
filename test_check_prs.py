@@ -31,5 +31,49 @@ class WaitingTest(unittest.TestCase):
         self.assertEqual(check_prs.waiting(check_prs.events(PR, [], [], [], [], "unxed")), PR["created_at"])
 
 
+    def test_upstream_owner_is_people_and_gh_login_is_us(self):
+        # blue-panels/mcommander#418: the owner's own PR upstream; repo owner blue-panels is not "us"
+        commits = [{"author": {"login": "unxed"},
+                    "commit": {"author": {"email": "1151423+unxed@users.noreply.github.com"},
+                               "committer": {"date": "2026-10-20T21:44:17Z"}}}]
+        pr = {"created_at": "2026-10-15T11:35:31Z"}
+        evs = check_prs.events(pr, [c("2026-10-15T11:39:21Z", "unxed")], [], [], commits, "unxed")
+        self.assertIsNone(check_prs.waiting(evs))
+        evs = check_prs.events(pr, [c("2026-10-21T08:00:00Z", "blue-panels")], [], [], commits, "unxed")
+        self.assertEqual(check_prs.waiting(evs), "2026-10-21T08:00:00Z")
+
+    def test_bot_identity_commit_is_ours(self):
+        # unxed/goWidgets#29: Lunobot-2 commits, the noreply address maps to the unrelated GitHub user "lunobot"
+        commits = [{"author": {"login": "lunobot"},
+                    "commit": {"author": {"email": "lunobot@users.noreply.github.com"},
+                               "committer": {"date": "2026-10-20T03:05:16Z"}}}]
+        evs = check_prs.events(PR, [c("2026-10-19T23:11:59Z", "unxed")], [], [], commits, "unxed")
+        self.assertIsNone(check_prs.waiting(evs))
+
+
+class HoldsTest(unittest.TestCase):
+    def test_parse_owner_hold_lines(self):
+        text = ("# f4\n\n- Код: https://github.com/unxed/f4\n"
+                "- PR не трогать: #1818 — https://github.com/unxed/f4/pull/1818#issuecomment-6171866633\n"
+                "- PR не трогать: #7\n- PR: ветка\n")
+        self.assertEqual(check_prs.holds(text),
+                         {1818: "https://github.com/unxed/f4/pull/1818#issuecomment-6171866633", 7: ""})
+        self.assertEqual(check_prs.repo_of(text), "unxed/f4")
+
+    def test_no_holds(self):
+        self.assertEqual(check_prs.holds("- PR: ветка -> PR -> мерж\n- PR не трогать без слова владельца\n"), {})
+
+    def test_real_passports_parse(self):
+        import os
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "projects")
+        for p in sorted(os.listdir(root)):
+            path = os.path.join(root, p, "PROJECT.md")
+            if os.path.exists(path):
+                with open(path, encoding="utf-8") as f:
+                    text = f.read()
+                check_prs.repo_of(text)
+                check_prs.holds(text)
+
+
 if __name__ == "__main__":
     unittest.main()
