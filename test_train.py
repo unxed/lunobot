@@ -1917,6 +1917,35 @@ class RevertedLaterInTrainTest(unittest.TestCase):
         self.assertIsNone(train.reverted_later_in_train(commits, 1))
 
 
+class RedTrainBehindMainTest(unittest.TestCase):
+    """unxed/f4#2119, 21-10-2026: main ушёл вперёд мимо поезда — tick закрывает поезд, а не перезапускает."""
+
+    def _red(self, ahead_by):
+        pr = {"number": 7, "head": {"sha": "c" * 40}, "html_url": "u"}
+        failed = [{"name": "govulncheck", "conclusion": "failure"}]
+        with mock.patch.object(train, "failed_steps", return_value=[("govulncheck", "x")]), \
+                mock.patch.object(train, "compare", return_value={"ahead_by": ahead_by}) as cmp, \
+                mock.patch.object(train, "close_train") as close, \
+                mock.patch.object(train, "bisect_refs", return_value=[]), \
+                mock.patch.object(train, "attempts", return_value=1), \
+                mock.patch.object(train, "rerun") as rerun:
+            rc = train.red("o/r", pr, failed)
+        cmp.assert_called_once_with("o/r", "c" * 40, "main")
+        return rc, close, rerun
+
+    def test_behind_main_closes_without_rerun(self):
+        rc, close, rerun = self._red(2)
+        self.assertEqual(rc, 0)
+        close.assert_called_once()
+        rerun.assert_not_called()
+
+    def test_current_train_is_rerun(self):
+        rc, close, rerun = self._red(0)
+        self.assertEqual(rc, 0)
+        close.assert_not_called()
+        rerun.assert_called_once()
+
+
 class TagUntaggedMainTest(unittest.TestCase):
     """21-10-2026: vtui 679635b (поезд #238 влит не веткой вливания tick) простоял без тега 2,5 ч."""
 
