@@ -20,6 +20,7 @@ status-файлу с исполнимым остатком: тикет, прио
 Коды возврата: 0 — проверка выполнена (в том числе когда печатать нечего), 2 — не удалось
 (нет проекта, нет TRIAGE.md, неверные аргументы).
 """
+import os
 import re
 import sys
 from pathlib import Path
@@ -147,11 +148,18 @@ def priority_key(value):
 
 def occupied(project):
     """Ссылки `владелец/репозиторий#N` из DISPATCH.md проекта (в файле только действующие захваты)."""
-    path = ROOT / "projects" / project / "DISPATCH.md"
-    if not path.exists():
+    import tempfile
+    import claims
+    text = claims.dispatch_text(str(ROOT), project, str(ROOT / "projects" / project / "DISPATCH.md"))
+    if not text.strip():
         return set()
     found = set()
-    for entry in check_dispatch.parse(str(path))[0]:
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "DISPATCH.md")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+        entries = check_dispatch.parse(path)[0]
+    for entry in entries:
         if entry["verb"] in check_dispatch.LIVE:
             found |= entry["refs"]
     return found

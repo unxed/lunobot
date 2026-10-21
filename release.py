@@ -10,7 +10,9 @@ SIGTERM): круг — это сессия, и после неё в учёте �
 жив: живость он считал по узлу, а на узле работал второй раннер).
 
 Снимает:
-  projects/*/DISPATCH.md — все записи id «Лунобот-<N> (node <узел>; …)», с суффиксом воркера и без;
+  refs/claims/*/*        — все захваты id «Лунобот-<N> (node <узел>; …)», с суффиксом воркера и без
+                           (одним атомарным пушем удалений с lease, claims.py);
+  projects/*/DISPATCH.md — то же в файле, пока учёт не переведён на ref (представление не трогает);
   OWNER_QUEUE.md         — «Состояние: взял в работу — <этот id>…» → «Состояние: свободно» и строка
                            «Прогресс <UTC> (<id>): захват снят — <причина>» под ней.
 Чужие номера и узлы не трогает. Берёт файлы из свежего origin/main (рабочую копию не трогает),
@@ -27,6 +29,7 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import claims  # noqa: E402
 from acct_line import git  # noqa: E402
 
 RECORD = re.compile(r"\d\d-\d\d-\d{4} \d\d:\d\d:\d\d ")
@@ -96,6 +99,8 @@ def changes(repo, base, who, trace):
         if path == QUEUE:
             new, freed = release_queue(old, who, trace)
             report += [f"{QUEUE}: блок {b} — свободно" for b in freed]
+        elif claims.MARKER in old:
+            continue  # представление refs/claims: его перепишет janitor.py
         else:
             new, gone = release_dispatch(old, who)
             report += [f"{path}: {g[:110]}" for g in gone]
@@ -104,7 +109,31 @@ def changes(repo, base, who, trace):
     return out, report
 
 
+def release_refs(repo, who, dry):
+    """Удалить свои refs/claims (номер+узел в строке захвата) одним атомарным пушем с lease.
+    Возвращает число снятых захватов или None, если удаление не прошло (кто-то продлил/снял
+    между чтением и удалением — ещё круг)."""
+    claims._fetched.pop((repo, "origin"), None)
+    claims.fetch(repo)
+    mine = [c for c in claims.refs(repo) if who.search(c["line"])]
+    seen = set()
+    for c in mine:
+        if c["sha"] not in seen:
+            seen.add(c["sha"])
+            print(("сниму " if dry else "снял ") + f"refs/claims/{c['project']}/{c['key']}: {c['line'][:110]}")
+    if not mine or dry:
+        return len(seen)
+    ok, rejected, net = claims._push_retry(repo, "origin", [(c["ref"], None, c["sha"]) for c in mine])
+    if ok:
+        return len(seen)
+    print("удаление ref не прошло: " + (", ".join(rejected) if rejected else "сеть"))
+    return None
+
+
 def attempt(repo, number, node, sign, reason, dry):
+    n_refs = release_refs(repo, owner(number, node), dry)
+    if n_refs is None:
+        return "race"
     git(repo, "fetch", "-q", "origin", "main")
     base = git(repo, "rev-parse", "FETCH_HEAD").stdout.strip()
     stamp = datetime.now(timezone.utc).strftime("%d-%m-%Y %H:%M:%S")
@@ -113,7 +142,8 @@ def attempt(repo, number, node, sign, reason, dry):
     for r in report:
         print(("сниму " if dry else "снял ") + r)
     if not new:
-        print(f"захватов {sign} нет — снимать нечего")
+        if not n_refs:
+            print(f"захватов {sign} нет — снимать нечего")
         return "ok"
     if dry:
         return "ok"

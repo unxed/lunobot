@@ -21,6 +21,8 @@ jobs:
           # всегда, и гейт из него горел бы постоянно, обесценивая сигнал.
           status=0
           for f in projects/*/DISPATCH.md; do
+            # представление refs/claims пишет janitor.py; захват проверяет claims.py take до создания ref
+            grep -q "генерируется janitor.py из refs/claims" "$f" && continue
             echo "== $f"
             python3 check_dispatch.py "$f" --added-only || status=1
           done

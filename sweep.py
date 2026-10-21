@@ -114,6 +114,9 @@ def references():
             if f == "DISPATCH.md" or os.path.basename(dirpath) == "status":
                 with open(os.path.join(dirpath, f), encoding="utf-8") as fh:
                     text.append(fh.read())
+    import claims
+    if claims.fetch(ROOT) or claims.refs(ROOT):
+        text += claims.records(ROOT)  # захваты на refs/claims (claims.py)
     return "\n".join(text)
 
 

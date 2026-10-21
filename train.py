@@ -441,6 +441,11 @@ def freeze_stamp(repo):
     if not os.path.isdir(os.path.join(ACCOUNTING, ".git")):
         return None
     project = repo.split("/")[1]
+    import claims
+    claims.fetch(ACCOUNTING)
+    if claims.ref_mode(ACCOUNTING):
+        # заморозка — ref refs/claims/<проект>/freeze (claims.py take той же строкой)
+        return active_freeze("\n".join(claims.records(ACCOUNTING, project)), project)
     run("git", "-C", ACCOUNTING, "fetch", "-q", "origin", "main", check=False)
     p = run("git", "-C", ACCOUNTING, "show", f"origin/main:projects/{project}/DISPATCH.md",
             check=False)
@@ -1708,6 +1713,9 @@ def dispatch_format_warn(root=None):
     один раз, дальше невидима (14-10-2026: 5b329822 превратил захваты dn в строки формата CI.md,
     dispatch-lint упал, следующие пуши зелёные, мусор лежал до ручной уборки aab98732)."""
     import check_dispatch
+    import claims
+    if claims.ref_mode(root or ACCOUNTING):
+        return  # захваты — refs/claims: формат проверяет claims.py take до создания ref
     base = os.path.join(root or ACCOUNTING, "projects")
     try:
         names = sorted(os.listdir(base))

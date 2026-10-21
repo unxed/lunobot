@@ -143,10 +143,17 @@ def read_lines(path):
     return [l.strip() for l in raw.splitlines() if l.strip()]
 
 
+def dispatch_lines(project_dir):
+    """Записи захватов проекта: refs/claims (claims.py), до перевода учёта на ref — DISPATCH.md."""
+    import claims
+    text = claims.dispatch_text(str(ROOT), project_dir.name, str(project_dir / "DISPATCH.md"))
+    return [l.strip() for l in text.replace("\\n", "\n").splitlines() if l.strip()]
+
+
 def active_claims(project_dir):
-    """Кто что держит прямо сейчас, по DISPATCH.md."""
+    """Кто что держит прямо сейчас (refs/claims или DISPATCH.md)."""
     holders = {}
-    for line in read_lines(project_dir / "DISPATCH.md"):
+    for line in dispatch_lines(project_dir):
         ts = re.match(TS, line)
         who = re.search(r"Лунобот-(\d+) \((?:instance|node) ([0-9a-f]+); ([A-Z]{3})\)", line)
         if not (ts and who) or not re.search(r"взял|работаю", line):
@@ -411,7 +418,7 @@ def report(name, repo, d, hours):
     # время берём из самой свежей записи учёта: боты пишут в своих часовых поясах
     marks = [datetime.strptime(m.group(1), "%d-%m-%Y %H:%M:%S")
              for m in (re.search(r"(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})", l) for l in
-                       read_lines(d / "DISPATCH.md") + pending) if m]
+                       dispatch_lines(d) + pending) if m]
     ci_now = effective_now(marks, d.relative_to(ROOT) if str(d).startswith(str(ROOT)) else "projects")
     if pending:
         ci_items = [ci_line(l, repo, ci_now) for l in pending[:10]]

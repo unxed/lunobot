@@ -22,6 +22,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import claims
 from gh_post import check_text
 
 ROOT = Path(__file__).resolve().parent
@@ -180,6 +181,69 @@ def hard_stale(blocks_, now):
             and (now - latest[row_key(b)]) / 60 > limit(row_key(b))]
 
 
+FREEZE_KEEP_MIN = 60     # заморозка land живёт 25 минут (train.FREEZE_MIN); ref убирается через час
+NOTE_KEEP_MIN = 24 * 60  # «прекращаю работу»/«считаю цель» — сутки
+
+
+def sweep_refs(project, alive, now):
+    """Снять ref-захваты проекта по тем же срокам, что строки DISPATCH.md: владелец (номер+узел)
+    молчит дольше SILENT_MIN, захват не продлевали дольше HARD_SILENT_MIN (URGENT_SILENT_MIN у
+    срочных по § 5 п. 2). Продление — дата коммиттера ref-коммита. Снятие — удаление с lease на
+    прочитанный sha: захват, продлённый между чтением и удалением, уцелеет."""
+    groups = {}
+    for c in claims.refs(ROOT, project):
+        groups.setdefault(c["sha"], []).append(c)
+    gone = []
+    for sha, cs in groups.items():
+        c = cs[0]
+        idle = (now - c["ts"]) / 60
+        if c["key"] == "freeze":
+            dead = idle > FREEZE_KEEP_MIN
+        elif c["key"].startswith("note-"):
+            dead = idle > NOTE_KEEP_MIN
+        else:
+            m = re.search(WHO, c["line"])
+            limit = URGENT_SILENT_MIN if URGENT_MARK in c["line"] else HARD_SILENT_MIN
+            silent = (now - alive[(m.group(1), m.group(2))]) / 60 if m and (m.group(1), m.group(2)) in alive \
+                else SILENT_MIN + 1
+            dead = idle > limit or silent > SILENT_MIN
+        if dead:
+            gone.append(cs)
+    if not gone:
+        return 0
+    print(f"{project}: refs/claims снято {len(gone)} — владелец молчит дольше {SILENT_MIN} мин или захват "
+          f"не продлевали дольше {HARD_SILENT_MIN} мин ({URGENT_SILENT_MIN} мин у срочных по § 5 п. 2)")
+    for cs in gone:
+        print("   ", cs[0]["line"][:100])
+    if not DRY:
+        claims._push_retry(ROOT, "origin", [(c["ref"], None, c["sha"]) for cs in gone for c in cs])
+    return len(gone)
+
+
+def write_views(root=None):
+    """projects/*/DISPATCH.md — представление refs/claims (после claims.fetch). Пишет только
+    изменившиеся файлы; коммит делает workflow (или вызвавший)."""
+    root = str(root or ROOT)
+    changed = 0
+    base = os.path.join(root, "projects")
+    for name in sorted(os.listdir(base)):
+        path = os.path.join(base, name, "DISPATCH.md")
+        if not os.path.isfile(path) and not claims.refs(root, name):
+            continue
+        text = claims.render_view(name, claims.records(root, name))
+        try:
+            with open(path, encoding="utf-8") as f:
+                old = f.read()
+        except OSError:
+            old = None
+        if old != text:
+            changed += 1
+            if not DRY:
+                with open(path, "w", encoding="utf-8", newline="") as f:
+                    f.write(text)
+    return changed
+
+
 def save(path, kept, removed, what):
     if not removed:
         return 0
@@ -201,6 +265,14 @@ def main():
     seen = last_seen()
     now = datetime.now(timezone.utc).timestamp()
     total = 0
+    claims.fetch(ROOT)
+    on_refs = claims.ref_mode(ROOT)
+    # продление ref-захвата — тоже след живости его владельца (номер+узел)
+    for c in claims.refs(ROOT):
+        m = re.search(WHO, c["line"])
+        if m:
+            key = (m.group(1), m.group(2))
+            seen[key] = max(seen.get(key, 0), c["ts"])
 
     index = (ROOT / "projects" / "INDEX.md").read_text(encoding="utf-8")
     for name in re.findall(r"^\d+\.\s*\[([^\]]+)\]", index, re.M):
@@ -218,7 +290,9 @@ def main():
 
         # 1. захваты замолчавших инстансов
         f = d / "DISPATCH.md"
-        if f.exists():
+        if on_refs:
+            total += sweep_refs(name, alive, now)
+        elif f.exists():
             kept, gone = [], []
             all_blocks = blocks(f.read_text(encoding="utf-8"))
             stale = hard_stale(all_blocks, now)
@@ -276,6 +350,12 @@ def main():
         # 4. комментарии, дошедшие до GitHub кашей из «?» (кодировка сломалась по дороге)
         mojibake(d, repo)
 
+    if on_refs:
+        claims._fetched.clear()
+        claims.fetch(ROOT)
+        views = write_views()
+        if views:
+            print(f"DISPATCH.md: обновлено представлений {views}")
     print("нечего убирать" if not total else f"итого убрано записей: {total}")
     return 0
 

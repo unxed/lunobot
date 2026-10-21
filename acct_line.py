@@ -11,6 +11,9 @@
 до 3 попыток. Рабочая копия и индекс клона не трогаются, поэтому конфликтов rebase нет
 (14-10-2026: за один круг пять ручных «возьми origin и внеси строку заново»).
 Коды: 0 — запушено (или удалять нечего), 1 — гейт или пуш не прошли, 2 — ошибка вызова.
+
+После перевода учёта на ref (`claims.py migrate --apply`) `add|remove projects/<p>/DISPATCH.md`
+делегируется в `claims.py`: «взял …» — take, «работаю над …» — keepalive, remove — drop своего.
 """
 import argparse
 import os
@@ -147,6 +150,30 @@ def attempt(repo, remote, branch, op, relpath, arg, message, sign, remove_all=Fa
     return "ok"
 
 
+def claims_route(repo, remote, branch, op, relpath, text, sign, remove_all):
+    """DISPATCH.md после перевода учёта на ref (claims.py): захват — ref, а не строка файла.
+    None — учёт ещё на файлах, работать по-старому; иначе код возврата."""
+    m = re.fullmatch(r"projects/([^/]+)/DISPATCH\.md", relpath)
+    if not m:
+        return None
+    import claims
+    claims.fetch(repo, remote)
+    if not claims.refs(repo):
+        git(repo, "fetch", "-q", remote, branch, check=False)
+        cur = git(repo, "show", f"FETCH_HEAD:{relpath}", check=False)
+        if cur.returncode or claims.MARKER not in cur.stdout:
+            return None
+    project = m.group(1)
+    if op == "remove":
+        code = claims.drop(repo, project, text, sign, remote, remove_all)
+        return 0 if code in (0, claims.NOTHING) else code
+    if ", работаю над " in text:
+        key = re.search(r"https://github\.com/\S+?/(?:issues|pull)/\d+", text) or re.search(r"«([^»]+)»", text)
+        needle = key.group(1) if key and key.re.groups else (key.group(0) if key else text)
+        return claims.keepalive(repo, project, needle, sign, remote)
+    return claims.take(repo, project, text, remote)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("op", choices=["add", "remove"])
@@ -164,6 +191,9 @@ def main(argv=None):
         return 2
     relpath = a.file.replace("\\", "/")
     try:
+        routed = claims_route(a.repo, a.remote, a.branch, a.op, relpath, a.text, a.sign, a.all)
+        if routed is not None:
+            return routed
         for _ in range(3):
             r = attempt(a.repo, a.remote, a.branch, a.op, relpath, a.text, a.message, a.sign, a.all)
             if r in ("ok", "noop"):

@@ -6,7 +6,7 @@
 Раз в --interval секунд обновляет учётный клон и печатает строку ТОЛЬКО когда есть повод
 разбудить менеджера:
 
-  ПРОСТОЙ   — живых захватов сессии в projects/*/DISPATCH.md меньше --min, а работа есть
+  ПРОСТОЙ   — живых захватов сессии (refs/claims, claims.py) меньше --min, а работа есть
   КРАСНОЕ   — train.py health по проекту со staging вернул 1 (красный staging/main, застой)
   ПРОТУХ    — захват сессии держится дольше 45 минут без отметки; а также
               `ПРОТУХ очередь <id>` — блок OWNER_QUEUE.md `Состояние: взял в работу`, у которого
@@ -27,6 +27,8 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+
+import claims
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REPEAT = timedelta(minutes=5)
@@ -58,11 +60,7 @@ def captures(node, number=None):
         if number else None
     latest = {}
     for p in projects():
-        path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
-        if not os.path.exists(path):
-            continue
-        with open(path, encoding="utf-8") as f:
-            lines = f.readlines()
+        lines = claims.dispatch_text(ROOT, p).splitlines()
         for line in lines:
             if node in line and ("взял" in line or "работаю" in line) \
                     and (own is None or own.search(line)):
@@ -126,10 +124,7 @@ def stale_queue(now):
     с их id в «ёлочках» в DISPATCH.md. «Ждёт владельца» и свободные блоки не трогает."""
     dispatch = ""
     for p in projects():
-        path = os.path.join(ROOT, "projects", p, "DISPATCH.md")
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
-                dispatch += f.read() + "\n"
+        dispatch += claims.dispatch_text(ROOT, p) + "\n"
     found = []
     for text in queue_blocks(read_queue()):
         key = re.match(r"## (\S+)", text)
@@ -159,10 +154,7 @@ def free_work():
         dis = os.path.join(ROOT, "projects", p, "DISPATCH.md")
         if not os.path.exists(tri):
             continue
-        taken = ""
-        if os.path.exists(dis):
-            with open(dis, encoding="utf-8") as f:
-                taken = f.read()
+        taken = claims.dispatch_text(ROOT, p, dis)
         with open(tri, encoding="utf-8") as f:
             tri_lines = f.readlines()
         for line in tri_lines:
@@ -183,6 +175,7 @@ def staged_repos():
 
 def check(node, minimum, last, number=None):
     sh("git", "pull", "-q", "--rebase")
+    claims._fetched.clear()  # захваты — refs/claims, pull их не обновляет
     now = datetime.now(timezone.utc)
     events = []
     live = captures(node, number)

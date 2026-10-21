@@ -30,6 +30,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      # Захваты — refs/claims/* (claims.py): janitor.py сам делает fetch '+refs/claims/*:refs/claims/*',
+      # снимает протухшие удалением ref с lease (нужен contents: write — он выше) и пишет
+      # projects/*/DISPATCH.md как представление; шаг «Сохранить» коммитит изменившиеся представления.
       - name: Подмести учёт
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
