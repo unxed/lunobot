@@ -93,7 +93,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: «tv3 — чистое происхождение»: переписать по протоколу все модули tv3, унаследованные из tv, шаги S0–S31 плана unxed/tv3#12, по одному PR на шаг; протокол и реестр — `projects/tv3/CLEANROOM.md` в учёте.
 Критерий: шаги плана unxed/tv3#12 влиты с AUDIT PASS и зелёным CI; история — по решению владельца на шаге S31.
 Состояние: в работе — S0, S1, S1a, S1b, S2 готовы (unxed/tv3#13, #14, #15; CLEANROOM.md); S3 ядро цикла (TvKeys → TvUtf8 → TvEvents → TvSys) идёт у Лунобота-1; переносятся все 50 файлов из tv — projects/tv3/status/12.md
-Прогресс 21-10-2026 20:22 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): tvterm — разрешённый источник (unxed/tv3#16 влит), CLEANROOM.md п. 4 и план под tvterm; дальше S3 TvKeys с парковки, затем TvUtf8, TvEvents, TvSys — projects/tv3/status/12.md «Дальше»
+Прогресс 21-10-2026 21:00 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): tvterm — источник (unxed/tv3#16), S3 TvKeys, S4 TvUtf8, S5 TvEvents влиты (#17–#19); S6 TvSys — PR unxed/tv3#20, итерация 2 по CI — projects/tv3/status/12.md «Дальше»
 
 ## account-241
 Заметка владельца: https://github.com/unxed/lunobot/issues/241
