@@ -1462,7 +1462,31 @@ def stuck(repo):
     hours = None
     if train:
         checks, pending, failed, cancelled = rollup(repo, train["number"])
-        if pending and not failed and not cancelled:
+        if checks and not pending and not failed and not cancelled:
+            # Зелёный, ещё не влитый поезд: матрица прошла, влить его — дело следующего tick.
+            # Коммиты самого поезда в возраст не входят, как у поезда в пути (21-10-2026,
+            # unxed/f4#2121: поезд зелёный, после нарезки в staging два свежих land, а health
+            # считал compare(main, staging) с коммитами поезда — ложный «ИНЦИДЕНТ ПРОЦЕССА»).
+            if train["head"]["sha"] == staging:
+                ahead = {"status": "identical", "commits": []}
+            else:
+                ahead = compare(repo, train["head"]["sha"], staging)
+            if ahead.get("status") in ("ahead", "identical"):
+                own = exclude_reverted([c for c in ahead["commits"] if len(c["parents"]) == 1])
+                if not own:
+                    print(f"поезд #{train['number']} зелёный, ждёт влития tick — ожидание штатное")
+                    return 0
+                oldest = oldest_staging_arrival(repo, own)
+                hours = (datetime.now(timezone.utc) - oldest).total_seconds() / 3600
+                print(f"в staging {len(own)} коммит(ов) ждут main впереди зелёного поезда "
+                      f"#{train['number']} (ждёт влития tick); старший — {hours:.1f} ч")
+                if hours > STUCK_HOURS:
+                    print(f"ИНЦИДЕНТ ПРОЦЕССА: приземлённая работа ждёт main дольше {STUCK_HOURS} ч. "
+                          "§ 4 «ретро круга»: найти, почему не едет поезд, починить конвейер и "
+                          "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
+                    return 1
+                return 0
+        elif pending and not failed and not cancelled:
             created = datetime.fromisoformat(train["created_at"].replace("Z", "+00:00"))
             train_hours = (datetime.now(timezone.utc) - created).total_seconds() / 3600
             if train["head"]["sha"] == staging:
