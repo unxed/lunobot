@@ -41,8 +41,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: bp
 Поручение: вести unxed/bp#56 (safe-диалект) по плану тикета, один шаг — один PR; после шагов 2 и 13 сверить планы unxed/dn#87 и unxed/bp#3 и записать сверку в тикетах.
 Критерий: шаги unxed/bp#56 влиты в main с зелёным CI, SPEC v0.7 — по критерию шага 16; сверка планов unxed/dn#87 и unxed/bp#3 записана в тикетах.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 20:32:09 UTC
-Прогресс 21-10-2026 20:32:09 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): продолжить unxed/bp#56 с атомарной частью S14e
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 21:08:35 UTC
+Прогресс 21-10-2026 21:08:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): продолжить unxed/bp#56, исправить PR S14e после красного CI #434.
 
 ## account-214
 Заметка владельца: https://github.com/unxed/lunobot/issues/214
@@ -92,8 +92,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: tv3 (план unxed/tv3#12)
 Поручение: «tv3 — чистое происхождение»: переписать по протоколу все модули tv3, унаследованные из tv, шаги S0–S31 плана unxed/tv3#12, по одному PR на шаг; протокол и реестр — `projects/tv3/CLEANROOM.md` в учёте.
 Критерий: шаги плана unxed/tv3#12 влиты с AUDIT PASS и зелёным CI; история — по решению владельца на шаге S31.
-Состояние: в работе — S0, S1, S1a, S1b, S2 готовы (unxed/tv3#13, #14, #15; CLEANROOM.md); S3 ядро цикла (TvKeys → TvUtf8 → TvEvents → TvSys) идёт у Лунобота-1; переносятся все 50 файлов из tv — projects/tv3/status/12.md
-Прогресс 21-10-2026 20:22 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): tvterm — разрешённый источник (unxed/tv3#16 влит), CLEANROOM.md п. 4 и план под tvterm; дальше S3 TvKeys с парковки, затем TvUtf8, TvEvents, TvSys — projects/tv3/status/12.md «Дальше»
+Состояние: свободно — S0–S6 влиты (unxed/tv3#13–#20); дальше S7 TvColors и модули по CLEANROOM.md п. 9–10, 12: оркестратор Лунобот-2, классификация попаданий — Лунобот-1 (projects/tv3/status/12.md, «Дальше»)
+Прогресс 21-10-2026 21:15 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): tvterm — источник (unxed/tv3#16); ядро цикла перенесено — TvKeys, TvUtf8, TvEvents, TvSys влиты (#17–#20), `t_async` зелёный (S1a); дальше S7… TvColors по CLEANROOM — projects/tv3/status/12.md «Дальше»
 
 ## account-241
 Заметка владельца: https://github.com/unxed/lunobot/issues/241
@@ -111,4 +111,4 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: разобрать и устранить падение CI в PR владельца joncampbell123/dosbox-x#6716 (ветка unxed/dosbox-x:sse2-pentium4) по гейту § 7.3.
 Критерий: причина найдена; если в PR — исправление в ветке и зелёный CI; если вне PR — доказано ссылками на прогоны и записано в тикете.
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 20:17:36 UTC
-Прогресс 21-10-2026 20:41:30 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): причина — `cc1plus.exe: out of memory` в 32-битных lowend-сборках (HX-DOS, MinGW lowend/lowend9x, WinXP lowend) на core_normal/core_prefetch/core_simple: SSE2-помощники PR были always_inline (`INLINE`); на `master` (push 029bd65c5d) те же workflow зелёные. Фикс — коммиты `d94ca18` (вне линии) и `23fe43d58addcf5d2c63b76b561841f1c9bb57a1` (сборка ядер 8086) в unxed/dosbox-x `sse2-pentium4`, fast-forward по слову владельца в заметке; осталось: CI PR на `23fe43d` зелёный → отчёт в #243, закрыть.
+Прогресс 21-10-2026 21:05:00 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): причина — `cc1plus.exe: out of memory` в 32-битных lowend-сборках (HX-DOS, MinGW lowend/lowend9x, WinXP lowend) на core_normal/core_prefetch/core_simple; на `master` (push 029bd65c5d) те же workflow зелёные. Фикс в unxed/dosbox-x `sse2-pentium4` (fast-forward, по слову владельца в заметке): `d94ca18` помощники SSE2 вне линии, `23fe43d` сборка ядер 8086 (на нём упал только core_normal), `90fd413fed267a78d67756a6435a0e7d2081e90a` одна копия MMX/SSE-кейсов на оба размера операнда (CASE_0F_B); осталось: CI PR на `90fd413` зелёный → отчёт в #243, закрыть.
