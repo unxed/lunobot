@@ -165,8 +165,12 @@ def metrics(path, fmt=None):
         fmt = "opencode"
         for line in text.splitlines()[:50]:
             try:
-                if json.loads(line).get("type") in ("system", "assistant", "result"):
+                t = json.loads(line).get("type")
+                if t in ("system", "assistant", "result"):
                     fmt = "claude"
+                    break
+                if t in ("step_start", "step_finish", "text", "tool_use", "reasoning"):
+                    fmt = "opencode-json"  # opencode run --format json
                     break
             except (ValueError, AttributeError):
                 continue
@@ -198,18 +202,50 @@ def metrics(path, fmt=None):
             m["result"] = (results[-1].get("result") or "")[:600]
             m["resumes"] = len(results) - 1
         m["tokens"] = dict(usage)
+    elif fmt == "opencode-json":
+        # step_finish.part: cost (USD за шаг) и tokens (TokenUsage: вложенные счётчики) — суммируем по шагам
+        cost, usage, steps, last = 0.0, Counter(), 0, ""
+        for line in text.splitlines():
+            try:
+                j = json.loads(line)
+            except ValueError:
+                continue
+            part = j.get("part") or j.get("data") or {}
+            if j.get("type") == "step_finish":
+                steps += 1
+                cost += float(part.get("cost") or 0)
+                for k, v in _flat(part.get("tokens") or {}):
+                    usage[k] += v
+            elif j.get("type") == "text" and (part.get("text") or "").strip():
+                last = part["text"].strip()
+                said.append(last)
+            elif j.get("type") == "tool_use":
+                said.append(f"▶ {part.get('tool') or part.get('name') or 'tool'}")
+            elif j.get("type") == "error":
+                said.append("Error: " + json.dumps(j.get("error") or part, ensure_ascii=False)[:300])
+        m.update({"cost_usd": round(cost, 4), "turns": steps, "tokens": dict(usage), "result": last[:600]})
     # лимит — только по итогу круга и строкам вне JSON (stderr среды), не по выводу инструментов
-    if fmt == "claude":
+    if fmt in ("claude", "opencode-json"):
         tail = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("{")) + "\n" + m.get("result", "")
+        tail += "\n" + "\n".join(x for x in said if x.startswith("Error: "))
     else:  # opencode печатает вывод инструментов простым текстом — смотрим только его строки «Error:»
         plain = re.sub(r"\x1b\[[0-9;]*m", "", text)
         tail = "\n".join(l for l in plain.splitlines() if re.match(r"\W*Error\b", l))
     m["rate_limited"] = bool(re.search(r"(?i)usage limit|hit your limit|rate.?limit|429 Too Many|overloaded|quota exceeded", tail))
-    if fmt != "claude":
+    if fmt == "opencode":
         said = tail.splitlines()
     m["_said"] = said
     m["errors"] = len(re.findall(r"(?i)\b(traceback|cannot lock ref|\[rejected\]|\[remote rejected\])", text))
     return m
+
+
+def _flat(d, prefix=""):
+    """Числовые листья вложенного словаря: {"cache": {"read": 5}} → ("cache.read", 5)."""
+    for k, v in d.items():
+        if isinstance(v, dict):
+            yield from _flat(v, f"{prefix}{k}.")
+        elif isinstance(v, (int, float)) and not isinstance(v, bool):
+            yield f"{prefix}{k}", v
 
 
 def digest(recs):

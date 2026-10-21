@@ -357,6 +357,13 @@ def main():
         if views:
             print(f"DISPATCH.md: обновлено представлений {views}")
     print("нечего убирать" if not total else f"итого убрано записей: {total}")
+    if not DRY:
+        # пульс петли самоулучшения — независимо от ботов (pulse.py); сбой пульса не роняет уборку
+        try:
+            import pulse
+            pulse.main(["--write"])
+        except Exception as e:  # noqa: BLE001
+            print(f"pulse: {e}", file=sys.stderr)
     return 0
 
 

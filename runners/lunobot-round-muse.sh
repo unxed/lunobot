@@ -45,7 +45,10 @@ acquire_runner_lock() {
 # проверка на ошибку исчерпания токенов в выводе
 check_token_limit() {
   local log_file="$1"
-  grep -qi -E "rate limit|token limit|quota exceeded|too many tokens|429 Too Many Requests|insufficient quota|billing" "${log_file}" 2>/dev/null
+  # лог — opencode --format json: смотрим только события error и строки вне JSON (stderr), не текст тикетов в выводе инструментов
+  jq -Rr '(fromjson? // null) as $j | if $j == null then . elif $j.type == "error" then ($j | tostring) else empty end' \
+    "${log_file}" 2>/dev/null \
+    | grep -qi -E "rate limit|token limit|quota exceeded|too many tokens|429 Too Many Requests|insufficient quota|billing"
 }
 
 # ожидание сброса квоты с прогресс-баром
@@ -144,12 +147,21 @@ run_round() {
     --title "Lunobot-2 round ${round_num}" \
     --auto \
     --standalone \
+    --format json \
     -- "$prompt" \
     >"${log_file}" 2>&1 &
   ACTIVE_PID=$!
   CLAIMS_DIRTY=1
   ACTIVE_PGID="$(ps -o pgid= -p "${ACTIVE_PID}" 2>/dev/null | tr -d ' ' || true)"
-  tail --pid="${ACTIVE_PID}" -n +1 -f "${log_file}" &
+  # лог — JSON (стоимость и токены по шагам для journal.py); в терминал — текст, вызовы инструментов, ошибки
+  tail --pid="${ACTIVE_PID}" -n +1 -f "${log_file}" | jq -Rr --unbuffered '
+    (fromjson? // null) as $j
+    | if $j == null then .
+      elif $j.type == "text" then ($j.part.text // empty)
+      elif $j.type == "tool_use" then "▶ \($j.part.tool // "tool") \(($j.part.state.input // {}) | tostring | .[0:200])"
+      elif $j.type == "step_finish" then "· шаг: $\($j.part.cost // 0)"
+      elif $j.type == "error" then "ERROR \($j | tostring | .[0:300])"
+      else empty end' &
   ACTIVE_TAIL_PID=$!
   local exit_code=0
   if wait "${ACTIVE_PID}"; then

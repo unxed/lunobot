@@ -144,6 +144,21 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual((m["cost_usd"], m["turns"], m["tokens"]["cache_read_input_tokens"]), (5.25, 32, 100))
         self.assertFalse(m["rate_limited"])
 
+    def test_opencode_json_steps_are_summed(self):
+        lines = [{"type": "step_start", "part": {}},
+                 {"type": "text", "part": {"text": "делаю шаг"}},
+                 {"type": "step_finish", "part": {"cost": 0.25, "tokens": {"input": 100, "output": 20,
+                                                                           "cache": {"read": 900, "write": 0}}}},
+                 {"type": "step_finish", "part": {"cost": 0.5, "tokens": {"input": 50, "output": 5,
+                                                                          "cache": {"read": 100, "write": 10}}}},
+                 {"type": "error", "error": {"name": "APIError", "message": "429 Too Many Requests"}}]
+        m = journal.metrics(self.write("\n".join(json.dumps(x, ensure_ascii=False) for x in lines)))
+        self.assertEqual(m["log_format"], "opencode-json")
+        self.assertEqual((m["cost_usd"], m["turns"]), (0.75, 2))
+        self.assertEqual(m["tokens"], {"input": 150, "output": 25, "cache.read": 1000, "cache.write": 10})
+        self.assertEqual(m["result"], "делаю шаг")
+        self.assertTrue(m["rate_limited"])
+
     def test_tool_output_mentioning_limits_is_not_a_limit(self):
         m = journal.metrics(self.write("> build\nвывод: rate limit в тексте тикета\nError: usage limit reached\n"),
                             "opencode")
