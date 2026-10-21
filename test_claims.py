@@ -113,7 +113,9 @@ class GitCase(unittest.TestCase):
         return code
 
     def remote_refs(self):
-        return sorted(l.split("\t")[1] for l in sh(self.a, "ls-remote", self.bare, "refs/claims/*").splitlines())
+        # на сервере захваты — ветки refs/heads/claims/* (прокси облачных сессий режет прочие ref); в тестах — локальные имена
+        return sorted("refs/claims/" + l.split("\t")[1][len("refs/heads/claims/"):]
+                      for l in sh(self.a, "ls-remote", self.bare, "refs/heads/claims/*").splitlines())
 
 
 class TakeTest(GitCase):

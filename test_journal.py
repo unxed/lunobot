@@ -77,9 +77,9 @@ class JournalGitTest(unittest.TestCase):
     def test_instances_have_separate_refs(self):
         self.quiet(journal.add, self.a, SIGN1, {"kind": "round"})
         self.quiet(journal.add, self.b, SIGN2, {"kind": "round"})
-        refs = sh(self.a, "ls-remote", "origin", "refs/journal/*")
-        self.assertIn(f"refs/journal/{NODE}-1", refs)
-        self.assertIn(f"refs/journal/{NODE}-2", refs)
+        refs = sh(self.a, "ls-remote", "origin", "refs/heads/journal/*")
+        self.assertIn(f"refs/heads/journal/{NODE}-1", refs)
+        self.assertIn(f"refs/heads/journal/{NODE}-2", refs)
 
     def test_digest_counts_repeated_frictions_and_rounds(self):
         for i in range(2):

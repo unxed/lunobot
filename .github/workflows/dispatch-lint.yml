@@ -2,6 +2,8 @@ name: dispatch-lint
 
 on:
   push:
+    # захваты и журналы — ветки claims/**, journal/** (claims.py, journal.py): не код учёта, не проверяем
+    branches-ignore: ['claims/**', 'journal/**']
   workflow_dispatch:
 
 jobs:

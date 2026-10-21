@@ -5,6 +5,7 @@ name: tests
 # кода: обычные записи учёта (status/, TRIAGE.md, OWNER_QUEUE.md) тесты не запускают.
 on:
   push:
+    branches-ignore: ['claims/**', 'journal/**']
     paths: ['**.py', '.github/workflows/tests.yml']
   pull_request:
     paths: ['**.py', '.github/workflows/tests.yml']

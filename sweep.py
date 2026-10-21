@@ -174,6 +174,8 @@ def branches(apply, refs, repo_names):
             reason = None
             if name in ("main", "master", "lunobot/staging"):
                 continue
+            if name.startswith(("claims/", "journal/")):
+                continue  # захваты и журналы учёта (claims.py, journal.py) — живут своим порядком
             if name in refs:
                 continue
             m = re.match(r"^bisect/(\d+)/", name)

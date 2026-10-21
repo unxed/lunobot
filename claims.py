@@ -44,7 +44,19 @@ sys.path.insert(0, HERE)
 
 import check_dispatch  # noqa: E402
 
-NS = "refs/claims"
+NS = "refs/claims"            # локальные ref в клоне
+# На GitHub захваты лежат ВЕТКАМИ: прокси облачных сессий Claude Code отвечает 403 на push любых ref вне
+# refs/heads (21-10-2026, узел 801452e4: refs/claims и теги), а ветки пушит. Workflows эти ветки
+# пропускают (branches-ignore: claims/**), sweep.py их не перечисляет.
+REMOTE_NS = "refs/heads/claims"
+
+
+def remote_ref(ref):
+    return REMOTE_NS + ref[len(NS):] if ref.startswith(NS + "/") else ref
+
+
+def local_ref(ref):
+    return NS + ref[len(REMOTE_NS):] if ref.startswith(REMOTE_NS + "/") else ref
 TS = re.compile(r"^(\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}) ")
 SIGN = re.compile(r"(?:Лунобот|Lunobot)-(\d+) \((?:node|instance) ([0-9a-f]{6,24}); ([A-Z]{3})")
 WORKER = re.compile(r"воркер\s+([0-9a-f]{6,})")
@@ -145,7 +157,7 @@ def fetch(root=HERE, remote="origin"):
         return _fetched[(root, remote)]
     ok = False
     for _ in range(3):
-        r = git(root, "fetch", "-q", remote, f"+{NS}/*:{NS}/*", "--prune", check=False)
+        r = git(root, "fetch", "-q", remote, f"+{REMOTE_NS}/*:{NS}/*", "--prune", check=False)
         if r.returncode == 0:
             ok = True
             break
@@ -265,11 +277,11 @@ def _push(repo, remote, specs):
     Возвращает (ok, отклонённые ref, сетевой_сбой)."""
     args = ["push", "--atomic", "--porcelain", remote]
     for ref, _, exp in specs:
-        args.append(f"--force-with-lease={ref}:{exp}")
+        args.append(f"--force-with-lease={remote_ref(ref)}:{exp}")
     for ref, new, _ in specs:
-        args.append(f"{new}:{ref}" if new else f":{ref}")
+        args.append(f"{new}:{remote_ref(ref)}" if new else f":{remote_ref(ref)}")
     r = git(repo, *args, check=False)
-    rejected = [l.split("\t")[1].split(":", 1)[1] for l in r.stdout.splitlines()
+    rejected = [local_ref(l.split("\t")[1].split(":", 1)[1]) for l in r.stdout.splitlines()
                 if l.startswith("!\t") and "\t" in l]
     rejected = [x for x in rejected if x]
     if r.returncode == 0:

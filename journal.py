@@ -40,6 +40,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 NS = "refs/journal"
+REMOTE_NS = "refs/heads/journal"  # на GitHub — ветки: прокси облачных сессий режет ref вне refs/heads (как у claims.py)
 SIGN = re.compile(r"(?:Лунобот|Lunobot)-(\d+) \((?:node|instance) ([0-9a-f]{24}); ([A-Z]{3})")
 KINDS = ("round", "reflection", "claim", "digest")
 
@@ -109,14 +110,15 @@ def add(repo, sign, rec, remote="origin", quiet=False):
     tree = git(repo, "hash-object", "-t", "tree", "-w", "--stdin", data="").stdout.strip()
     msg = f"journal {rec['kind']}\n\n{json.dumps(rec, ensure_ascii=False, sort_keys=True)}\n"
     for _ in range(4):
-        r = git(repo, "fetch", "-q", remote, f"+{ref}:{ref}", check=False)
+        rref = REMOTE_NS + ref[len(NS):]
+        r = git(repo, "fetch", "-q", remote, f"+{rref}:{ref}", check=False)
         old = git(repo, "rev-parse", "-q", "--verify", ref, check=False).stdout.strip() if r.returncode == 0 else ""
         if r.returncode and "couldn't find remote ref" not in r.stderr:
             time.sleep(1)
             continue
         args = ["commit-tree", tree] + (["-p", old] if old else [])
         commit = git(repo, *args, data=msg).stdout.strip()
-        p = git(repo, "push", "-q", remote, f"--force-with-lease={ref}:{old}", f"{commit}:{ref}", check=False)
+        p = git(repo, "push", "-q", remote, f"--force-with-lease={rref}:{old}", f"{commit}:{rref}", check=False)
         if p.returncode == 0:
             git(repo, "update-ref", ref, commit, check=False)
             if not quiet:
@@ -137,7 +139,7 @@ def try_add(repo, sign, rec, remote="origin"):
 
 def read(repo, remote="origin", since=None, kind=None):
     """Все записи всех журналов (после fetch), по времени."""
-    git(repo, "fetch", "-q", remote, f"+{NS}/*:{NS}/*", "--prune", check=False)
+    git(repo, "fetch", "-q", remote, f"+{REMOTE_NS}/*:{NS}/*", "--prune", check=False)
     heads = git(repo, "for-each-ref", NS, "--format=%(refname)", check=False).stdout.split()
     out = []
     for h in heads:
