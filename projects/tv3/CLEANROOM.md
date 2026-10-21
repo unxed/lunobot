@@ -163,7 +163,54 @@ every place where you departed from the C++ behaviour and why.
 
 ## 9. Порядок модулей по `uses`
 
-(заполняет S2 до пилота: таблица «шаг — модуль — использует»)
+Построено S2 (21-10-2026) по `main` `73c212e`: граф `uses` обеих секций всех `src/*.pas`, топологическая сортировка
+объединения (40 модулей), ядро цикла первым; циклов нет. `*` — модуль с заголовком перевода вне списка плана (ждёт
+ответа владельца, unxed/lunobot#240). Номер — порядковый; шаг S<n+1>. Модули вне объединения, от которых зависят
+перечисленные (их не переписываем, пока S30 не скажет иное): tvappdir, tvclip, tvdosnames, tvformat, tvglyphs, tvpath,
+tvpty, tvtermosbase, tvtermosnone, tvtermosunix, tvtermoswin, tvvt, tvvtext, tvvtkeys, tvwordnav, tvxlat.
+
+```
+1 TvGeom (S2, пилот)
+2 TvKeys
+3 TvUtf8 *
+4 TvEvents — TvGeom, TvKeys, TvUtf8
+5 TvSys — TvEvents, TvKeys, TvUtf8 (ядро: WaitForEvents, WakeUp, очередь задач, таймеры; `const TvAsyncCore = True`)
+6 TvColors *
+7 TvAnsi * — TvColors
+8 TvCodePg * — TvUtf8
+9 TvCell * — TvCodePg, TvColors
+10 TvText * — TvCell, TvCodePg, TvColors, TvUtf8
+11 TvDrawBuf * — TvCell, TvColors, TvText, TvUtf8
+12 TvUtil * — TvCodePg, TvEvents, TvKeys, TvText, TvUtf8
+13 TvObjs — TvUtil
+14 TvScreen * — TvCell, TvColors, TvGeom, TvSys
+15 TvTimer * — TvScreen, TvSys
+16 TvViews — 11 модулей выше
+17 TvMenus — … TvViews
+18 TvWindow — … TvViews
+19 TvApp — … TvMenus, TvWindow (TProgram.GetEvent, Idle по docs/ASYNC.md)
+20 TvDialog — … TvWindow
+21 TvFiles * — TvObjs, TvUtil
+22 TvMsgBox — TvApp, TvDialog
+23 TvValid — TvMsgBox
+24 TvInput — … TvValid
+25 TvList — … TvDialog, TvWindow
+26 TvHist — … TvInput, TvList
+27 TvFileDlg — … TvFiles, TvHist
+28 TvChDir — … TvFileDlg
+29 TvClipCmd *
+30 TvCluster — … TvDialog
+31 TvColorSel — … TvCluster, TvList
+32 TvFar2l — TvUtf8 (по VTExts.md)
+33 TvHelp — … TvWindow
+34 TvMem — TvCell, TvCodePg, TvColors, TvEvents, TvScreen, TvSys
+35 TvMouse * — TvEvents, TvGeom, TvSys
+36 TvTermIo — TvCodePg, TvEvents, TvFar2l, TvKeys, TvUtf8
+37 TvTermOs
+38 TvTextView * — … TvWindow
+39 TvUnix — … TvClipCmd, TvMouse, TvTermIo, TvTermOs, TvViews
+40 TvVtView — … TvApp, TvDialog, TvMsgBox
+```
 
 ## Шаги вне плана tv3, нужные протоколу
 
