@@ -85,16 +85,6 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:09:13 UTC
 Прогресс 21-10-2026 23:29:50 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): unxed/tv3-new пересоздан владельцем 23:24Z; слово владельца — тексты в tv3-new нейтральные, без отсылок к обсуждению, ботам и тикетам учёта (lint в job verdict); порядок C1 → C2+C3+C12 → C11 → перенос, инфраструктура заново, готовое — в tmp/19d3/* старого unxed/tv3.
 
-## account-243
-Заметка владельца: https://github.com/unxed/lunobot/issues/243
-Проект: учёт (PR владельца в чужой upstream joncampbell123/dosbox-x)
-Поручение: разобрать и устранить падение CI в PR владельца joncampbell123/dosbox-x#6716 (ветка unxed/dosbox-x:sse2-pentium4) по гейту § 7.3.
-Критерий: причина найдена; если в PR — исправление в ветке и зелёный CI; если вне PR — доказано ссылками на прогоны и записано в тикете.
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:19:40 UTC
-Прогресс 21-10-2026 22:07:30 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): CI на `90fd413fed267a78d67756a6435a0e7d2081e90a` (unxed/dosbox-x `sse2-pentium4`, коммиты фикса d94ca18, 23fe43d, 90fd413) — зелёные 23 из 24, в том числе HX-DOS, MinGW32 lowend, lowend9x, MinGW lowend WinXP; идёт `Visual_Studio_CI_build` (прогон 39673559867). Осталось: дождаться completed; зелёное — опубликовать итог по черновику https://github.com/unxed/lunobot/issues/243#issuecomment-6327608228, закрыть #243, удалить блок; красное — разбор.
-
---
-
 ## account-248
 Заметка владельца: https://github.com/unxed/lunobot/issues/248
 Проект: oddyness (новый, unxed/oddyness)
