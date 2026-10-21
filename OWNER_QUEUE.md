@@ -101,7 +101,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: срочно довести до мержа открытый PR unxed/vtui#207.
 Критерий: PR #207 влит в main после проверки обязательного CI.
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 22:11:38 UTC
-Прогресс 21-10-2026 20:12:36 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX; воркер aa1e3ed653e63c20b)): слияние PR с main припарковано (unxed/vtui tmp/19d3/vtui207-sync), остался go.sum и CI после ветки gogpu; план — projects/vtui/status/207.md.
+Прогресс 21-10-2026 22:17:24 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): ветка gogpu в unxed/gogpu, sync-PR unxed/vtui#243 открыт, идёт CI; план — projects/vtui/status/207.md.
 
 --
 
