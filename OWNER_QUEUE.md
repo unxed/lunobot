@@ -50,7 +50,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 16:26:53 UTC
-Прогресс 21-10-2026 07:01:32 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер a7e916e0eac94f4ee): шаг 2 влит 8cbc4a7 (PR unxed/goWidgets#32), «что попробовать» в unxed/goWidgets#30; API zipper Z1/Z7 влиты (unxed/zipper#36 → ebed9c3, unxed/zipper#37 → 431b760), «Try it!» в unxed/zipper#35. Дальше — шаг 3 unxed/goWidgets#30, тег zipper и подъём версии в zipgui (projects/goWidgets/status/30.md, projects/zipper/status/35.md).
+Прогресс 21-10-2026 16:35:16 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер abb8a0d9634510f70): тег zipper v0.1.179; шаг 3 — PR unxed/goWidgets#33 (zipper v0.1.179, engine.List), ждёт CI; план шагов 4–12 для исполнителя — projects/goWidgets/status/30.md.
 
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215

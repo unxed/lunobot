@@ -9,9 +9,9 @@
   требует парной правки здесь
 - Покрытие: не проверялось, уточнить прежде чем брать задачи по покрытию
 - Язык общения: английский (upstream-стиль репозитория)
-- CI: `Zipper Build & Release` (pull_request/push), обычный процесс без батчинга
+- CI: `Zipper Build & Release` (pull_request/push), обычный процесс без батчинга; лёгкий по замеру модуля merge (прогон main 39558773285: 17 job, 15 сборок, весь прогон 2 мин 17 с) — потолок (а) к PR и тегу zipper не применяется
   (батчинг — договорённость только для f4, см. LUNOBOT.md §7.2)
-- Релизы: тег v* → workflow (`build.yml`, job Create Official Release на push тега `v*.*.*`); схема: vX.Y.Z, патч +1 (последний `v0.1.178`, он Latest); плавающий `nightly` (job Update Nightly Release на push в `main`) — не трогать
+- Релизы: тег v* → workflow (`build.yml`, job Create Official Release на push тега `v*.*.*`); схема: vX.Y.Z, патч +1 (последний `v0.1.179` от 21-10-2026, он Latest; тег ставится REST `git/tags` + `git/refs` или `git push`, workflow сам создаёт релиз с `generate_release_notes`, заметки — `gh release edit --notes-file`); плавающий `nightly` (job Update Nightly Release на push в `main`) — не трогать
 - Триаж тикетов заведён (`TRIAGE.md`, проверено `check_triage.py zipper` 28-09-2026 —
   полностью совпадает с GitHub, 3 открытых тикета). Запись про 9 нетронутых тикетов
   от 27-09-2026 устарела — репозиторий с тех пор подчищен.
