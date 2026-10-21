@@ -264,7 +264,6 @@ class StuckTest(unittest.TestCase):
 
         with mock.patch.object(train, "api", side_effect=[
                 {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
-                mock.patch.object(train, "green_train_covering", return_value=None), \
                 mock.patch.object(train, "train_pr", return_value=train_pr), \
                 mock.patch.object(train, "rollup", return_value=rollup or ([], [], [], [])), \
                 mock.patch.object(train, "staging_push_time", return_value=push_time), \
@@ -504,6 +503,23 @@ class StuckTest(unittest.TestCase):
             self.assertEqual(result, 1)
             self.assertIn("поезд #23 зелёный, но не влит 3.0 ч", output)
             self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_green_train_on_staging_tip_is_checked_for_age(self):
+        # review unxed/lunobot#222: голова зелёного поезда — точная вершина staging (после нарезки
+        # ничего не приземлили). Молодой поезд — ожидание штатное; старше 2 ч — инцидент: tick не
+        # вливает, main стоит. Раньше ранний выход «staging tip уже покрыт зелёным поездом» давал 0.
+        now = datetime.now(timezone.utc)
+        old = self.commit("a5" * 20, "old work", now - timedelta(hours=5))
+        for age, code in ((timedelta(minutes=30), 0), (timedelta(hours=3), 1)):
+            pr = {"number": 24, "head": {"sha": "staging"},
+                  "created_at": (now - age).isoformat()}
+            result, output = self.check_stuck([old], pr, self.GREEN)
+            self.assertEqual(result, code)
+            if code:
+                self.assertIn("поезд #24 зелёный, но не влит 3.0 ч", output)
+                self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+            else:
+                self.assertIn("поезд #24 зелёный, ждёт влития tick — ожидание штатное", output)
 
     def test_old_commit_ahead_of_green_train_still_triggers_incident(self):
         now = datetime.now(timezone.utc)
