@@ -1944,3 +1944,58 @@ class RedTrainBehindMainTest(unittest.TestCase):
         self.assertEqual(rc, 0)
         close.assert_not_called()
         rerun.assert_called_once()
+
+
+class TagUntaggedMainTest(unittest.TestCase):
+    """21-10-2026: vtui 679635b (поезд #238 влит не веткой вливания tick) простоял без тега 2,5 ч."""
+
+    HEAD = "679635b586d6a7a65b13de2dd119cd434a9c2d9f"
+
+    def fake_api(self, tags, runs, prs=()):
+        def api(path, *args, check=True):
+            if path.startswith("repos/unxed/vtui/pulls"):
+                return list(prs)
+            if path == "repos/unxed/vtui/branches/main":
+                return {"commit": {"sha": self.HEAD}}
+            if path.startswith("repos/unxed/vtui/tags"):
+                return tags
+            if path.startswith("repos/unxed/vtui/actions/runs"):
+                return {"workflow_runs": runs}
+            raise AssertionError(path)
+        return api
+
+    def call(self, tags, runs, prs=(), repo="unxed/vtui"):
+        done = subprocess.CompletedProcess([], 0, "", "")
+        with mock.patch.object(train, "api", side_effect=self.fake_api(tags, runs, prs)), \
+                mock.patch.object(train, "run", return_value=done) as run, \
+                contextlib.redirect_stdout(io.StringIO()):
+            return train.tag_untagged_main(repo), run
+
+    def test_green_untagged_head_gets_next_tag(self):
+        tags = [{"name": "v0.1.414", "commit": {"sha": "f514"}}]
+        tag, run = self.call(tags, [{"status": "completed", "conclusion": "success"}])
+        self.assertEqual(tag, "v0.1.415")
+        self.assertIn(f"sha={self.HEAD}", run.call_args.args)
+
+    def test_tagged_head_is_left_alone(self):
+        tags = [{"name": "v0.1.415", "commit": {"sha": self.HEAD}}]
+        tag, run = self.call(tags, [{"status": "completed", "conclusion": "success"}])
+        self.assertIsNone(tag)
+        run.assert_not_called()
+
+    def test_running_or_red_main_is_not_tagged(self):
+        tags = [{"name": "v0.1.414", "commit": {"sha": "f514"}}]
+        for runs in ([], [{"status": "in_progress", "conclusion": None}],
+                     [{"status": "completed", "conclusion": "failure"}]):
+            tag, run = self.call(tags, runs)
+            self.assertIsNone(tag)
+            run.assert_not_called()
+
+    def test_train_in_transit_or_other_repo_is_skipped(self):
+        tags = [{"name": "v0.1.414", "commit": {"sha": "f514"}}]
+        green = [{"status": "completed", "conclusion": "success"}]
+        tag, run = self.call(tags, green, prs=[{"head": {"ref": train.TRAIN_PREFIX + "vtui/x"}}])
+        self.assertIsNone(tag)
+        tag, run = self.call(tags, green, repo="unxed/f4")
+        self.assertIsNone(tag)
+        run.assert_not_called()
