@@ -1238,6 +1238,17 @@ def red(repo, pr, failed):
     n = pr["number"]
     steps = failed_steps(failed)
     print(f"поезд #{n} КРАСНЫЙ: " + ", ".join(f"{j} / шаг «{st or '?'}»" for j, st in steps))
+    # main ушёл вперёд мимо поезда (ручной мерж): перезапуск и бисект проверяют старую
+    # комбинацию, а влить её всё равно нельзя без новой проверки. Поезд закрывается, следующий
+    # tick вольёт main в staging и нарежет новый (§ 7.2 п. 5 шаг 1; unxed/f4#2119, 21-10-2026).
+    behind = compare(repo, pr["head"]["sha"], "main").get("ahead_by", 0)
+    if behind:
+        close_train(repo, pr,
+                    f"main ушёл вперёд на {behind} коммит(ов) — поезд переразрезается от staging "
+                    "с main, красный прогон на старой базе не перезапускается.")
+        print(f"поезд #{n}: main ушёл вперёд на {behind} — поезд закрыт без перезапуска, "
+              "следующий tick режет новый от staging с main")
+        return 0
     refs = bisect_refs(repo, n)
     if refs:
         verdict = []
