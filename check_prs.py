@@ -7,8 +7,17 @@
   [ждёт ответа] — автор PR (или другой человек) написал, ответил на ревью или запушил ПОСЛЕ нашего последнего
                   ответа: ответь по существу в этом же круге (влей, доработай, отзыв — модуль merge);
   [отстал от main] — все проверки PR зелёные, но ветка позади `main`: догнать `main` — наша работа, а не автора
-                  (sync-ветка, модуль merge); просить автора обновить ветку ещё раз нельзя.
-Код 1 — есть строки (не повод останавливать круг), 0 — нет, 2 — ошибка доступа.
+                  (`update-branch` или sync-ветка `lunobot/urgent/<N>-sync`, модуль merge); просить автора обновить
+                  ветку ещё раз нельзя;
+  [запрет устарел] — PR из строки «PR не трогать» паспорта уже не открыт: убери строку из `PROJECT.md`.
+Справочная строка (не работа, на код возврата не влияет):
+  [не трогать] — владелец велел PR не трогать (строка `- PR не трогать: #N — <ссылка на слово владельца>` в
+                  `projects/<проект>/PROJECT.md`); остальные строки по этому PR не печатаются.
+Код 1 — есть строки работы (не повод останавливать круг), 0 — нет, 2 — ошибка доступа.
+
+«Мы» — логин аккаунта `gh`, под которым пишут боты и владелец (`gh api user`), и коммиты с личностью бота
+(`lunobot@users.noreply.github.com`, § 2), а не владелец репозитория из паспорта: у проекта с чужим upstream
+(mcommander — blue-panels/mcommander) владелец репозитория — мейнтейнер upstream, то есть «люди».
 
 Зачем: 20–21-10-2026 автор unxed/f4#2098 обновил ветку по просьбе бота и отписался, а бот почти сутки молчал —
 гейт `check_triage.py` смотрит только тикеты, строки `CI.md` есть только у PR ботов, и ответ автора в PR не
@@ -24,6 +33,8 @@ from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BOTS = re.compile(r"\[bot\]$")
+BOT_EMAIL = "lunobot@users.noreply.github.com"
+HOLD = re.compile(r"^\s*-\s*PR не трогать:\s*#(\d+)\b(.*)$", re.M)
 
 
 def api(path):
@@ -33,26 +44,39 @@ def api(path):
     return json.loads(r.stdout)
 
 
-def repo_of(project):
-    p = os.path.join(HERE, "projects", project, "PROJECT.md")
-    m = re.search(r"https://github\.com/([\w.-]+/[\w.-]+)", open(p, encoding="utf-8").read())
-    return m.group(1)
+def passport(project):
+    with open(os.path.join(HERE, "projects", project, "PROJECT.md"), encoding="utf-8") as f:
+        return f.read()
 
 
-def events(pr, comments, review_comments, reviews, commits, owner):
-    """[(ts, кто: «мы»|«люди»)] — мы: владелец репозитория (боты пишут под ним); боты-сервисы не считаются."""
+def repo_of(text):
+    """Первая ссылка на репозиторий в паспорте — там, где живут PR (mcommander: upstream)."""
+    return re.search(r"https://github\.com/([\w.-]+/[\w.-]+)", text).group(1)
+
+
+def holds(text):
+    """{номер PR: остаток строки со ссылкой на слово владельца} из строк «- PR не трогать: #N — …»."""
+    return {int(n): rest.strip(" —-") for n, rest in HOLD.findall(text)}
+
+
+def events(pr, comments, review_comments, reviews, commits, us):
+    """[(ts, кто: «мы»|«люди»)] — мы: аккаунт `gh` ботов и владельца и коммиты с личностью бота; боты-сервисы не
+    считаются."""
     out = []
     for c in comments + review_comments:
         login = c["user"]["login"]
         if BOTS.search(login):
             continue
-        out.append((c["created_at"], "мы" if login == owner else "люди"))
+        out.append((c["created_at"], "мы" if login == us else "люди"))
     for r in reviews:
         if r.get("submitted_at") and not BOTS.search(r["user"]["login"]):
-            out.append((r["submitted_at"], "мы" if r["user"]["login"] == owner else "люди"))
+            out.append((r["submitted_at"], "мы" if r["user"]["login"] == us else "люди"))
     for c in commits:
         author = (c.get("author") or {}).get("login") or ""
-        if author and author != owner:
+        email = ((c.get("commit") or {}).get("author") or {}).get("email") or ""
+        if author == us or email == BOT_EMAIL:
+            out.append((c["commit"]["committer"]["date"], "мы"))
+        elif author:
             out.append((c["commit"]["committer"]["date"], "люди"))
     out.append((pr["created_at"], "люди"))
     return sorted(out)
@@ -70,18 +94,28 @@ def main(argv):
         print(__doc__)
         return 2
     try:
-        repo = repo_of(argv[0])
-        owner = repo.split("/")[0]
-        prs = [p for p in api(f"repos/{repo}/pulls?state=open&per_page=100")
-               if not p["head"]["ref"].startswith("lunobot/") and not p.get("draft")]
+        text = passport(argv[0])
+        repo = repo_of(text)
+        held = holds(text)
+        us = api("user")["login"]
+        all_open = api(f"repos/{repo}/pulls?state=open&per_page=100")
+        prs = [p for p in all_open if not p["head"]["ref"].startswith("lunobot/") and not p.get("draft")]
         found = 0
         now = datetime.now(timezone.utc)
+        open_numbers = {p["number"] for p in all_open}
+        for n in sorted(set(held) - open_numbers):
+            print(f"[запрет устарел] {repo}#{n} не открыт — убери строку «PR не трогать: #{n}» из "
+                  f"projects/{argv[0]}/PROJECT.md")
+            found += 1
         for p in prs:
             n = p["number"]
+            if n in held:
+                print(f"[не трогать] {repo}#{n} — слово владельца: {held[n] or 'ссылки нет'}")
+                continue
             evs = events(p, api(f"repos/{repo}/issues/{n}/comments?per_page=100"),
                          api(f"repos/{repo}/pulls/{n}/comments?per_page=100"),
                          api(f"repos/{repo}/pulls/{n}/reviews?per_page=100"),
-                         api(f"repos/{repo}/pulls/{n}/commits?per_page=100"), owner)
+                         api(f"repos/{repo}/pulls/{n}/commits?per_page=100"), us)
             ts = waiting(evs)
             if ts:
                 h = (now - datetime.fromisoformat(ts.replace("Z", "+00:00"))).total_seconds() / 3600
@@ -95,11 +129,12 @@ def main(argv):
                 behind = api(f"repos/{repo}/compare/{p['base']['ref']}...{head}")["behind_by"]
                 if behind:
                     print(f"[отстал от main] {repo}#{n} — проверки зелёные, позади `{p['base']['ref']}` на {behind}: "
-                          "догнать сами (sync-ветка, модуль merge), автора не просить")
+                          f"догнать сами (update-branch или sync-ветка `lunobot/urgent/{n}-sync`, модуль merge), "
+                          "автора не просить")
                     found += 1
         print(f"PR людей: {len(prs)}, строк: {found}")
         return 1 if found else 0
-    except (RuntimeError, OSError, KeyError, ValueError) as e:
+    except (RuntimeError, OSError, KeyError, ValueError, AttributeError) as e:
         print(f"check_prs: {e}", file=sys.stderr)
         return 2
 
