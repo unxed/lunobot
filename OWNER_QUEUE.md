@@ -112,7 +112,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: goWidgets
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 06:56:29 UTC (вливание зелёного PR шага; воркер a7e916e0eac94f4ee)
+Состояние: свободно
+Прогресс 21-10-2026 07:01:32 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер a7e916e0eac94f4ee): шаг 2 влит 8cbc4a7 (PR unxed/goWidgets#32), «что попробовать» в unxed/goWidgets#30; API zipper Z1/Z7 влиты (unxed/zipper#36 → ebed9c3, unxed/zipper#37 → 431b760), «Try it!» в unxed/zipper#35. Дальше — шаг 3 unxed/goWidgets#30, тег zipper и подъём версии в zipgui (projects/goWidgets/status/30.md, projects/zipper/status/35.md).
 Прогресс 21-10-2026 00:44:35 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): шаг 1 влит 25d2a0f (PR unxed/goWidgets#31), «что попробовать» в unxed/goWidgets#30. Следующий — шаг 2 по projects/goWidgets/status/30.md.
 Прогресс 20-10-2026 22:53 UTC: TRIAGE #30 обновлён; ADR-0019 + план 12 шагов + каркас showcase/zipgui закоммичены локально (status/30.md), PR шага 1 открывается.
 
@@ -121,7 +122,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: dn
 Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
 Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 06:56:29 UTC (вливание зелёного PR шага; воркер a7e916e0eac94f4ee)
+Состояние: свободно
+Прогресс 21-10-2026 07:01:32 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер a7e916e0eac94f4ee): PR unxed/dn#168 (шаг 2 FreeBSD) зелёный, но не влит — правит строку `commit:` в dn/third-party/f4-fish/NOTICE, по п. 5 CLAUDE.md dn нужно решение владельца; вопрос: https://github.com/unxed/dn/pull/168#issuecomment-6310068934 (notify_owner). Остальные шаги — по projects/dn/status/166.md.
 Прогресс 21-10-2026 01:02:11 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): прежняя сессия узла завершилась; таблица платформ опубликована (https://github.com/unxed/dn/issues/166#issuecomment-6305062661), захват воркера a5978c8d снят; шаги 1–2 FreeBSD — у узла 801452e4 (PR unxed/dn#168). Следующее — по projects/dn/status/166.md.
 Прогресс 20-10-2026 22:51:57 UTC: проба платформ (freebsd x64/aarch64, netbsd, openbsd, dragonfly, haiku, macos arm64/x64, linux armhf/riscv64) — ветка tmp/19d3/dn166-plat-1020-2245, прогон https://github.com/unxed/dn/actions/runs/39511037412; план шагов 3–4 FreeBSD готовится (status/166.md).
 
