@@ -309,6 +309,15 @@ class TombstoneTest(GitCase):
         # а теперь это снова живой чужой захват
         self.assertEqual(self.quiet(claims.take, self.a, "f4", line(1)), 1)
 
+    def test_note_key_retaken_over_tombstone(self):
+        note = f"{ago(20)} Я {ME}, прекращаю работу: команда владельца"
+        later = f"{ago(10)} Я {ME}, считаю цель достигнутой"
+        self.quiet(claims.take, self.a, "f4", note)
+        self.assertEqual(self.drop_blocked(self.b, "f4", f"note-1-{NODE}", ME), 0, self.out)
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", later), 0, self.out)
+        claims.fetch(self.a)
+        self.assertEqual(claims.records(self.a, "f4"), [later])
+
     def test_take_other_key_over_tombstone_directory_waits_for_janitor(self):
         part = line(1, tail=" (часть 2 из 3) [land]")
         self.quiet(claims.take, self.a, "f4", part)

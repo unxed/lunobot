@@ -411,7 +411,7 @@ def take(repo, project, line, remote="origin", unix=None, check=True):
         dead = {c["key"]: c["sha"] for c in refs(repo, project, released=True) if c["released"]}
         specs = []
         for k in ks:
-            if k in dead and k not in notes:
+            if k in dead:
                 specs.append((f"{NS}/{project}/{k}", _commit(repo, line, sign, parent=dead[k], unix=unix), dead[k]))
             else:
                 specs.append((f"{NS}/{project}/{k}", commit, current.get(k, "") if k in notes else ""))
