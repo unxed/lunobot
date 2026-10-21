@@ -352,6 +352,55 @@ class TombstoneTest(GitCase):
         self.assertEqual(self.remote_refs(), [])
 
 
+    # review unxed/lunobot#239: гонки вокруг метки
+    def tombstone(self, n=1):
+        self.quiet(claims.take, self.a, "f4", line(n))
+        self.assertEqual(self.drop_blocked(self.b, "f4", F4.format(n), ME), 0, self.out)
+
+    def test_take_over_tombstone_with_stale_local_cache(self):
+        # клон a ещё видит живой захват (метку не получал) — take всё равно занимает ключ, без ложного «занято»
+        self.tombstone()
+        self.assertEqual(self.quiet(claims.take, self.a, "f4", line(1, who=THEM)), 0, self.out)
+        claims.fetch(self.b)
+        self.assertEqual([c["line"] for c in claims.refs(self.b, "f4")], [line(1, who=THEM)])
+
+    def test_take_over_tombstone_that_janitor_deleted_meanwhile(self):
+        # b видит метку, но ветку уже удалили: lease на метку не проходит, второй круг берёт ключ заново
+        self.tombstone()
+        claims.fetch(self.a)
+        c = claims.refs(self.a, "f4", released=True)[0]
+        self.assertTrue(claims._push_retry(self.a, "origin", [(c["ref"], None, c["sha"])])[0])
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1, who=THEM)), 0, self.out)
+        claims.fetch(self.a)
+        self.assertEqual([c["line"] for c in claims.refs(self.a, "f4")], [line(1, who=THEM)])
+
+    def test_janitor_keeps_claim_taken_over_tombstone_after_its_read(self):
+        # janitor прочитал метку, бот занял ключ поверх неё: удаление по lease на sha метки не проходит
+        import janitor
+        self.tombstone()
+        claims.fetch(self.a)
+        self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1, who=THEM)), 0, self.out)
+        old_root = janitor.ROOT
+        janitor.ROOT = type(old_root)(self.a)
+        try:
+            self.quiet(janitor.sweep_refs, "f4", {}, time.time())
+        finally:
+            janitor.ROOT = old_root
+        claims._fetched.clear()
+        claims.fetch(self.b)
+        self.assertEqual([c["line"] for c in claims.refs(self.b, "f4")], [line(1, who=THEM)])
+
+    def test_keepalive_drop_and_release_skip_tombstone(self):
+        import release
+        self.tombstone()
+        self.assertNotEqual(self.quiet(claims.keepalive, self.a, "f4", F4.format(1), ME), 0)
+        self.assertNotEqual(self.quiet(claims.drop, self.a, "f4", F4.format(1), ME), 0)
+        code = self.quiet(release.main, ["--number", "1", "--node", NODE, "--platform", "LNX", "--repo", self.a])
+        self.assertEqual(code, 0, self.out)
+        self.assertNotIn("unxed-f4-1", self.out)
+        claims.fetch(self.a)
+        self.assertTrue(claims.refs(self.a, "f4", released=True)[0]["released"])
+
 class ReleaseAndJanitorTest(GitCase):
     def test_release_drops_own_refs_only(self):
         import release
