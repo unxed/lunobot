@@ -110,8 +110,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: учёт (PR владельца в чужой upstream joncampbell123/dosbox-x)
 Поручение: разобрать и устранить падение CI в PR владельца joncampbell123/dosbox-x#6716 (ветка unxed/dosbox-x:sse2-pentium4) по гейту § 7.3.
 Критерий: причина найдена; если в PR — исправление в ветке и зелёный CI; если вне PR — доказано ссылками на прогоны и записано в тикете.
-Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 20:17:36 UTC
-Прогресс 21-10-2026 21:05:00 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): причина — `cc1plus.exe: out of memory` в 32-битных lowend-сборках (HX-DOS, MinGW lowend/lowend9x, WinXP lowend) на core_normal/core_prefetch/core_simple; на `master` (push 029bd65c5d) те же workflow зелёные. Фикс в unxed/dosbox-x `sse2-pentium4` (fast-forward, по слову владельца в заметке): `d94ca18` помощники SSE2 вне линии, `23fe43d` сборка ядер 8086 (на нём упал только core_normal), `90fd413fed267a78d67756a6435a0e7d2081e90a` одна копия MMX/SSE-кейсов на оба размера операнда (CASE_0F_B); осталось: CI PR на `90fd413` зелёный → отчёт в #243, закрыть.
+Состояние: свободно
+Прогресс 21-10-2026 22:07:30 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): CI на `90fd413fed267a78d67756a6435a0e7d2081e90a` (unxed/dosbox-x `sse2-pentium4`, коммиты фикса d94ca18, 23fe43d, 90fd413) — зелёные 23 из 24, в том числе HX-DOS, MinGW32 lowend, lowend9x, MinGW lowend WinXP; идёт `Visual_Studio_CI_build` (прогон 39673559867). Осталось: дождаться completed; зелёное — опубликовать итог по черновику https://github.com/unxed/lunobot/issues/243#issuecomment-6327608228, закрыть #243, удалить блок; красное — разбор.
 
 --
 
