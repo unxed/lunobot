@@ -2098,6 +2098,15 @@ def should_cancel_main_run(repo):
     return repo not in PRESERVE_MAIN and not nightly_is_stale(repo)
 
 
+def tags_disabled(repo):
+    """Сессия без права ставить теги (LUNOBOT_NO_TAGS=1: облачная сессия Claude Code — прокси отвечает 403 на
+    запись тегов, 21-10-2026, узел 801452e4). Тег поставит tick узла, где пуш тегов работает (§ 7.7)."""
+    if os.environ.get("LUNOBOT_NO_TAGS") == "1":
+        print(f"{repo}: теги с этого узла не ставлю (LUNOBOT_NO_TAGS=1) — поставит tick узла с правом пуша тегов")
+        return True
+    return False
+
+
 def tag_untagged_main(repo):
     """Тег на вершине main проекта из TAG_AFTER_MERGE, влитой не этим tick (владелец, срочный PR,
     другой путь): tag_next зовёт только ветка вливания поезда в train_step, и такая вершина
@@ -2105,6 +2114,8 @@ def tag_untagged_main(repo):
     без тега 22:39Z–01:14Z). Только когда поезда в пути нет и все push-прогоны main на вершине
     завершены зелёными; иначе молча ждём следующего tick. Возвращает поставленный тег или None."""
     if repo not in TAG_AFTER_MERGE or train_pr(repo):
+        return None
+    if tags_disabled(repo):
         return None
     head = api(f"repos/{repo}/branches/main")["commit"]["sha"]
     tags = api(f"repos/{repo}/tags?per_page=100") or []
@@ -2121,6 +2132,8 @@ def tag_untagged_main(repo):
 def tag_next(repo, head=None):
     """Следующий последовательный тег vX.Y.Z на вершине main (если она ещё без тега).
     `head` — проверенный sha вершины; не передан — берётся текущая вершина main."""
+    if tags_disabled(repo):
+        return None
     head = head or api(f"repos/{repo}/branches/main")["commit"]["sha"]
     tags = api(f"repos/{repo}/tags?per_page=100") or []
     if any(t["commit"]["sha"] == head for t in tags):
@@ -2139,7 +2152,9 @@ def tag_next(repo, head=None):
         # обычный git push тега проходит (10-10-2026: vtui v0.1.399 не ставился).
         r = subprocess.CompletedProcess(r.args, 0, "", "")
     print(f"{repo}: тег {tag} на {head[:9]}" if r.returncode == 0 else
-          f"{repo}: тег {tag} не создан: {r.stderr.strip()}")
+          f"{repo}: тег {tag} не создан: {r.stderr.strip()} — ни REST, ни git push тега с этого узла не прошли: "
+          "до конца сессии запускай train.py с LUNOBOT_NO_TAGS=1 и не бери работу с тегами (§ 7.7, модуль releases); "
+          "тег поставит tick другого узла")
     return tag if r.returncode == 0 else None
 
 

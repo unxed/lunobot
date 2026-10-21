@@ -1,4 +1,5 @@
 import contextlib
+import os
 import io
 import subprocess
 import unittest
@@ -2195,3 +2196,16 @@ class TagUntaggedMainTest(unittest.TestCase):
         tag, run = self.call(tags, green, repo="unxed/f4")
         self.assertIsNone(tag)
         run.assert_not_called()
+
+
+class NoTagsSessionTest(unittest.TestCase):
+    """LUNOBOT_NO_TAGS=1 — сессия без права пуша тегов (облачная Claude Code): train.py теги не трогает."""
+
+    def test_tag_functions_skip_without_api(self):
+        import train
+        with mock.patch.dict(os.environ, {"LUNOBOT_NO_TAGS": "1"}), \
+                mock.patch.object(train, "api", side_effect=AssertionError("api не должен вызываться")), \
+                mock.patch.object(train, "train_pr", return_value=None), \
+                mock.patch.object(train, "TAG_AFTER_MERGE", {"unxed/vtui"}):
+            self.assertIsNone(train.tag_next("unxed/vtui"))
+            self.assertIsNone(train.tag_untagged_main("unxed/vtui"))
