@@ -1478,6 +1478,17 @@ def stuck(repo):
             # Коммиты самого поезда в возраст не входят, как у поезда в пути (21-10-2026,
             # unxed/f4#2121: поезд зелёный, после нарезки в staging два свежих land, а health
             # считал compare(main, staging) с коммитами поезда — ложный «ИНЦИДЕНТ ПРОЦЕССА»).
+            # Но сам зелёный поезд старше STUCK_HOURS — инцидент независимо от коммитов впереди
+            # головы: tick его не вливает (нет права merge, § 13.2, отказ API, ошибка вливания),
+            # main стоит (review unxed/lunobot#222; как «поезд проверяется дольше двух часов»).
+            created = datetime.fromisoformat(train["created_at"].replace("Z", "+00:00"))
+            train_hours = (datetime.now(timezone.utc) - created).total_seconds() / 3600
+            if train_hours > STUCK_HOURS:
+                print(f"поезд #{train['number']} зелёный, но не влит {train_hours:.1f} ч")
+                print(f"ИНЦИДЕНТ ПРОЦЕССА: зелёный поезд не вливается дольше {STUCK_HOURS} ч. "
+                      "§ 4 «ретро круга»: найти, почему tick не вливает поезд, влить его и "
+                      "зафиксировать правкой LUNOBOT.md/train.py (§ 12)")
+                return 1
             if train["head"]["sha"] == staging:
                 ahead = {"status": "identical", "commits": []}
             else:

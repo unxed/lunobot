@@ -483,14 +483,27 @@ class StuckTest(unittest.TestCase):
     def test_green_unmerged_train_without_commits_ahead_is_normal(self):
         now = datetime.now(timezone.utc)
         old = self.commit("a3" * 20, "old work", now - timedelta(hours=5))
-        # поезд старше 2 ч: зелёному поезду его возраст не в счёт, он ждёт только tick
+        # поезд моложе 2 ч, его коммиты (5 ч) в возраст не входят, впереди головы ничего нет
         pr = {"number": 21, "head": {"sha": "train-head"},
-              "created_at": (now - timedelta(hours=3)).isoformat()}
+              "created_at": (now - timedelta(minutes=40)).isoformat()}
         for ahead in ({"status": "identical", "commits": []}, {"status": "ahead", "commits": []}):
             result, output = self.check_stuck([old], pr, self.GREEN, ahead=ahead)
             self.assertEqual(result, 0)
             self.assertIn("поезд #21 зелёный, ждёт влития tick — ожидание штатное", output)
             self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+    def test_old_green_unmerged_train_is_incident(self):
+        # review unxed/lunobot#222: tick не вливает зелёный поезд (нет права merge, отказ API) —
+        # впереди головы ничего нет, но main стоит: поезд старше 2 ч — инцидент.
+        now = datetime.now(timezone.utc)
+        old = self.commit("a4" * 20, "old work", now - timedelta(hours=5))
+        pr = {"number": 23, "head": {"sha": "train-head"},
+              "created_at": (now - timedelta(hours=3)).isoformat()}
+        for ahead in ({"status": "identical", "commits": []}, {"status": "ahead", "commits": []}):
+            result, output = self.check_stuck([old], pr, self.GREEN, ahead=ahead)
+            self.assertEqual(result, 1)
+            self.assertIn("поезд #23 зелёный, но не влит 3.0 ч", output)
+            self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
 
     def test_old_commit_ahead_of_green_train_still_triggers_incident(self):
         now = datetime.now(timezone.utc)
