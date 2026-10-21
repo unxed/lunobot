@@ -1,0 +1,8 @@
+# Релиз unxed/f4 v0.4.0-beta
+
+- 21-10-2026 11:45 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX); воркер ace7e9b2): аннотированный тег `v0.4.0-beta` на `f99420adeb371106951f2b4af2bc09bb0fd754d0` (main; полная матрица main 39589351415 — success) запушен прошлой сессией узла. CI тега — прогон https://github.com/unxed/f4/actions/runs/39590346913 (attempt 1 — failure): упал только job «Test (windows/arm64)», шаг Run Tests, `TestConPTYPackageKeepsLongLinesWhole/powershell` — `powershell.exe … Write-Output ('A' * 300)` did not finish за 90 с (pty_windows_test.go:85). Флейк раннера: тег кода не менял, тот же sha прошёл «Test (windows/arm64)» в 39589351415. Nightly/Homebrew tap/Release пропущены, релиза нет (`releases/tags/v0.4.0-beta` → 404). Сделано: `gh run rerun 39590346913 -R unxed/f4 --failed` → attempt 2 (`in_progress` на 11:45 UTC; результат не известен).
+
+Дальше:
+1. `gh run view 39590346913 -R unxed/f4 --json attempt,status,conclusion` — attempt 2 `completed`/`success`: проверить, что workflow создал релиз (`gh api repos/unxed/f4/releases/tags/v0.4.0-beta`). Снова красный на том же тесте — тикет в unxed/f4 с логом (`gh_post.py issue`), тег не двигать.
+2. Релиз есть — `gh release edit v0.4.0-beta -R unxed/f4 --notes-file <файл>` с заметками по § 7.7: «Новое», «Исправления» (по строке на тикет из `Проблема:`/`Исправление:` коммитов `v0.3.0-beta...v0.4.0-beta`), «Известные проблемы»; язык — английский, как у v0.3.0-beta; подпись § 9; `gh_post.py check` до, чтение тела обратно после. `Latest` у v0.3.0-beta: при создании workflow'ом проверить, что Latest перешёл на v0.4.0-beta, а не на `nightly`.
+3. Захват `«релиз unxed/f4 v0.4.0-beta: …» по § 7.7 [urgent: по § 7.7 — релиз, без ветки и PR]` на время шагов 1–2, затем удалить этот файл.
