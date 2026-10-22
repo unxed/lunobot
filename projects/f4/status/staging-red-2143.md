@@ -1,0 +1,3 @@
+# Красный staging после unxed/f4#2143 (22-10-2026)
+
+22-10-2026 04:30 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): красный `quick` на staging (https://github.com/unxed/f4/actions/runs/39720610792, и на перезапуске) исправлен приземлённым коммитом `2f56ff474ecc257cb2ba9bade34ab2a435612c51` (`land --fix-staging`): два теста `internal/panel` под новое поведение быстрого поиска (песочница https://github.com/unxed/f4/actions/runs/39722305658: panel, app, cmd/f4 — ok, оба lint — ok). Запись в unxed/f4#2143 оставлена. Осталось: проверить `train.py covered` для `2f56ff47`, затем удалить этот файл
