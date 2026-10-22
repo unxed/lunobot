@@ -49,14 +49,14 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: goWidgets
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 22-10-2026 19:46:28 UTC
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 22-10-2026 19:41:48 UTC
 Прогресс 22-10-2026 19:44:45 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): шаг 5b влит merge-коммитом `fbca6a95f9b55046ac57127fc8c0bed5d7df31eb` (https://github.com/unxed/goWidgets/commit/fbca6a95f9b55046ac57127fc8c0bed5d7df31eb); «Пробуйте!» опубликовано: https://github.com/unxed/goWidgets/issues/30#issuecomment-6349742170.
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215
 Проект: dn
 Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
 Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 22-10-2026 20:11:00 UTC
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 22-10-2026 19:46:59 UTC
 Прогресс 22-10-2026 19:50:49 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): шаг 5 закоммичен `eee9136d16e4ce5dcb80572cb53b0dbe99b6ba64` и опубликован в [PR #182](https://github.com/unxed/dn/pull/182); обязательные проверки dn-freebsd #12, dn-linux #944, dn-windows #830, dn #929 зарегистрированы и выполняются/стоят в очереди. Дальше — CI, мерж, «Пробуйте!».
 
 ## account-216
