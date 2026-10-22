@@ -2271,10 +2271,16 @@ def main(argv):
             print(f"land: неизвестные аргументы {unknown} — ничего не сделано; допустим только --fix-staging")
             return 2
         return land(fix="--fix-staging" in rest)
-    if cmd == "tick-all" and opt("--sign"):
-        return tick_all(opt("--sign"))
-    if cmd == "health" and len(rest) == 1:
-        return health(rest[0])
+    if cmd == "tick-all":
+        if len(rest) == 2 and rest[0] == "--sign" and rest[1]:
+            return tick_all(rest[1])
+        print('tick-all: укажите подпись: train.py tick-all --sign "<подпись>"')
+        return 2
+    if cmd == "health":
+        if len(rest) == 1:
+            return health(rest[0])
+        print("health: укажите ровно один репозиторий: train.py health <owner/repo>")
+        return 2
     if cmd == "covered" and len(rest) == 2:
         return covered(rest[0], rest[1])
     if cmd == "tick" and rest and opt("--sign"):
