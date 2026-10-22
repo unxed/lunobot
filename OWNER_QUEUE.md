@@ -50,7 +50,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 22-10-2026 15:26:45 UTC
-Прогресс 22-10-2026 15:31:53 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): в PR unxed/goWidgets#35, ветка `agent/lunobot2/zipgui-4b-gtk`, запушен `d0a6a167e85fb78a1aa1955bb2c9b535900721aa`: убран дублирующий GTK `gObjectUnref`, из-за которого fast не собирался; учёт CI обновлён — fast #92 (39805472468) выполняется, gui #87 (39805473000) в очереди. Предыдущий Linux также сообщил отдельное падение Qt5 `TestCanvasPaintAndPointer` при драйве указателя; оно не связано с GTK-таблицей и ожидает результата нового SHA. PR comments/reviews отсутствуют; второй PR не открывал.
+Прогресс 22-10-2026 15:32:48 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): в PR unxed/goWidgets#35, ветка `agent/lunobot2/zipgui-4b-gtk`, запушен `d0a6a167e85fb78a1aa1955bb2c9b535900721aa`: убран дублирующий GTK `gObjectUnref`, из-за которого fast не собирался; учёт CI обновлён — PR fast #92 (39805472468) выполняется, gui #87 (39805473000) в очереди. Предыдущий Linux также сообщил `qt5: exit status 1` в `TestCanvasPaintAndPointer` (`drive Qt Canvas pointer`); причина не установлена, вне этой правки не менял. PR comments/reviews отсутствуют; второй PR не открывал.
 
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215
