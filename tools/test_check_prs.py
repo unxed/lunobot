@@ -75,5 +75,27 @@ class HoldsTest(unittest.TestCase):
                 check_prs.holds(text)
 
 
+class BotBranchTest(unittest.TestCase):
+    def test_lunobot_namespaces_are_bot_branches(self):
+        for ref in (
+            "lunobot/pr/dn166-step4",
+            "agent/lunobot/zipgui-fix",
+            "agent/lunobot1/zipgui-step",
+            "agent/lunobot2/zipgui-5b-navigation",
+        ):
+            with self.subTest(ref=ref):
+                self.assertTrue(check_prs.is_bot_branch(ref))
+
+    def test_unrelated_agent_namespaces_remain_human(self):
+        for ref in (
+            "agent/alice/fix",
+            "agent/lunobot-tools/fix",
+            "agent/lunobotish/fix",
+            "feature/fix",
+        ):
+            with self.subTest(ref=ref):
+                self.assertFalse(check_prs.is_bot_branch(ref))
+
+
 if __name__ == "__main__":
     unittest.main()
