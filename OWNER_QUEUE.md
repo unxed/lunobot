@@ -66,7 +66,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:42:31 UTC
-Прогресс 21-10-2026 23:54:40 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): части 4C, 5C, 4P, 5P готовы — отчёты https://github.com/unxed/f4/issues/2115#issuecomment-6327071568, https://github.com/unxed/f4/issues/2115#issuecomment-6327174722, https://github.com/unxed/f4/issues/2115#issuecomment-6329170643, https://github.com/unxed/f4/issues/2115#issuecomment-6329204584; тикеты 4P: unxed/f4#2154, unxed/vtui#244; 5P: unxed/tv3#24, unxed/tv3#25, unxed/tv3#26. Следующие части — 4B/5B (вставка), затем 4T/5T, 4D/5D, 4S/5S, шаг 6 (mcommander), шаги 7–9 по projects/f4/status/2115.md.
+Прогресс 22-10-2026 01:59:45 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): готовы 4C, 5C, 4P, 5P, 4B, 5B (отчёты в unxed/f4#2115: comment 6327071568, 6327174722, 6329170643, 6329204584, 6330850374, 6330853921); тикеты 4P/5P: unxed/f4#2154, unxed/vtui#244, unxed/tv3#24, unxed/tv3#25, unxed/tv3#26; 4B/5B: unxed/f4#2155, unxed/f4#2156, unxed/f4#2157, unxed/dn#179. Следующие части — 4T/5T, затем 4D/5D, 4S/5S, шаг 6 (mcommander), шаги 7–9 по projects/f4/status/2115.md.
 
 ## account-218
 Заметка владельца: https://github.com/unxed/lunobot/issues/218
