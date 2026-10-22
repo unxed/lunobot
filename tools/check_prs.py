@@ -35,6 +35,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))  # tools/: the scripts
 ROOT = os.path.dirname(HERE)  # the clone of the accounting repository
 BOTS = re.compile(r"\[bot\]$")
 BOT_EMAIL = "lunobot@users.noreply.github.com"
+BOT_BRANCH = re.compile(r"^(?:lunobot/|agent/lunobot(?:\d+)?/)")
 HOLD = re.compile(r"^\s*-\s*PR не трогать:\s*#(\d+)\b(.*)$", re.M)
 
 
@@ -58,6 +59,11 @@ def repo_of(text):
 def holds(text):
     """{номер PR: остаток строки со ссылкой на слово владельца} из строк «- PR не трогать: #N — …»."""
     return {int(n): rest.strip(" —-") for n, rest in HOLD.findall(text)}
+
+
+def is_bot_branch(ref):
+    """Recognize Lunobot namespaces without treating arbitrary agent/* refs as bots."""
+    return BOT_BRANCH.match(ref) is not None
 
 
 def events(pr, comments, review_comments, reviews, commits, us):
@@ -100,7 +106,7 @@ def main(argv):
         held = holds(text)
         us = api("user")["login"]
         all_open = api(f"repos/{repo}/pulls?state=open&per_page=100")
-        prs = [p for p in all_open if not p["head"]["ref"].startswith("lunobot/") and not p.get("draft")]
+        prs = [p for p in all_open if not is_bot_branch(p["head"]["ref"]) and not p.get("draft")]
         found = 0
         now = datetime.now(timezone.utc)
         open_numbers = {p["number"] for p in all_open}
