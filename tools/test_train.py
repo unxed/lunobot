@@ -1717,6 +1717,19 @@ class MainHelpTest(unittest.TestCase):
         land.assert_not_called()
         self.assertIn("--fix-staging", out)
 
+    def test_tick_all_missing_sign_gets_specific_usage(self):
+        rc, _, out = self.run_main(["tick-all"])
+        self.assertEqual(rc, 2)
+        self.assertIn("tick-all: нужен --sign", out)
+        self.assertNotIn("Staging и поезда", out)
+
+    def test_health_rejects_sign_with_specific_usage(self):
+        rc, _, out = self.run_main(["health", "unxed/f4", "--sign", "unused"])
+        self.assertEqual(rc, 2)
+        self.assertIn("health: ожидается ровно один <owner/repo>", out)
+        self.assertIn("--sign не принимается", out)
+        self.assertNotIn("Staging и поезда", out)
+
     def test_land_known_flags_still_work(self):
         rc, land, _ = self.run_main(["land"])
         land.assert_called_once_with(fix=False)
