@@ -559,6 +559,41 @@ class TrainStepCancellationTest(unittest.TestCase):
         rerun.assert_called_once_with(cancelled)
 
 
+class EjectConflictDiagnosticsTest(unittest.TestCase):
+    def test_revert_conflict_preserves_error_and_paths_without_mutating_refs(self):
+        sha = "db720328" + "a" * 32
+        conflict = _proc(1, "", "CONFLICT (modify/delete): internal/app/actions_table.go\n"
+                                  "error: could not revert " + sha[:7])
+        paths = _proc(0, "internal/app/actions_table.go\ninternal/panel/frame.go\n")
+        calls = []
+
+        def run(*cmd, **kwargs):
+            calls.append((cmd, kwargs))
+            if cmd[:2] == ("git", "clone"):
+                return _proc()
+            if cmd[:2] == ("git", "revert"):
+                return conflict
+            if cmd[:2] == ("git", "diff"):
+                return paths
+            self.fail(f"unexpected command after failed revert: {cmd}")
+
+        output = io.StringIO()
+        with mock.patch.object(train, "train_pr", return_value={"number": 7}), \
+                mock.patch.object(train, "run", side_effect=run), \
+                mock.patch.object(train, "close_train") as close_train, \
+                contextlib.redirect_stdout(output):
+            self.assertEqual(train.eject("o/r", [sha], "failed check"), 1)
+
+        message = output.getvalue()
+        self.assertIn(conflict.stderr, message)
+        self.assertIn("internal/app/actions_table.go", message)
+        self.assertIn("internal/panel/frame.go", message)
+        self.assertIn("Удалённые refs staging и поезда не изменены (push не выполнялся)", message)
+        self.assertEqual([cmd[0][1] for cmd in calls if cmd[0][:2] == ("git", "revert")], ["revert"])
+        self.assertFalse(any(cmd[:2] == ("git", "push") for cmd, _ in calls))
+        close_train.assert_not_called()
+
+
 class HealRerunTest(unittest.TestCase):
     def test_red_staging_rerun_uses_checked_rest_endpoint(self):
         last = {"html_url": "https://github.com/o/r/actions/runs/42",
