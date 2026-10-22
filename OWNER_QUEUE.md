@@ -66,7 +66,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
 Состояние: взял в работу — Лунобот-1 (node 19d368003c6c048e43dbec70; LNX), 21-10-2026 23:42:31 UTC
-Прогресс 22-10-2026 02:35:20 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): аудиты f4 и dn (K, C, P, B, T, D) и сводки 4S/5S готовы (comment 6331300602 в unxed/f4#2115: ни f4, ни dn не достигают Basic); спека 0.3 влита (unxed/f4#2163); утечка буфера unxed/f4#2158 в lunobot/staging (15b8d288), ждёт поезда. Следующее — шаг 6 (mcommander), затем шаг 7 (пробелы), 8 (набор самопроверки), 9 (README) по projects/f4/status/2115.md.
+Прогресс 22-10-2026 02:40:54 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): все аудиты шага 4–6 первым проходом готовы (f4, dn, mcommander; сводка comment 6331300602, mcommander comment 6331368171 в unxed/f4#2115); спека 0.3 влита; unxed/f4#2158 в lunobot/staging. Вопрос владельцу: включить ли Issues в форке unxed/mcommander (тикеты-пробелы mcommander ждут ответа). Следующее — шаг 7 (закрытие пробелов f4 по весу, начиная с unxed/f4#2155), шаг 8 (набор самопроверки), шаг 9 (README) по projects/f4/status/2115.md.
 
 ## account-218
 Заметка владельца: https://github.com/unxed/lunobot/issues/218
