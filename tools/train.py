@@ -2275,6 +2275,12 @@ def main(argv):
         return tick_all(opt("--sign"))
     if cmd == "health" and len(rest) == 1:
         return health(rest[0])
+    if cmd == "tick-all" and not opt("--sign"):
+        print('tick-all: нужен --sign "<подпись § 9>"; например: train.py tick-all --sign "Лунобот-2 (node …; LNX)"')
+        return 2
+    if cmd == "health":
+        print("health: ожидается ровно один <owner/repo>; --sign не принимается (он нужен только для tick/tick-all)")
+        return 2
     if cmd == "covered" and len(rest) == 2:
         return covered(rest[0], rest[1])
     if cmd == "tick" and rest and opt("--sign"):
