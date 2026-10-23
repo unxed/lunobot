@@ -11,4 +11,6 @@
 
 23-10-2026 05:22:30 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2175 [land]
 
-23-10-2026 05:30:58 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2187 [land]
+23-10-2026 05:36:46 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2177 [land]
+
+23-10-2026 05:41:46 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2174 [urgent: по § 5 п. 4 — учётный шаг без ветки и PR]
