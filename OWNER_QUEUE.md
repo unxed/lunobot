@@ -57,7 +57,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
 Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 23-10-2026 06:02:39 UTC
-Прогресс 23-10-2026 06:05:39 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR #182 проверен на SHA `eee9136d16e4ce5dcb80572cb53b0dbe99b6ba64`; один отменённый обязательный прогон dn #929 повторно запущен: https://github.com/unxed/dn/actions/runs/39843522855. Результат CI не ожидал.
+Прогресс 23-10-2026 06:13:11 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): dn #929 run [39843522855](https://github.com/unxed/dn/actions/runs/39843522855) attempt 2 завершился success на `eee9136d16e4ce5dcb80572cb53b0dbe99b6ba64` (gates, audit, units, bootstrap, units-aarch64 — success). В CI.md отмечены также dn-freebsd #12 и dn-windows #830 success; обязательный dn-linux #944 остаётся cancelled. Следующий шаг: восстановить dn-linux check и проверить полный набор; PR #182 не вливать.
 ## account-216
 Заметка владельца: https://github.com/unxed/lunobot/issues/216
 Проект: f4
