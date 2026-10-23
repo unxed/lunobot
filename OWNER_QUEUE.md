@@ -117,6 +117,6 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: диагностировать и устранить красный macOS CI в PR unxed/dosbox-x#6715, соблюдая гейт PR владельца; не вливать PR в upstream.
 Критерий: первопричина подтверждена и соответствующие проверки зелёные на точном SHA, либо конкретный блокер и следующий шаг записаны в issue #271.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 23-10-2026 23:23:08
-Прогресс 23-10-2026 23:30:21 (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): unxed/f4 staging-step parked: b83361e8 at tmp/19d3/f4-2172-cancel-seam-2327, sandbox run 40039855591; same worker now continues account-271 / PR #6715 without merging upstream.
+Прогресс 23-10-2026 23:33:59 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверен unxed/dosbox-x#6715 на SHA `812abcfd779d2aab9aa5d257db661ad3ca24ee28`; macOS job упал из-за подтверждённой потери связи hosted runner, а не ошибки сборки (детали и следующий шаг в https://github.com/unxed/lunobot/issues/271#issuecomment-6376850773). Нет WRITE-доступа для rerun/правки PR; ветку не менял, не вливал. Требуется maintainer rerun failed job на том же SHA; если сбой повторится — сохранить логи runner.
 
 --
