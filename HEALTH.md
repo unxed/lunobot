@@ -2,4 +2,4 @@
 
 Пишет `janitor.py` (`pulse.py`) по журналам `refs/journal/*`; вручную не править. Тревога — срочная работа § 5 п. 2 для любого бота (модуль round, «Пульс»), снимается сама, когда условие пропало.
 
-- **friction-repeats** — трения повторяются без разбора: `tool-train.py` ×12, `ci-wait` ×9, `env-opencode` ×7, `deadline` ×7, `gate-false-positive` ×6 — разбор рефлексии (Лунобот-1) или жалоба § 12
+- **friction-repeats** — трения повторяются без разбора: `tool-train.py` ×12, `ci-wait` ×9, `env-opencode` ×8, `deadline` ×7, `gate-false-positive` ×6 — разбор рефлексии (Лунобот-1) или жалоба § 12
