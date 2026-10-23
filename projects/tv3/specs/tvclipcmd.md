@@ -27,7 +27,7 @@ function ClipCmdSetName: AnsiString;
 function ClipCmdGetName: AnsiString;
 ```
 
-Source begins with `{$I tvdefs.inc}` and `{$H+}` (long strings). `OnClipEnv`: when assigned, the unit reads the environment variables `PATH`, `DISPLAY` and `WAYLAND_DISPLAY` through it instead of the process environment (tests supply their own values; an unknown name should return the empty text). No other variable is read through it.
+Source uses mode objfpc and `{$H+}` (long strings). `OnClipEnv`: when assigned, the unit reads the environment variables `PATH`, `DISPLAY` and `WAYLAND_DISPLAY` through it instead of the process environment (tests supply their own values; an unknown name should return the empty text). No other variable is read through it.
 
 ## 3. Behaviour (Unix)
 

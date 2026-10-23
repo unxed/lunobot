@@ -88,7 +88,7 @@ const
 function IniQuote(const S: AnsiString): AnsiString;
 ```
 
-The private parts (fields, `Parse`, `IndexOf`, `AddSection`) are not part of the interface; the unit needs them only as described below. The `P` names are aliases kept for old programs (classes are references, so `PIniEntry` is the class itself). The enumeration callbacks are declared `is nested` (the Free Pascal modifier), so a nested procedure of the caller can be passed with `@`. Source file begins with `{$I tvdefs.inc}`.
+The private parts (fields, `Parse`, `IndexOf`, `AddSection`) are not part of the interface; the unit needs them only as described below. The `P` names are aliases kept for old programs (classes are references, so `PIniEntry` is the class itself). The enumeration callbacks are declared `is nested` (the Free Pascal modifier), so a nested procedure of the caller can be passed with `@`. The source uses mode objfpc.
 
 ## 3. File format
 
@@ -181,7 +181,7 @@ State: the list of sections (file order), a modified flag, whether a BOM was rea
 
 * `TvUStr` (implementation): `U8Lower(S)`, the UTF-8 aware lower-casing, for all case-insensitive comparisons of tags, section names and boolean words.
 * `SysUtils` (implementation): trimming, integer-to-text and text-to-integer-with-default, file existence/deletion/rename, extension handling (`ExtractFileExt`, `ChangeFileExt`, `CompareText`), plus the Pascal untyped-file routines for reading and writing the whole file.
-* `tvdefs.inc` for the compiler mode.
+* Compiler mode objfpc with long strings.
 
 ## 8. What the tests pin down (t_ini)
 
