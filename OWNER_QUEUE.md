@@ -120,3 +120,8 @@ https://github.com/unxed/pureffi/issues
 
 --
 
+https://github.com/joncampbell123/dosbox-x/pull/6715
+тут CI чот красный
+
+--
+
