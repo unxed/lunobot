@@ -50,7 +50,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 23-10-2026 12:46:53 UTC
-Прогресс 23-10-2026 12:51:56 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): goWidgets#30 шаг 9a заблокирован: `archive.NewUpdater(...).Remove` не поддерживает удаление в tar.zst; PR/код не создавались, блокер записан в projects/goWidgets/status/30.md; требуется отдельный zipper API шаг.
+Прогресс 23-10-2026 13:03 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): goWidgets#30 шаг 9a заблокирован: завёл отдельный API тикет unxed/zipper#42 для удаления записей из tar.zst через `NewUpdater(...).Remove`, с требованиями к сохранению остальных записей, безопасной перепаковке и тестам; код и PR не создавались. Прогресс поручения опубликован в https://github.com/unxed/lunobot/issues/214#issuecomment-6365526595; блокер записан в projects/goWidgets/status/30.md; после API PR вернуться к 9a.
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215
 Проект: dn
