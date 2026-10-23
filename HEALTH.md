@@ -2,6 +2,5 @@
 
 Пишет `janitor.py` (`pulse.py`) по журналам `refs/journal/*`; вручную не править. Тревога — срочная работа § 5 п. 2 для любого бота (модуль round, «Пульс»), снимается сама, когда условие пропало.
 
-- **no-reflection** — за сутки 71 кругов, а записей рефлексии 17: боты не пишут рефлексию (модуль round, «Рефлексия») — выясни, какие раннеры/модели, и почини причину
-- **rounds-failing** — за 6 ч упали 31 из 34 кругов (lunobot-round-luna-high.sh/openai/gpt-6-luna#high: 31): хвосты — в `journal.py digest`, раздел «Неудачные круги»
+- **rounds-failing** — за 6 ч упали 30 из 33 кругов (lunobot-round-luna-high.sh/openai/gpt-6-luna#high: 30): хвосты — в `journal.py digest`, раздел «Неудачные круги»
 - **friction-repeats** — трения повторяются без разбора: `tool-train.py` ×11, `gate-false-positive` ×6, `ci-wait` ×6, `deadline` ×5, `env-opencode` ×4 — разбор рефлексии (Лунобот-1) или жалоба § 12
