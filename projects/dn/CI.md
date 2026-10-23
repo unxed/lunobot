@@ -6,5 +6,3 @@
 
 23-10-2026 14:10:30 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), main, коммит `dfc0a43`, прогон [#836](https://github.com/unxed/dn/actions/runs/39967326589) layout
 
-23-10-2026 14:33:10 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/dn/issues/166, PR [#184](https://github.com/unxed/dn/pull/184), коммит `1d2c77e`, прогоны [dn-freebsd #16](https://github.com/unxed/dn/actions/runs/39970453960) (in_progress), [dn #932](https://github.com/unxed/dn/actions/runs/39970454053) (in_progress), [dn-windows #832](https://github.com/unxed/dn/actions/runs/39970453988) (queued), [dn-linux #946](https://github.com/unxed/dn/actions/runs/39970454240) (queued)
-
