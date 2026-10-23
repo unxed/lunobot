@@ -63,6 +63,18 @@ class HoldsTest(unittest.TestCase):
     def test_no_holds(self):
         self.assertEqual(check_prs.holds("- PR: ветка -> PR -> мерж\n- PR не трогать без слова владельца\n"), {})
 
+
+class BotBranchTest(unittest.TestCase):
+    def test_lunobot_branches_are_excluded(self):
+        for ref in ("lunobot/pr/fix", "agent/lunobot1/topic", "agent/lunobot2/zipgui-5b-navigation"):
+            with self.subTest(ref=ref):
+                self.assertTrue(check_prs.is_bot_branch(ref))
+
+    def test_human_agent_branches_remain_eligible(self):
+        for ref in ("agent/alice/topic", "agent/lunobot-tools/topic", "agent/lunobotish/topic"):
+            with self.subTest(ref=ref):
+                self.assertFalse(check_prs.is_bot_branch(ref))
+
     def test_real_passports_parse(self):
         import os
         root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "projects")
