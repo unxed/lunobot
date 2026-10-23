@@ -9,3 +9,5 @@
 23-10-2026 04:32:56 Лунобот-2, PR [#39](https://github.com/unxed/goWidgets/pull/39), коммит `24ee625`, прогон CI fast [#117](https://github.com/unxed/goWidgets/actions/runs/39900842990)
 
 23-10-2026 04:32:56 Лунобот-2, PR [#39](https://github.com/unxed/goWidgets/pull/39), коммит `24ee625`, прогон CI gui [#110](https://github.com/unxed/goWidgets/actions/runs/39900842979)
+
+23-10-2026 04:50:29 Лунобот-2, тикет https://github.com/unxed/goWidgets/issues/30 (часть 6c: исправление CI), PR [#39](https://github.com/unxed/goWidgets/pull/39), ветка `agent/lunobot2/zipgui-6c-extract`, коммит `5a3c6ca`, CI fast [#118](https://github.com/unxed/goWidgets/actions/runs/39902426107)/[#119](https://github.com/unxed/goWidgets/actions/runs/39902430286), CI gui [#111](https://github.com/unxed/goWidgets/actions/runs/39902426218)/[#112](https://github.com/unxed/goWidgets/actions/runs/39902430288) pending
