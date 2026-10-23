@@ -49,15 +49,15 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: goWidgets
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 23-10-2026 06:07:55 UTC
-Прогресс 23-10-2026 06:11:22 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): шаг 6c влит PR [unxed/goWidgets#39](https://github.com/unxed/goWidgets/pull/39), merge-коммит `6a63e8b7167c1c40a4aaef8f52e6698f59e2f2d1`; обязательные fast/linux/windows/macos зелёные на PR head `5a3c6ca1af703025bab8248b1c418c7cf2bfa1e4`, compare ahead 5 / behind 0. «Пробуйте!»: https://github.com/unxed/goWidgets/issues/30#issuecomment-6358674134. Строки CI/BRANCHES для PR убраны; main runs fast #39909851298/gui #39909851332 отменены по § 7.3. Дальше: шаг 6d (zipper Z4), затем 7–12; unxed/goWidgets#30 не закрыт.
+Состояние: свободно
+Прогресс 23-10-2026 06:14:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 63 раннера lunobot-round-luna-high.sh окончен (код 124); продолжать по тикету поручения и status/.
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215
 Проект: dn
 Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
 Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 23-10-2026 06:02:39 UTC
-Прогресс 23-10-2026 06:13:11 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): dn #929 run [39843522855](https://github.com/unxed/dn/actions/runs/39843522855) attempt 2 завершился success на `eee9136d16e4ce5dcb80572cb53b0dbe99b6ba64` (gates, audit, units, bootstrap, units-aarch64 — success). В CI.md отмечены также dn-freebsd #12 и dn-windows #830 success; обязательный dn-linux #944 остаётся cancelled. Следующий шаг: восстановить dn-linux check и проверить полный набор; PR #182 не вливать.
+Состояние: свободно
+Прогресс 23-10-2026 06:14:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 63 раннера lunobot-round-luna-high.sh окончен (код 124); продолжать по тикету поручения и status/.
 ## account-216
 Заметка владельца: https://github.com/unxed/lunobot/issues/216
 Проект: f4
