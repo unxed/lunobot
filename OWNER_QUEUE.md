@@ -49,8 +49,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: goWidgets
 Поручение: вести unxed/goWidgets#30 (showcase — GUI для unxed/zipper по UX WinRAR) небольшими шагами, чередуя с планом pixy; одновременно не больше одного PR showcase; недостающее API zipper — отдельный тикет и PR в unxed/zipper.
 Критерий: шаги 1–12 unxed/goWidgets#30 влиты с зелёными fast, linux, windows, macos; по каждому шагу в тикете — комментарий «что попробовать».
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 23-10-2026 04:30:30
-Прогресс 23-10-2026 04:32:28 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): шаг 6c PR #39 — удалён только checksum, который fast `go mod tidy -diff` назвал лишним; SHA `24ee6253a2d45c1256dde4515dc8811d6185c6b1` запушен и припаркован в status/30.md; зарегистрированы fast #116/#117 и gui #110. Осталось: PR CI/review/merge.
+Состояние: свободно
+Прогресс 23-10-2026 04:33:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 62 раннера lunobot-round-luna-high.sh окончен (код 124); продолжать по тикету поручения и status/.
 ## account-215
 Заметка владельца: https://github.com/unxed/lunobot/issues/215
 Проект: dn
