@@ -57,9 +57,15 @@ def run_gh(command, attempts=GH_ATTEMPTS, timeout=60):
     raise AssertionError("недостижимо")
 
 
-def gh_pages_by_number(path):
-    """Все страницы через gh api с явным page=N, не доверяя заголовку Link."""
+def _issue_count(items):
+    """Число уникальных issue (без PR) в списке ответа issues endpoint."""
+    return len({item["number"] for item in items if "pull_request" not in item})
+
+
+def gh_pages_by_number(path, expected_count=None, include_pull_requests=False):
+    """Страницы по номеру; для issues не считаем короткий ответ концом."""
     items = []
+    issue_numbers = set()
     page = 1
     while True:
         separator = "&" if "?" in path else "?"
@@ -68,29 +74,56 @@ def gh_pages_by_number(path):
             raise RuntimeError(result.stderr.strip() or "gh api завершился с ошибкой")
         batch = json.loads(result.stdout)
         if not isinstance(batch, list):
-            return batch
+            raise RuntimeError("ожидался список в ответе GitHub API")
         items.extend(batch)
-        if len(batch) < 100:
+        issue_numbers.update(
+            item["number"] for item in batch
+            if include_pull_requests or "pull_request" not in item
+        )
+        if expected_count is not None:
+            if len(issue_numbers) == expected_count:
+                return items
+            if len(issue_numbers) > expected_count:
+                raise RuntimeError(
+                    f"GitHub вернул больше записей, чем заявлено: ожидалось {expected_count}, "
+                    f"получено {len(issue_numbers)}"
+                )
+            if not batch:
+                raise RuntimeError(
+                    f"пагинация неполна: ожидалось {expected_count} issues, получено {len(issue_numbers)}"
+                )
+        elif len(batch) < 100:
             return items
         page += 1
 
 
-def gh_pages(path):
+def gh_pages(path, expected_count=None, include_pull_requests=False):
     """Получить все страницы endpoint через gh или обычный HTTP."""
     if shutil.which("gh"):
         result = run_gh(["gh", "api", path, "--paginate", "--slurp"])
         if result.returncode == 0:
             pages = json.loads(result.stdout)
-            if not pages:
-                return []
-            if isinstance(pages[0], list):
-                return [item for page in pages for item in page]
-            return pages
+            if not isinstance(pages, list):
+                raise RuntimeError("gh api --paginate --slurp вернул не список страниц")
+            if not pages or not all(isinstance(page, list) for page in pages):
+                flattened = pages if pages and not isinstance(pages[0], list) else []
+            else:
+                flattened = [item for page in pages for item in page]
+            observed_count = (
+                len({item["number"] for item in flattened})
+                if include_pull_requests else _issue_count(flattened)
+            ) if expected_count is not None else None
+            if expected_count is None or observed_count == expected_count:
+                return flattened
+            # Proxy/API pagination may silently stop on an empty page or omit a
+            # page. Verify against the independently obtained total, then retry
+            # using explicit page numbers rather than treating that as closure.
+            return gh_pages_by_number(path, expected_count, include_pull_requests)
         # Прокси некоторых сред (Claude Code в облаке) запрещает числовые пути
         # repositories/{id}, на которые gh --paginate переходит по заголовку
         # Link. Тогда страницы берём по одной, без заголовка.
         if "repositories/" in result.stderr or "proxy" in result.stderr:
-            return gh_pages_by_number(path)
+            return gh_pages_by_number(path, expected_count, include_pull_requests)
         raise RuntimeError(result.stderr.strip() or "gh api завершился с ошибкой")
 
     items = []
@@ -104,7 +137,20 @@ def gh_pages(path):
         if not isinstance(batch, list):
             return batch
         items.extend(batch)
-        if len(batch) < 100:
+        if expected_count is not None:
+            observed_count = len({item["number"] for item in items}) if include_pull_requests else _issue_count(items)
+            if observed_count == expected_count:
+                return items
+            if observed_count > expected_count:
+                raise RuntimeError(
+                    f"GitHub вернул больше записей, чем заявлено: ожидалось {expected_count}, "
+                    f"получено {observed_count}"
+                )
+            if not batch:
+                raise RuntimeError(
+                    f"пагинация неполна: ожидалось {expected_count} записей, получено {observed_count}"
+                )
+        elif len(batch) < 100:
             return items
         page += 1
 
@@ -168,15 +214,23 @@ def main():
     repo = repository(project, explicit)
     rows, malformed = read_triage(project)
 
-    issues = gh_pages(f"/repos/{repo}/issues?state=open&per_page=100")
-    open_issues = {item["number"]: item for item in issues if "pull_request" not in item}
     try:
         count = gh_one(f"/search/issues?q={urllib.parse.quote(f'repo:{repo} is:issue is:open')}&per_page=1")["total_count"]
+        count_includes_prs = False
     except RuntimeError:
         # Прокси без search API: у репозитория open_issues_count включает PR,
         # а PR в списке выше мы видим сами.
-        open_prs = sum(1 for item in issues if "pull_request" in item)
-        count = gh_one(f"/repos/{repo}")["open_issues_count"] - open_prs
+        count = gh_one(f"/repos/{repo}")["open_issues_count"]
+        count_includes_prs = True
+
+    issues = gh_pages(
+        f"/repos/{repo}/issues?state=open&per_page=100",
+        expected_count=count,
+        include_pull_requests=count_includes_prs,
+    )
+    open_issues = {item["number"]: item for item in issues if "pull_request" not in item}
+    if count_includes_prs:
+        count = len(open_issues)
 
     problems = []
     if count != len(open_issues):
