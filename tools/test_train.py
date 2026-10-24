@@ -80,10 +80,10 @@ class InvalidInvocationTest(unittest.TestCase):
         self.assertIn("--sign", output.getvalue())
         self.assertNotIn("land", output.getvalue())
 
-    def test_health_rejects_sign_with_focused_usage_and_code_2(self):
+    def test_health_rejects_flag_without_repository(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            result = train.main(["health", "unxed/f4", "--sign", "bot"])
+            result = train.main(["health", "--sign"])
         self.assertEqual(result, 2)
         self.assertIn("health:", output.getvalue())
         self.assertIn("<owner/repo>", output.getvalue())
@@ -1736,6 +1736,29 @@ class MainHelpTest(unittest.TestCase):
         self.assertEqual(rc, 2)
         land.assert_not_called()
         self.assertIn("--fix-staging", out)
+
+    def test_tick_all_invalid_arguments_show_command_specific_help(self):
+        for argv in (["tick-all"], ["tick-all", "--sign"],
+                     ["tick-all", "--sign", "sig", "extra"]):
+            with self.subTest(argv=argv), \
+                    mock.patch.object(train, "tick_all") as tick_all, \
+                    contextlib.redirect_stdout(io.StringIO()) as out:
+                rc = train.main(argv)
+            self.assertEqual(rc, 2)
+            tick_all.assert_not_called()
+            self.assertIn("train.py tick-all --sign", out.getvalue())
+            self.assertNotIn("train.py land", out.getvalue())
+
+    def test_health_invalid_arguments_show_command_specific_help(self):
+        for argv in (["health"], ["health", "o/r", "extra"]):
+            with self.subTest(argv=argv), \
+                    mock.patch.object(train, "health") as health, \
+                    contextlib.redirect_stdout(io.StringIO()) as out:
+                rc = train.main(argv)
+            self.assertEqual(rc, 2)
+            health.assert_not_called()
+            self.assertIn("train.py health <owner/repo>", out.getvalue())
+            self.assertNotIn("train.py land", out.getvalue())
 
     def test_land_known_flags_still_work(self):
         rc, land, _ = self.run_main(["land"])

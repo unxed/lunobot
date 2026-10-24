@@ -30,15 +30,29 @@ def iso(dt):
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def completed_rounds(rounds):
+    """Уникальные успешно завершённые логические круги (метрика пишется на каждую попытку)."""
+    completed = {}
+    for r in rounds:
+        if r.get("exit") != 0:
+            continue
+        # Retries reuse a runner's round number. Older/manual records without one remain distinct by timestamp.
+        key = (r.get("id"), r.get("runner"), r["round"]) if r.get("round") is not None else (
+            r.get("id"), r.get("runner"), r["ts"])
+        completed[key] = r
+    return list(completed.values())
+
+
 def alarms(recs, now=None):
     """Список (ключ, текст) тревог по записям журналов."""
     now = now or datetime.now(timezone.utc)
     d6, d24, d48 = iso(now - timedelta(hours=6)), iso(now - timedelta(hours=24)), iso(now - timedelta(hours=48))
     rounds24 = [r for r in recs if r["kind"] == "round" and r["ts"] >= d24]
+    completed24 = completed_rounds(rounds24)
     refl24 = [r for r in recs if r["kind"] == "reflection" and r["ts"] >= d24]
     out = []
-    if len(rounds24) >= 4 and len(refl24) < len(rounds24) / 2:
-        out.append(("no-reflection", f"за сутки {len(rounds24)} кругов, а записей рефлексии {len(refl24)}: боты не "
+    if len(completed24) >= 4 and len(refl24) < len(completed24) / 2:
+        out.append(("no-reflection", f"за сутки {len(completed24)} завершённых кругов, а записей рефлексии {len(refl24)}: боты не "
                     "пишут рефлексию (модуль round, «Рефлексия») — выясни, какие раннеры/модели, и почини причину"))
     digests = [r["ts"] for r in recs if r["kind"] == "digest"]
     l1 = [r for r in recs if r["kind"] == "round" and r["ts"] >= d48 and r.get("id", "").startswith("Лунобот-1 ")]
