@@ -101,7 +101,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: взять unxed/pureffi на обслуживание: подключить в projects/INDEX.md, завести паспорт и учётные файлы, затем исправлять открытые проблемы атомарными PR по приоритету.
 Критерий: pureffi добавлен в INDEX с рабочим паспортом и триажем; все порученные исправления влиты с зелёным CI, прогресс ведётся в issue до завершения.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 24-10-2026 17:39:35 UTC
-Прогресс 24-10-2026 17:39:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): возобновил поручение; сверяю текущие PR, открытые проблемы и TRIAGE pureffi перед следующим атомарным шагом.
+Прогресс 24-10-2026 17:41:32 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): unxed/pureffi main: run [40105634930](https://github.com/unxed/pureffi/actions/runs/40105634930) success на SHA `441d5b62d291f8534c156d505b9d69656e060f8b`; run [40105876416](https://github.com/unxed/pureffi/actions/runs/40105876416) success; текущий main [e6e6228d51d3e19caafaee07f96543a7c3ab7ae6](https://github.com/unxed/pureffi/commit/e6e6228d51d3e19caafaee07f96543a7c3ab7ae6).
 
 
 
