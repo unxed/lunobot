@@ -108,7 +108,7 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: pureffi добавлен в INDEX с рабочим паспортом и триажем; все порученные исправления влиты с зелёным CI, прогресс ведётся в issue до завершения.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 24-10-2026 01:01:36 UTC
 
-Прогресс 24-10-2026 01:09:27 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): unxed/pureffi#11 припаркован, фикс errno из вызова готов к PR; unxed/pureffi#9 ждёт CI по PR #18; unxed/pureffi#10 ждёт ответа владельца: https://github.com/unxed/pureffi/issues/10#issuecomment-6377943249.
+Прогресс 24-10-2026 01:10:07 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): unxed/pureffi#11 — PR https://github.com/unxed/pureffi/pull/19, CI #40048533136 в очереди; unxed/pureffi#9 — CI по PR #18; unxed/pureffi#10 ждёт ответа владельца: https://github.com/unxed/pureffi/issues/10#issuecomment-6377943249.
 --
 
 ## account-271
