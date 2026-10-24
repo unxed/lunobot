@@ -2277,7 +2277,7 @@ def main(argv):
         print('tick-all: укажите подпись: train.py tick-all --sign "<подпись>"')
         return 2
     if cmd == "health":
-        if len(rest) == 1:
+        if len(rest) == 1 and not rest[0].startswith("-"):
             return health(rest[0])
         print("health: укажите ровно один репозиторий: train.py health <owner/repo>")
         return 2

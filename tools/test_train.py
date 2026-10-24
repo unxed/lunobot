@@ -70,6 +70,26 @@ class ApiRetryTest(unittest.TestCase):
         self.assertTrue(train.api_is_read(["-X", "GET", "-f", "branch=lunobot/staging"]))
 
 
+class InvalidInvocationTest(unittest.TestCase):
+    def test_tick_all_without_sign_has_focused_usage_and_code_2(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            result = train.main(["tick-all"])
+        self.assertEqual(result, 2)
+        self.assertIn("tick-all:", output.getvalue())
+        self.assertIn("--sign", output.getvalue())
+        self.assertNotIn("land", output.getvalue())
+
+    def test_health_rejects_flag_without_repository(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            result = train.main(["health", "--sign"])
+        self.assertEqual(result, 2)
+        self.assertIn("health:", output.getvalue())
+        self.assertIn("<owner/repo>", output.getvalue())
+        self.assertNotIn("tick-all", output.getvalue())
+
+
 class ExistingRefTest(unittest.TestCase):
     def test_404_json_is_not_a_ref(self):
         # `gh api` prints the 404 body to stdout; api() parses it into a dict.
