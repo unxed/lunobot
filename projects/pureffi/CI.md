@@ -11,3 +11,5 @@
 24-10-2026 02:16:17 UTC, тикет https://github.com/unxed/pureffi/issues/13, PR [#21](https://github.com/unxed/pureffi/pull/21), коммит `40a7b7e`, прогон [#40053468459](https://github.com/unxed/pureffi/actions/runs/40053468459)
 
 24-10-2026 02:20:42 UTC, тикет https://github.com/unxed/pureffi/issues/14, PR [#22](https://github.com/unxed/pureffi/pull/22), коммит `a1ba739`, прогон [#40053777227](https://github.com/unxed/pureffi/actions/runs/40053777227)
+
+24-10-2026 02:25:41 UTC, тикет https://github.com/unxed/pureffi/issues/15, PR [#23](https://github.com/unxed/pureffi/pull/23), коммит `289612d`, прогон [#40054095519](https://github.com/unxed/pureffi/actions/runs/40054095519)
