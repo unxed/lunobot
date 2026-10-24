@@ -151,40 +151,11 @@ id, адресат и проект не нужны (пишет с телефон
 
 --
 
-Посмотри в github.com/unxed/sandbox
-недавние коммиты со словом
-faststone
-Лунобот должен подхватить эту работу и закончить её
-
-
-commit 29917912707e6a389adc4c9ed5c6240724a54e50
-Author: Codex <codex@openai.com>
-Date:   Sat Oct 24 14:19:21 2026 +0200
-
-    faststone: Document complete task, checkpoint evidence and clean-room recovery
-
-commit 2e0131f5130d25b71b2814eaaed6c22d78da4795
-Author: Codex <codex@openai.com>
-Date:   Sat Oct 24 14:19:21 2026 +0200
-
-    faststone: Restore precloned prefixes and actionable runtime diagnostics
-
-commit e508aaf213b185f9cafb9e15ecfb2abcfef82691
-Author: Codex <codex@openai.com>
-Date:   Sat Oct 24 01:57:31 2026 +0200
-
-    faststone: Preserve isolated test runners and interrupted runtime investigation
-
-commit 74eb6ddb306a55ef8c8c0dc9c7437ef6d1d02039
-Author: Codex <codex@openai.com>
-Date:   Sat Oct 24 01:44:00 2026 +0200
-
-    faststone: Preserve current runtime probes and recovery details
-
-commit b8290cbb36a574a44159faae63149e4f143bd465
-Author: Codex <codex@openai.com>
-Date:   Fri Oct 23 14:17:27 2026 -0400
-
-    faststone: Preserve recovery checkpoint, API probes, GUI tests and portable bundle workbench
+## account-280
+Заметка владельца: https://github.com/unxed/lunobot/issues/280
+Проект: учёт
+Поручение: подключить unxed/sandbox в учёт как проект и подхватить до проверяемого результата работу faststone из перечисленных владельцем коммитов.
+Критерий: unxed/sandbox добавлен в INDEX с рабочим паспортом и учётными файлами; состояние faststone и следующий проверяемый шаг отражены в issue #280, а сделанная правка влита с обязательными проверками либо конкретный внешний блокер записан там же.
+Состояние: взял в работу — Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX), 24-10-2026 23:04:22 UTC
 
 --
