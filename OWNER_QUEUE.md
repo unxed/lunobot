@@ -121,4 +121,11 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: ждёт владельца — нет прав на rerun macOS job в чужом upstream; следующий шаг maintainer записан в issue #271.
 Прогресс 23-10-2026 23:35:05 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверен unxed/dosbox-x#6715 на SHA `812abcfd779d2aab9aa5d257db661ad3ca24ee28`; macOS job упал из-за подтверждённой потери связи hosted runner, а не ошибки сборки (детали и следующий шаг в https://github.com/unxed/lunobot/issues/271#issuecomment-6376850773). Нет WRITE-доступа для rerun/правки PR; ветку не менял, не вливал. Требуется maintainer rerun failed job на том же SHA; если сбой повторится — сохранить логи runner.
 
+## account-272
+Заметка владельца: https://github.com/unxed/lunobot/issues/272
+Проект: учёт
+Поручение: добавить распознавание OpenCode JSON-события `error` в journal.py и regression test для error-only quota log.
+Критерий: ошибка-only JSON распознаётся как OpenCode JSON и сохраняет quota/error details; PR влит с зелёным CI.
+Состояние: ждёт владельца — точный фикс уже в открытом PR #273, все три CI проверки зелёные; нужен review/merge Луноботом-1 или владельцем (Лунобот-2 не вливает complaint PR по § 12).
+
 --
