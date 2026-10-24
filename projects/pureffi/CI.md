@@ -9,3 +9,5 @@
 24-10-2026 02:29:40 UTC, тикет https://github.com/unxed/pureffi/issues/16, PR [#24](https://github.com/unxed/pureffi/pull/24), коммит `f3f9d27`, прогон [#40054377025](https://github.com/unxed/pureffi/actions/runs/40054377025)
 
 24-10-2026 06:06:00 UTC, main, коммит `610e7d6`, прогон [#40](https://github.com/unxed/pureffi/actions/runs/40068816697)
+
+24-10-2026 08:59:00 UTC, Лунобот-2, main, коммит `b2f6d73`, прогон [#41](https://github.com/unxed/pureffi/actions/runs/40080115527)
