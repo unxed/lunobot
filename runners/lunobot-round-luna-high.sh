@@ -47,7 +47,47 @@ check_token_limit() {
   # лог — opencode --format json: смотрим только события error и строки вне JSON (stderr), не текст тикетов в выводе инструментов
   jq -Rr '(fromjson? // null) as $j | if $j == null then . elif $j.type == "error" then ($j | tostring) else empty end' \
     "${log_file}" 2>/dev/null \
-    | grep -qi -E "rate limit|token limit|quota exceeded|too many tokens|429 Too Many Requests|insufficient quota|billing"
+    | grep -qi -E "rate limit|token limit|quota exceeded|too many tokens|429 Too Many Requests|insufficient quota|billing|provider\.quota|usage_limit_reached"
+}
+
+quota_wait_seconds() {
+  local log_file="$1"
+  python3 - "$log_file" "$TOKEN_LIMIT_WAIT" <<'PY'
+import json
+import sys
+
+fallback = int(sys.argv[2])
+waits = []
+
+def find_resets(value):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "resets_in_seconds":
+                try:
+                    waits.append(int(child))
+                except (TypeError, ValueError):
+                    pass
+            elif key in {"body", "response"} and isinstance(child, str):
+                try:
+                    find_resets(json.loads(child))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            else:
+                find_resets(child)
+    elif isinstance(value, list):
+        for child in value:
+            find_resets(child)
+
+with open(sys.argv[1], encoding="utf-8") as log:
+    for line in log:
+        try:
+            find_resets(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+# Honor the latest provider reset in the log, with a small boundary cushion.
+print(max(waits) + 5 if waits else fallback)
+PY
 }
 
 wait_token_reset() {
@@ -174,7 +214,7 @@ run_round() {
 
   if check_token_limit "${log_file}"; then
     log "DETECTED: Token limit / rate limit in round output"
-    wait_token_reset "${TOKEN_LIMIT_WAIT}"
+    wait_token_reset "$(quota_wait_seconds "${log_file}")"
     return 2
   fi
 
