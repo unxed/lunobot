@@ -151,7 +151,7 @@ id, адресат и проект не нужны (пишет с телефон
 
 --
 
-## sandbox-faststone-handoff-20261025
+## account-280
 Заметка владельца: «Доделать эту работу: https://github.com/unxed/sandbox/blob/main/faststone/HANDOFF.md»
 Проект: sandbox (faststone)
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
