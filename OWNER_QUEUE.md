@@ -151,7 +151,11 @@ id, адресат и проект не нужны (пишет с телефон
 
 --
 
-Доделать эту работу:
-https://github.com/unxed/sandbox/blob/main/faststone/HANDOFF.md
+## sandbox-faststone-handoff-20261025
+Заметка владельца: «Доделать эту работу: https://github.com/unxed/sandbox/blob/main/faststone/HANDOFF.md»
+Проект: sandbox (faststone)
+Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
+Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
+Состояние: взял в работу — Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX), 25-10-2026 06:18:27 UTC
 
 --
