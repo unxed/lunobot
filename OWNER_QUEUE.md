@@ -157,6 +157,6 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX), 25-10-2026 06:18:27 UTC
-Прогресс 25-10-2026 12:08:36 UTC (Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX)): retry 40188738487 failure на exact SHA после зелёного Wine source-build: MinGW не объявляет `OCR_NORMAL`, QEMU/GUI evidence ещё не запускались. Artifact 12598111867 сохранён; продолжаю атомарной portable resource-id правкой и новым PR-run.
+Прогресс 25-10-2026 16:27:51 UTC (Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX)): run 40191928206 failure на SHA d8e1375 после зелёных source-build/MinGW/kernel и старта guest: `wineboot -i` отверг host-seeded golden-prefix по ownership, поэтому запрос первого STATIC окна не исполнился. Artifact 12598684342 сохранён; продолжаю атомарной правкой guest-visible ownership mapping и guard.
 
 --
