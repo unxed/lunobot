@@ -157,6 +157,6 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX), 25-10-2026 06:18:27 UTC
-Прогресс 25-10-2026 06:49:28 UTC (Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX)): открыт unxed/sandbox#6 на `lunobot/urgent/280-faststone-gui-bootstrap`; точный PR-run 40170016794 на SHA `15b2099149b13dd05f545f6c93690451f55bdb2d` проверяет source-build Wine и offline QEMU static-window/X11 evidence. Результат ещё не подтверждён; следующий шаг — разобрать exact SHA после завершения run.
+Прогресс 25-10-2026 11:22:03 UTC (Лунобот-2 (node e65adfdb29b05535c1eb5c7a; LNX)): run 40170016794 завершился failure на exact SHA: source-build Wine зелёный, но MinGW отклонил `LoadCursorW(NULL, IDC_ARROW)` в новом probe как ANSI/wide type mismatch, поэтому QEMU и GUI evidence ещё не выполнялись. Artifact 12590945121 сохранён; продолжаю атомарной wide-resource правкой и повтором PR workflow.
 
 --
