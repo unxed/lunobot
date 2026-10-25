@@ -149,3 +149,9 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: ждёт владельца — контракт resurrect не подтверждён; вопрос: https://github.com/unxed/lunobot/issues/279#issuecomment-6387310436; 24-10-2026 17:28:38 UTC
 Прогресс 24-10-2026 17:28:38 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): f4 resurrection относится к сессиям, far2l использует системную корзину, старый mcommander Undelfs удалён; вопрос владельцу: https://github.com/unxed/lunobot/issues/279#issuecomment-6387310436
 
+--
+
+Доделать эту работу:
+https://github.com/unxed/sandbox/blob/main/faststone/HANDOFF.md
+
+--
