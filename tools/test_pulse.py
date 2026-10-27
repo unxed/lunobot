@@ -24,6 +24,16 @@ class PulseTest(unittest.TestCase):
         recs = [rec("round", f"2026-10-22T0{h}:00:00Z", exit=0) for h in range(4)]
         self.assertIn("no-reflection", self.keys(recs))
 
+    def test_no_reflection_ignores_failed_attempts_and_deduplicates_retries(self):
+        recs = []
+        for n in range(4):
+            recs += [rec("round", f"2026-10-22T0{n + 1}:00:00Z", exit=124, runner="r", round=n),
+                     rec("round", f"2026-10-22T0{n + 1}:01:00Z", exit=0, runner="r", round=n)]
+        for n in range(4, 12):
+            recs.append(rec("round", f"2026-10-22T1{n - 4}:00:00Z", exit=1, runner="r", round=n))
+        recs += [rec("reflection", f"2026-10-22T11:{n:02d}:00Z", friction=[]) for n in range(4)]
+        self.assertNotIn("no-reflection", self.keys(recs))
+
     def test_failing_rounds(self):
         recs = [rec("round", f"2026-10-22T1{h}:00:00Z", exit=124, runner="r", model="m") for h in range(3)]
         recs += [rec("reflection", "2026-10-22T11:00:00Z", friction=[])] * 3
