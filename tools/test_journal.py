@@ -159,6 +159,15 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(m["result"], "делаю шаг")
         self.assertTrue(m["rate_limited"])
 
+    def test_opencode_error_only_json_log_is_detected(self):
+        line = {"type": "error", "error": {"type": "provider.quota",
+                                              "message": "The usage limit has been reached",
+                                              "response": {"body": '{"type":"error","error":{"type":"usage_limit_reached"}}'}}}
+        m = journal.metrics(self.write(json.dumps(line)))
+        self.assertEqual(m["log_format"], "opencode-json")
+        self.assertTrue(m["rate_limited"])
+        self.assertIn("provider.quota", m["_said"][0])
+
     def test_tool_output_mentioning_limits_is_not_a_limit(self):
         m = journal.metrics(self.write("> build\nвывод: rate limit в тексте тикета\nError: usage limit reached\n"),
                             "opencode")
