@@ -10,8 +10,9 @@ class ImageOutputDirTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             bot_root = Path(tmp) / "lunobot-2"
             accounting = bot_root / "accounting"
-            accounting.mkdir(parents=True)
-            script = accounting / "fetch_images.py"
+            tools = accounting / "tools"
+            tools.mkdir(parents=True)
+            script = tools / "fetch_images.py"
 
             first = Path(fetch_images.image_output_dir(script, "unxed/f4", "1389"))
             second = Path(fetch_images.image_output_dir(script, "unxed/f4", "1389"))
@@ -25,9 +26,10 @@ class ImageOutputDirTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             step = Path(tmp) / "lunobot-2" / "work" / "1389-1014-1200"
             accounting = step / "accounting"
-            accounting.mkdir(parents=True)
+            tools = accounting / "tools"
+            tools.mkdir(parents=True)
 
-            path = Path(fetch_images.image_output_dir(accounting / "fetch_images.py", "unxed/f4", "1389"))
+            path = Path(fetch_images.image_output_dir(tools / "fetch_images.py", "unxed/f4", "1389"))
 
             self.assertEqual(path, step.resolve() / "img" / "unxed-f4-1389")
             self.assertTrue(path.is_dir())
