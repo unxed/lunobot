@@ -64,7 +64,7 @@ var
   GadgetPalette: ShortString = #2;
 ```
 
-Source begins with `{$I tvdefs.inc}`. `Update` is a virtual method of `TView` (a no-op there) that is called by the program, not by the view system. `TimeStr` and `HeapStr` are public so that tests can read them.
+The source uses mode objfpc. `Update` is a virtual method of `TView` (a no-op there) that is called by the program, not by the view system. `TimeStr` and `HeapStr` are public so that tests can read them.
 
 ## 3. Common behaviour
 

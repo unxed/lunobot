@@ -42,7 +42,7 @@ procedure ClearActions;
 procedure UseActionsForSwitcher(const AName: ShortString = 'window.switch');
 ```
 
-Source begins with `{$I tvdefs.inc}`. No other public identifiers.
+The source uses mode objfpc. No other public identifiers.
 
 ## 3. Behaviour
 
