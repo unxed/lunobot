@@ -12,13 +12,13 @@
 - Диагностические workflow: `dn.yml`, `dn-linux.yml`, `dn-windows.yml` и
   `class-migration.yml` через `workflow_dispatch`; отдельного `sandbox.yml` нет
 - Обязательная проверка: для изменений в DN используй PR-проверки `dn.yml`,
-  `dn-linux.yml` и `dn-windows.yml`; `class-migration.yml` добавляется, когда
+  `dn-linux.yml`, `dn-windows.yml` и `dn-freebsd.yml`; `class-migration.yml` добавляется, когда
   затронуты class-порт, `dn/**`, `tv` или инструменты миграции. После мержа
   учитывай push-проверки `tv.yml`, `layout.yml`, `audit.yml` и `toolchain.yml`,
   если их пути затронуты.
 - Первая компиляция нового Pascal-кода до PR: запушь ветку `lunobot/pr/<ключ>` и запусти узко `gh workflow run dn.yml --ref <ветка>` — дают `units`, `units-aarch64`, `gates`, `audit` за ~5 минут без матриц `dn-linux`/`dn-windows` (их запускает PR). `dn-test.sh` печатает только первые 10 строк `FAIL`; лог — `python3 tools/run_log.py unxed/dn <id прогона> --job units --grep 'FAIL|Error'`. PR открывай, когда этот прогон зелёный (часть 6а `unxed/dn#90`: модуль собрался на x86_64 и aarch64 с первого раза).
 - Прогоны `main` после мержа не отменять (исключение из § 7.3, как у vtui): `nightly.yml` публикует коммит `main`, только
-  когда все его push-прогоны `dn-linux`, `dn`, `dn-windows`, `dos-utf8` завершились успехом; отменённый прогон оставляет
+  когда все его push-прогоны `dn-linux`, `dn`, `dn-windows`, `dos-utf8`, `dn-freebsd` завершились успехом; отменённый прогон оставляет
   `nightly` без исправления, которое «Пробуйте!» предлагает проверить (14-10-2026, PR unxed/dn#43).
 - Платформы (unxed/dn#166, пробы 39511037412 и 39511629649, 20-10-2026; таблица — комментарий 6305062661 в тикете): FreeBSD x86_64 — шаги 1–2 (pkg fpc 3.2.3, сборка `tools/build.sh freebsd64`, job `dn-freebsd.yml`); собираются родным fpc без правок исходников и рисуют панели — DragonFly 6.4 x86_64 (pkg fpc 3.2.3), macOS arm64 (brew fpc 3.2.2); собираются, запуск не проверен — NetBSD 10.1 x86_64 (pkgsrc fpc 3.2.2, нужен свой `fpc.cfg`), Linux armhf; не собираются — macOS x86_64 (ассемблер clang отвергает метки `goto` внутри `.cfi_startproc`, `arvidavt.pas` и ~55 файлов с `label`); нет компилятора в пакетах — Linux riscv64, FreeBSD aarch64, OpenBSD 7.8; Haiku r1beta5 — репозиторий HaikuPorts в VM не скачался (повторить на r1beta6). Порядок новых платформ: DragonFly → macOS arm64 → NetBSD, armhf; смоук «команда из командной строки» в пробе был сломан (красный и на Linux), его не считать результатом платформы.
 - Особенности: Pascal/FreePascal, исходники DN и TV разделены; сборка и проверки
