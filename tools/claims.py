@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Захваты на git-ref учётного репозитория (§ 3 п. 12, § 8 «DISPATCH.md»).
 
-    python3 tools/claims.py take      <проект> "<строка захвата>"                  [--repo DIR]
+    python3 tools/claims.py take      <проект> "<строка захвата>"                  [--repo DIR] [--sign "<id>"]
     python3 tools/claims.py keepalive <проект> "<ключ|подстрока>"   --sign "<id>"  [--repo DIR]
     python3 tools/claims.py drop      <проект> "<ключ|подстрока>"   --sign "<id>"  [--all] [--foreign]
     python3 tools/claims.py list      [<проект>]
@@ -23,6 +23,10 @@
 `stall-main`; поручение `OWNER_QUEUE.md` («<id блока>: …», блок существует) → только `queue-<id>`;
 кастомная задача без ссылок → `custom-<12 hex sha1 текста>`; «объявляю заморозку land проекта» →
 `freeze`; «прекращаю работу»/«считаю цель» → `note-<N>-<узел>` (своя, перезаписывается).
+
+Метку времени и «Я <id>,» можно не писать: `take … --sign "<id>"` дописывает их к строке без метки сам, UTC — по
+часам этого узла в момент вызова («метка из `date -u` в том же вызове», § 8): ручная метка раз за разом оказывалась в
+будущем или терялась вместе с «Я Лунобот-N (…)» (отказ гейта, повторный вызов).
 
 Продление — новый коммит с родителем-прежним и свежей датой коммиттера; живость захвата —
 дата коммиттера ref-коммита. Снятие — удаление ветки; если прокси не даёт её удалить (облачная
@@ -377,6 +381,17 @@ def validate(repo, project, line, base):
     return problems
 
 
+def stamp_line(line, sign, now=None):
+    """Строка захвата без метки времени (и без «Я <id>,») + `--sign` → полная строка с текущим UTC.
+    Строка с меткой остаётся как есть; без `--sign` ничего не дописывается (гейт скажет сам)."""
+    line = line.strip()
+    if not sign or TS.match(line):
+        return line
+    now = now or datetime.now(timezone.utc)
+    head = "" if line.startswith("Я ") else f"Я {sign}, "
+    return f"{now.strftime('%d-%m-%Y %H:%M:%S')} {head}{line}"
+
+
 def take(repo, project, line, remote="origin", unix=None, check=True):
     """Захватить. 0 — взято (или уже держит тот же владелец), 1 — занято/гейт, 2 — сеть."""
     line = line.strip()
@@ -604,7 +619,11 @@ def main(argv=None):
         import janitor_kick
         janitor_kick.spawn(a.repo)
         if a.op == "take":
-            return take(a.repo, project, text, a.remote)
+            if a.sign and not SIGN.search(a.sign):
+                print("--sign: нужен полный id, например «Лунобот-1 (node a721a6d1487257292ae00780; LNX)»",
+                      file=sys.stderr)
+                return 2
+            return take(a.repo, project, stamp_line(text, a.sign), a.remote)
         if not a.sign or not SIGN.search(a.sign):
             print("--sign: нужен полный id, например «Лунобот-1 (node a721a6d1487257292ae00780; LNX)»",
                   file=sys.stderr)
