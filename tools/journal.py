@@ -172,7 +172,7 @@ def metrics(path, fmt=None):
                 if t in ("system", "assistant", "result"):
                     fmt = "claude"
                     break
-                if t in ("step_start", "step_finish", "text", "tool_use", "reasoning"):
+                if t in ("step_start", "step_finish", "text", "tool_use", "reasoning", "error"):
                     fmt = "opencode-json"  # opencode run --format json
                     break
             except (ValueError, AttributeError):
