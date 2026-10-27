@@ -118,6 +118,31 @@ class GitCase(unittest.TestCase):
                       for l in sh(self.a, "ls-remote", self.bare, "refs/heads/claims/*").splitlines())
 
 
+class StampLineTest(unittest.TestCase):
+    NOW = datetime(2026, 10, 27, 19, 2, 36, tzinfo=timezone.utc)
+
+    def test_adds_stamp_and_id_to_bare_text(self):
+        got = claims.stamp_line("взял кастомную задачу «x» по § 4 п. 6 [land]", ME, self.NOW)
+        self.assertEqual(got, f"27-10-2026 19:02:36 Я {ME}, взял кастомную задачу «x» по § 4 п. 6 [land]")
+
+    def test_adds_only_stamp_when_id_is_already_there(self):
+        got = claims.stamp_line(f"Я {ME}, взял кастомную задачу «x» по § 4 п. 6 [land]", ME, self.NOW)
+        self.assertEqual(got, f"27-10-2026 19:02:36 Я {ME}, взял кастомную задачу «x» по § 4 п. 6 [land]")
+
+    def test_full_line_is_untouched(self):
+        full = custom("x", ts="27-10-2026 19:00:00")
+        self.assertEqual(claims.stamp_line(full, ME, self.NOW), full)
+
+    def test_without_sign_nothing_is_added(self):
+        self.assertEqual(claims.stamp_line(" взял задачу ", None, self.NOW), "взял задачу")
+
+    def test_stamped_line_passes_the_gate_and_is_never_in_the_future(self):
+        bare = f"взял кастомную задачу «автоштамп» по § 4 п. 6 [urgent: по § 5 п. 2 — красный staging]"
+        got = claims.stamp_line(bare, ME)
+        self.assertRegex(got, r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2} Я ")
+        self.assertIsNone(claims.TS.match(bare))
+
+
 class TakeTest(GitCase):
     def test_take_then_other_owner_is_refused(self):
         self.assertEqual(self.quiet(claims.take, self.a, "f4", line(1)), 0)
@@ -125,6 +150,11 @@ class TakeTest(GitCase):
         self.assertEqual(self.quiet(claims.take, self.b, "f4", line(1, who=THEM)), 1)
         self.assertIn("занято", self.out)
         self.assertIn(line(1), self.out)
+
+    def test_take_of_auto_stamped_line_is_accepted(self):
+        bare = "взял кастомную задачу «автоштамп» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]"
+        self.assertEqual(self.quiet(claims.take, self.a, "f4", claims.stamp_line(bare, ME)), 0)
+        self.assertEqual(len(self.remote_refs()), 1)
 
     def test_same_owner_retake_is_noop(self):
         self.quiet(claims.take, self.a, "f4", line(1))
