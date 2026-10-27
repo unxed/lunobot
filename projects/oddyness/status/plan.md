@@ -24,3 +24,5 @@
 22-10-2026 00:00:01 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): P01 завершена: PR https://github.com/unxed/oddyness/pull/1 влит в `main`, merge-коммит `c78fbc6774a35ba1fc2186a346520a434d02f318`; CI #3 зелёный, CI `main` #4 отменён по §7.3 (PR был актуален; сохранение каждого прогона main не требуется). Issue поручения unxed/lunobot#248 закрыт после отчёта.
 
 27-10-2026 19:50 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): P03 часть 1 из 2 (контракт и `Number`) припарковано — unxed/oddyness, ветка `tmp/19d3/odd-p03-1`, sha `96bc194f2e5d7dc0c4cbcfb4503a26e673182ec2`; дальше: PR `lunobot/pr/p03-numbers-contract` и CI. Часть 2: сравнение кандидатов decimal и выбор представления.
+
+27-10-2026 19:52 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): P03 часть 1 из 2 приземлена — PR https://github.com/unxed/oddyness/pull/2 влит merge-коммитом `431be0e4e8de3cd12be8f14e8e879409ed3b1d8a`, `ci` зелёный на `fcf04f8fbb75b06e2b41eed3a2bdcf8a89b8a174`, ветка парковки удалена. Осталось: часть 2 из 2 (сравнение кандидатов apd/shopspring/govalues в отдельной пробе, выбор представления, умножение/деление по выбранному правилу), затем P07.
