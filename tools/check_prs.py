@@ -35,7 +35,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))  # tools/: the scripts
 ROOT = os.path.dirname(HERE)  # the clone of the accounting repository
 BOTS = re.compile(r"\[bot\]$")
 BOT_EMAIL = "lunobot@users.noreply.github.com"
-BOT_BRANCH = re.compile(r"^(?:lunobot/|agent/lunobot\d+/)")
+BOT_BRANCH = re.compile(r"^(?:lunobot/|agent/lunobot(?:\d+)?/)")
 HOLD = re.compile(r"^\s*-\s*PR не трогать:\s*#(\d+)\b(.*)$", re.M)
 
 
@@ -62,7 +62,7 @@ def holds(text):
 
 
 def is_bot_branch(ref):
-    """Recognize Lunobot branches while leaving unrelated agent/* refs eligible."""
+    """Recognize Lunobot namespaces without treating arbitrary agent/* refs as bots."""
     return BOT_BRANCH.match(ref) is not None
 
 
