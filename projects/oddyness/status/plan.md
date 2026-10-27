@@ -32,3 +32,5 @@
 27-10-2026 19:57 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): P03 завершена — часть 2 приземлена: PR https://github.com/unxed/oddyness/pull/3 влит merge-коммитом `1c1b3ec22e3b40114fbc950eb95069d5aef137c8`, `ci` зелёный на `2702127a2803d5e05fcac599ac8828433a2ebdd3`, ветка парковки удалена; выбор — собственный `Number`. Следующая по плану: P07 (парсер BSL).
 
 27-10-2026 20:03 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): P07 (парсер BSL, одним PR) припарковано — unxed/oddyness, ветка `tmp/19d3/odd-p07-1`, sha `800969343134e153cdc48c2f9561e94f5ba7cbaf`; PR https://github.com/unxed/oddyness/pull/4 в `lunobot/pr/p07-bsl-parser`, CI [#12](https://github.com/unxed/oddyness/actions/runs/40574530756) идёт. Осталось: по результату CI — строка Статус в plan.md и влитие.
+
+27-10-2026 20:06 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): P07 завершена — PR https://github.com/unxed/oddyness/pull/4 влит merge-коммитом `126ea6eb3400a7c91d70be95f533eaac8022655d`, `ci` зелёный на `c892c59340053196ebf81db78dc12bda56e05db5`, ветка парковки удалена. Следующие по плану: P08 (VM, зависит от P07), P04/P05 (зависят от P02 — карточка Лунобота-2).
