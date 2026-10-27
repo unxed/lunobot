@@ -2174,9 +2174,15 @@ def eject(repo, shas, reason):
         for sha in shas:
             r = run("git", "revert", "--no-edit", sha, cwd=d, check=False)
             if r.returncode:
-                print(f"revert {sha[:9]} не лёг чисто — СРОЧНО (§ 5 п. 2): откатить руками в "
-                      f"клоне staging или починить вперёд ({reason}). Вердикт бисекта сохранён, "
-                      "повторного бисекта не будет.")
+                conflicts = run("git", "diff", "--name-only", "--diff-filter=U", cwd=d, check=False)
+                paths = conflicts.stdout.strip()
+                details = r.stderr.strip() or r.stdout.strip() or "git revert завершился с ошибкой без текста"
+                print(f"revert {sha[:9]} не лёг чисто — {details}; "
+                      f"конфликтующие пути: {paths or 'git не сообщил пути'}. "
+                      f"Удалённые refs staging и поезда не изменены (push не выполнялся). "
+                      f"СРОЧНО (§ 5 п. 2): "
+                      f"откатить вручную в клоне staging или починить вперёд ({reason}). "
+                      "Вердикт бисекта сохранён, повторного бисекта не будет.")
                 return 1
             msg = run("git", "log", "-1", "--format=%B", cwd=d).stdout
             run("git", "commit", "-q", "--amend", "-m",
