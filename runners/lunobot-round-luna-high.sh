@@ -33,6 +33,18 @@ rotate_logs() {
 # ── вспомогательные ──────────────────────────────────────────────────
 log() { echo "[$(date -u '+%Y-%m-%d %H:%M:%S UTC')] $*" | tee -a "${LOG_DIR}/lunobot.log"; }
 
+runner_deadline_instructions() {
+  local start_epoch="$1"
+  local cutoff_epoch=$((start_epoch + 1790))
+  local persist_epoch=$((cutoff_epoch - 240))
+  local cutoff_utc persist_utc
+  cutoff_utc="$(date -u -d "@${cutoff_epoch}" '+%Y-%m-%d %H:%M:%S UTC')"
+  persist_utc="$(date -u -d "@${persist_epoch}" '+%Y-%m-%d %H:%M:%S UTC')"
+
+  printf 'The runner will forcibly stop this round at about %s; treat %s as the persistence deadline. Pass both deadlines to every worker, do not start a step that cannot be safely parked, and push completed work by the persistence deadline.' \
+    "${cutoff_utc}" "${persist_utc}"
+}
+
 acquire_runner_lock() {
   mkdir -p "/tmp/lunobot-${BOT_NUMBER}"
   exec 9>"/tmp/lunobot-${BOT_NUMBER}/runner.lock"
@@ -132,7 +144,9 @@ run_round() {
   curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md" \
     -o "/tmp/lunobot-2/LUNOBOT.md" || { log "ERROR: cannot fetch LUNOBOT.md"; return 1; }
 
-  local prompt="Ты — Лунобот-2 (GPT-6 Luna, high). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-2/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. После круга раннер снимет все захваты твоего id (release.py, LUNOBOT.md § 1): незаконченное оставь запушенной веткой с записью в status (§ 7.5), не в /tmp. В ретро запиши рефлексию круга (journal.py, § 4 п. 6). Ответь кратко итогом круга."
+  local deadline_instructions
+  deadline_instructions="$(runner_deadline_instructions "$(date -u +%s)")"
+  local prompt="Ты — Лунобот-2 (GPT-6 Luna, high). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-2/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, rétro. Не останавливайся, пока круг не завершён. ${deadline_instructions} Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. После круга раннер снимет все захваты твоего id (release.py, LUNOBOT.md § 1): незаконченное оставь запушенной веткой с записью в status (§ 7.5), не в /tmp. В ретро запиши рефлексию круга (journal.py, § 4 п. 6). Ответь кратко итогом круга."
 
   log "Starting opencode (model: ${MODEL}) ..."
   cd "${WORKDIR}"
