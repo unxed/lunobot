@@ -30,7 +30,7 @@ for line in open(room + "/out/commits.txt", encoding="utf-8"):
         cur = {"msg": line[7:].strip(), "files": []}; blocks.append(cur)
     elif line.strip() and cur is not None:
         cur["files"].append(line.strip().lstrip("-* ").strip("`"))
-allowed = re.compile(r"^(src/[^/]+|tests/[^/]+|docs/API-NAMES\.md|tools/gen_tables\.py|tools/tests/test_gen_tables\.py|\.github/workflows/ci\.yml)$")
+allowed = re.compile(r"^(src/[^/]+|tests/[^/]+|docs/API-NAMES\.md|tools/gen_tables\.py|tools/tests/test_gen_tables\.py|\.github/workflows/ci\.yml|src/tvcp\.inc|src/tvcsets\.inc)$")
 git("fetch", "-q", "origin", "main")
 git("checkout", "-q", "main"); git("merge", "-q", "--ff-only", "origin/main")
 git("checkout", "-q", "-B", branch, "origin/main")
@@ -49,7 +49,7 @@ for b in blocks:
         if os.path.exists(rp):
             rec = json.load(open(rp, encoding="utf-8"))
         else:
-            k = "new" if f.startswith(("tools/", ".github/")) else "translation"
+            k = "new" if f.startswith(("tools/", ".github/", "src/tvcp.inc", "src/tvcsets.inc")) else "translation"
             rec = {"path": f, "kind": k, "sources": [], "inputs": [], "implementer": impl, "proofs": [], "versions": []}
         if f in prov and any(i.startswith("far2l/") for i in prov[f]):
             rec["kind"] = "standard"
@@ -81,7 +81,7 @@ for b in blocks:
         with open(rp, "w", encoding="utf-8", newline="\n") as fh:
             json.dump(rec, fh, indent=2, ensure_ascii=False); fh.write("\n")
     out = subprocess.run(["python3", "tools/audit/provenance_lint.py", "--write-index"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.decode()
-    git("add", "-A", "src", "tests", "docs", "provenance")
+    git("add", "-A", "src", "tests", "docs", "provenance", "tools", ".github")
     msg = b["msg"] + "\n\nAssisted-by: Claude Sonnet 5.5\n"
     git("commit", "-q", "-m", msg)
     print("commit", git("rev-parse", "--short", "HEAD").strip(), b["msg"])
