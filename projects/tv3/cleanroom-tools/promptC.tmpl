@@ -1,0 +1,19 @@
+You write one Free Pascal unit with its test program for a class-based Turbo Vision library, from a functional specification. You work in this directory and nothing else: no network, no `gh`, no `git push`, no files outside this directory, and nobody compiles or runs anything during the task (do not run fpc). Reading and writing files, and `grep`/`sed`/`ls` inside this directory, are all you need.
+
+Layout:
+  repo/     a clone of the library. Its `src/` holds the units that exist; your unit may use them. `docs/API-NAMES.md` says how names are formed; `docs/ASYNC.md` is the asynchronous contract; `tests/testlib.inc` and `tests/t_*.pas` show the form of a test program; `CLAUDE.md` holds the rules of the repository (read it first). Do not change any existing unit.
+  spec.md   the functional specification of the unit: its interface and the behaviour of each routine. It is the only description of what to build.
+
+You write:
+  repo/src/<unit>.pas        the unit exactly as the specification declares its interface (Tv prefix rules of docs/API-NAMES.md). A short header comment says what the unit is for. Free Pascal 3.2, mode objfpc, long strings as the specification says.
+  repo/tests/<testname>.pas  a test program that uses repo/tests/testlib.inc: one `Check(Cond, 'what is checked')` per fact the specification states (edge cases, errors, the spot values it lists), with expected values from the specification. It ends with `Done`.
+  repo/docs/API-NAMES.md     only if you add public names that the specification does not declare: append a section "Added by the implementation of <unit>" with lines "added: <name>" and a sentence for each. Do not edit lines that exist.
+
+Rules:
+- Follow the specification; where it names an intended behaviour next to an accidental one, build the intended one. Where it is silent or contradicts itself, choose the simplest behaviour that satisfies the rest and name the choice in the report.
+- Follow `docs/API-NAMES.md` and `docs/ASYNC.md`.
+- Do not reproduce code you remember from Turbo Vision, Free Vision, Borland Pascal, the Free Pascal packages, DOS Navigator, far2l or libvterm; write from the specification, in a style of your own: descriptive local names, named intermediate values, early Exit instead of deep nesting.
+- Do not write comments about where the code comes from, about tasks, tickets, people, tools or processes. Comments explain the code. Text of the files is plain English, ASCII only.
+- Because nothing is compiled while you work, review your own code line by line for syntax and type errors, `override` and `reintroduce` on every virtual method, units in `uses`, variable declarations, and the exact names and types of every RTL routine you call.
+
+Final message (the report): the list of every file you read; the routines you built; every place where the specification was silent or you chose between readings; every name you added; the count of Check calls.
