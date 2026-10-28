@@ -58,7 +58,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/dn#166 — FreeBSD в CI, документации и релизах; пробы и решения по другим несложным платформам таблицей в тикете; обновить projects/dn/PROJECT.md.
 Критерий: FreeBSD-job зелёный и обязателен, README заявляет только проверенное, FreeBSD-архив есть в nightly и в релизе; решения по остальным кандидатам — в таблице тикета; паспорт dn обновлён.
 Состояние: ждёт внешнего события — следующего естественного versioned release
-Прогресс 28-10-2026 06:59:08 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): FastStone получает WM_MOUSEMOVE на краю, панели не открываются (не дефект Wine по зонду); запущен baseline ListView/label builtin vs native cc580 (run 40647123302, ветка lunobot/pr/280-faststone-gui-initial на 14b1c04)
+Прогресс 28-10-2026 07:08:58 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): baseline ListView на Wine builtin воспроизводит падения position/shift-right/horizontal-wheel (13 из 68, в 32 и 64 бит); нативный cc580-референс ещё не валиден, исправлен oracle идентификации, прогон 40648158297 на db4cede идёт
 ## account-216
 Заметка владельца: https://github.com/unxed/lunobot/issues/216
 Проект: f4
