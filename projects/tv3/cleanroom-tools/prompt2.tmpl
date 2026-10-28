@@ -1,0 +1,44 @@
+You change a Free Pascal library, a class-based Turbo Vision for Free Pascal 3.2 (mode objfpc). Your working
+directory is a git working tree of the library. Your task is at the end of this file.
+
+Inputs, all in this directory and nothing else:
+  the working tree  - the library: src/, tests/, docs/, tools/, provenance/. Read CLAUDE.md and docs/CLEANROOM.md
+                      first; they hold the rules of the library and they win over anything else.
+  inputs/           - C++ source files of magiblot/tvision at b4831e2ca16652db327fb7cc964f1c8c2d512524 (and
+                      headers of it) that the task names. The behaviour of the routines you write follows them,
+                      function by function.
+  docs/API-NAMES.md - how C++ names and forms become Pascal names; docs/ASYNC.md - the rules for what is added.
+
+Rules:
+- Read and write only files inside this directory. Do not use the network, a shell, a compiler, git or python. Nobody
+  compiles anything during the task: write the Pascal with great care for the syntax and the types of the units that
+  you use (read their interface sections).
+- Write each routine from the C++ source in front of you and from the interfaces of the library. Do not reproduce code
+  you remember from any other Turbo Vision (Borland, Free Vision, Sigala, others), from Free Pascal packages, DOS
+  Navigator or far2l. Where the behaviour cannot be expressed with the given interfaces, say so in the report.
+- Do not write statements about where code comes from, in code, comments, tests or commit texts, except the notice
+  "Translated from magiblot/tvision @ b4831e2" with the list of the C++ files and "See COPYRIGHT.magiblot." that
+  every translated unit and every test program of such a unit starts with (a comment before the `unit` or `program`
+  line); a notice lists the files the code is translated from, so add the new C++ files of this task to it. Texts of
+  comments, tests and API-NAMES.md are neutral: they describe the code as it is. tools/text_lint.py lists what is not
+  allowed; read it.
+- A test program of a unit is tests/t_<name>.pas; it uses tests/testlib.inc and ends with `Done`. A test checks the
+  behaviour of the C++ that you translated, with the expected values worked out by hand from the C++. Change the tests
+  that the changed behaviour makes wrong, and add tests for what you add.
+- Names added that have no counterpart in the C++ API are listed in docs/API-NAMES.md as the rules there say; a
+  name that C++ gives is not added to the list.
+- Do not touch provenance/, VERDICT.md, tools/ or .github/.
+
+Deliver, in this tree:
+  1. the changed and new files of src/ and tests/ and docs/API-NAMES.md;
+  2. out/commits.txt: the commits, in order. One block per commit: a first line "commit: <subject>" (an imperative
+     sentence that says what the change does, in a neutral tone), then the paths of the files of that commit, one per
+     line. Each commit leaves the library consistent (a unit and the tests that use it change together);
+  3. out/provenance.tsv: one line per changed or new file of src/ and tests/: the path, a tab, then the input files of
+     inputs/ that this file now follows (paths relative to inputs/, separated by commas), only those files that you
+     really used, with all inputs that the file already followed implied;
+  4. out/report.md: the list of every file you read; for each routine you wrote, the C++ function it follows
+     (file:line); every place where you departed from the C++ behaviour and why; every place where the C++ could not
+     be expressed; what is left open.
+
+Your task:
