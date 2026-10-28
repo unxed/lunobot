@@ -3,6 +3,10 @@
 import json, os, re, subprocess, sys, shutil, hashlib
 W = "/tmp/lunobot-1/work/tv3-cont2-1028"
 PIN = "b4831e2ca16652db327fb7cc964f1c8c2d512524"
+PINT = "210eb23564da06c358d2623388939bb02f7f3419"
+def srcinfo(i):
+    if i.startswith("tvterm/"): return "magiblot/tvterm", PINT, i[7:]
+    return "magiblot/tvision", PIN, i
 slug, impl = sys.argv[1], sys.argv[2]
 branch = "tmp/19d3/" + slug
 room = "%s/rooms/%s/repo" % (W, slug)
@@ -46,16 +50,23 @@ for b in blocks:
             rec = json.load(open(rp, encoding="utf-8"))
         else:
             rec = {"path": f, "kind": "translation", "sources": [], "inputs": [], "implementer": impl, "proofs": [], "versions": []}
-        if f in prov and rec["kind"] == "translation":
-            have = {s["file"] for s in rec["sources"]}
+        if f in prov and any(i.startswith("far2l/") for i in prov[f]):
+            rec["kind"] = "standard"
+            rec["sources"] = [{"document": "VTExts.md of unxed/far2l", "url": "https://github.com/unxed/far2l/blob/8030902caf42498e1612e5a393ab7fc489048f51/VTExts.md"}]
+            rec["inputs"] = [{"origin": "unxed/far2l@8030902caf42498e1612e5a393ab7fc489048f51:VTExts.md", "sha256": inputs["far2l/VTExts.md"][0]}]
+            if impl not in rec["implementer"]:
+                rec["implementer"] = rec["implementer"] + ", " + impl
+        elif f in prov and rec["kind"] == "translation":
+            have = {s["file"] for s in rec["sources"]} | {"tvterm/"+s["file"] for s in rec["sources"] if s["source"]=="magiblot/tvterm"}
             for i in prov[f]:
                 if i not in inputs:
                     if i in have: continue
                     raise SystemExit("unknown input " + i)
                 sha, n = inputs[i]
-                if i not in have:
-                    rec["sources"].append({"source": "magiblot/tvision", "commit": PIN, "file": i, "lines": "1-%d" % n})
-                o = "magiblot/tvision@%s:%s" % (PIN, i)
+                sname, scommit, sfile = srcinfo(i)
+                if sfile not in have:
+                    rec["sources"].append({"source": sname, "commit": scommit, "file": sfile, "lines": "1-%d" % n})
+                o = "%s@%s:%s" % (sname, scommit, sfile)
                 if not any(x["origin"] == o for x in rec["inputs"]):
                     rec["inputs"].append({"origin": o, "sha256": sha})
             if impl not in rec["implementer"]:

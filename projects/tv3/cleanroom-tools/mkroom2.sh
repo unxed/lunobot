@@ -17,9 +17,10 @@ mkdir -p "$room/repo/inputs" "$room/repo/out"
 : > "$W/rooms/$slug.inputs.tsv"
 for p in "$@"; do
   [ "$p" = "-" ] && continue
+  case "$p" in far2l/*) src="$W/far2l/${p#far2l/}";; tvterm/*) src="$W/mbt/${p#tvterm/}";; *) src="$W/mb/$p";; esac
   mkdir -p "$room/repo/inputs/$(dirname "$p")"
-  cp "$W/mb/$p" "$room/repo/inputs/$p"
-  printf '%s\t%s\t%s\t%s\n' "$p" "$(git hash-object "$W/mb/$p")" "$(sha256sum "$W/mb/$p" | cut -d' ' -f1)" "$(wc -l < "$W/mb/$p")" >> "$W/rooms/$slug.inputs.tsv"
+  cp "$src" "$room/repo/inputs/$p"
+  printf '%s\t%s\t%s\t%s\n' "$p" "$(git hash-object "$src")" "$(sha256sum "$src" | cut -d' ' -f1)" "$(wc -l < "$src")" >> "$W/rooms/$slug.inputs.tsv"
 done
 sed "s/@SLUG@/$slug/" "$W/tools/prompt.tmpl" > "$room/repo/PROMPT.md"
 cat "$task" >> "$room/repo/PROMPT.md"
