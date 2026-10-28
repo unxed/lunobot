@@ -30,7 +30,7 @@ for line in open(room + "/out/commits.txt", encoding="utf-8"):
         cur = {"msg": line[7:].strip(), "files": []}; blocks.append(cur)
     elif line.strip() and cur is not None:
         cur["files"].append(line.strip().lstrip("-* ").strip("`"))
-allowed = re.compile(r"^(src/[^/]+|tests/[^/]+|docs/API-NAMES\.md)$")
+allowed = re.compile(r"^(src/[^/]+|tests/[^/]+|docs/API-NAMES\.md|tools/gen_tables\.py|tools/tests/test_gen_tables\.py|\.github/workflows/ci\.yml)$")
 git("fetch", "-q", "origin", "main")
 git("checkout", "-q", "main"); git("merge", "-q", "--ff-only", "origin/main")
 git("checkout", "-q", "-B", branch, "origin/main")
@@ -49,7 +49,8 @@ for b in blocks:
         if os.path.exists(rp):
             rec = json.load(open(rp, encoding="utf-8"))
         else:
-            rec = {"path": f, "kind": "translation", "sources": [], "inputs": [], "implementer": impl, "proofs": [], "versions": []}
+            k = "new" if f.startswith(("tools/", ".github/")) else "translation"
+            rec = {"path": f, "kind": k, "sources": [], "inputs": [], "implementer": impl, "proofs": [], "versions": []}
         if f in prov and any(i.startswith("far2l/") for i in prov[f]):
             rec["kind"] = "standard"
             rec["sources"] = [{"document": "VTExts.md of unxed/far2l", "url": "https://github.com/unxed/far2l/blob/8030902caf42498e1612e5a393ab7fc489048f51/VTExts.md"}]
