@@ -7,6 +7,8 @@ set -euo pipefail
 
 export LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONUTF8=1
 export NO_PROXY=127.0.0.1,localhost
+# git никогда не спрашивает логин/пароль в терминале: без помощника gh push падает сразу, а не виснет
+export GIT_TERMINAL_PROMPT=0
 
 # ── настройки ─────────────────────────────────────────────────────────
 # Менеджер — бесплатная модель opencode (`opencode models | grep free`), переопределяется переменной.
@@ -139,6 +141,13 @@ check_prereqs() {
   done
   if command -v gh >/dev/null 2>&1 && ! gh auth status >/dev/null 2>&1; then
     echo "MISSING: gh не авторизован — выполни: gh auth login" >&2; bad=1
+  elif command -v gh >/dev/null 2>&1 && ! git config --global --get-regexp '^credential\..*helper' 2>/dev/null | grep -q 'gh auth git-credential'; then
+    # без помощника git push по https спрашивает логин, хотя gh авторизован
+    if gh auth setup-git >/dev/null 2>&1; then
+      echo "NOTE: git настроен брать учётные данные у gh (gh auth setup-git)" >&2
+    else
+      echo "MISSING: git не берёт учётные данные у gh — выполни: gh auth setup-git" >&2; bad=1
+    fi
   fi
   if ! command -v aistudio >/dev/null 2>&1; then
     echo "MISSING: aistudio не установлен — git clone https://github.com/unxed/AI ~/AI-repo && ~/AI-repo/skills/aistudio-offload/install.sh" >&2
@@ -241,13 +250,11 @@ run_round() {
 
   log "Starting opencode (model: ${MODEL}) ..."
   cd "${WORKDIR}"
-  # --standalone: own private server, no external dependency
   # Stream output to the terminal and log while preserving the command status.
   OFFLOAD_CALLER="${MANAGER_ID}" setsid timeout --foreground "${ROUND_TIMEOUT}" opencode run \
     --model "${MODEL}" \
     --title "Lunobot-${BOT_NUMBER} round ${round_num}" \
     --auto \
-    --standalone \
     --format json \
     -- "$prompt" \
     >"${log_file}" 2>&1 &
