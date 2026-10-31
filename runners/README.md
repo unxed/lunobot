@@ -16,7 +16,7 @@
 | `lunobot-round.sh` | opencode, Nemotron 3 Ultra Free | 1 |
 | `lunobot-round-luna-high.sh` | opencode, GPT-6 Luna High | 2 |
 | `lunobot-round-muse.sh` | opencode, Muse Spark 1.3 Free | 2 |
-| `lunobot-round-opencode-gemini.sh [--check]` | схема «роутер»: opencode-модель `LUNOBOT_ROUTER_MODEL` (по умолчанию GLM 5.3 Flash Free) только запускает одну команду `aistudio drive` с файлом задачи, который пишет сам раннер, и пересказывает её вывод; весь круг, включая чтение LUNOBOT.md, делает Gemini (AI Studio, unxed/AI skills/aistudio-offload), а его команды выполняет движок; гейт `aistudio guard` (одна команда `aistudio ...`) подключён плагином opencode `tool.execute.before` (живой прогон не проверен); `--check` — только предусловия | 2 |
+| `lunobot-round-opencode-gemini.sh [--check]` | схема «роутер»: opencode-модель `LUNOBOT_ROUTER_MODEL` (по умолчанию GLM 5.3 Flash Free) только запускает одну команду `aistudio drive` с файлом задачи, который пишет сам раннер, и пересказывает её вывод; весь круг, включая чтение LUNOBOT.md, делает Gemini (AI Studio, unxed/AI skills/aistudio-offload), а его команды выполняет движок; гейт `aistudio guard` (одна команда `aistudio ...`) подключён плагином opencode `tool.execute.before` (живой прогон не проверен); во время круга раннер живым хвостом показывает `[drive]` stderr движка и раз в минуту пишет `[status]` из `aistudio status --runs`, после круга логирует `result.json` и `[diag]`, а при сбое оффлоадинга запускает фазу SKILL-FIX (отдельный плагин-гейт, свежий клон unxed/AI, `SKILLFIX_TIMEOUT`=1200 с) для починки скилла, не задачи; `--check` — только предусловия | 2 |
 
 В режиме одного круга потолок воркеров (б) — 1 (LUNOBOT.md § 5): промпт каждого раннера
 говорит это явно, менеджер в потолок не входит.

@@ -32,11 +32,14 @@ INTERVAL_MIN=15
 MAX_RETRIES=3
 RETRY_DELAY=60
 TOKEN_LIMIT_WAIT=120                   # ожидание сброса квоты токенов (сек)
+SKILLFIX_TIMEOUT="${SKILLFIX_TIMEOUT:-1200}"   # потолок фазы починки скилла оффлоадинга (сек)
 LOG_DIR="${HOME}/.lunobot/logs-opencode-gemini"
 mkdir -p "${LOG_DIR}"
 ACTIVE_PID=""
 ACTIVE_PGID=""
 ACTIVE_TAIL_PID=""
+ACTIVE_STDERR_PID=""
+ACTIVE_STATUS_PID=""
 ACCOUNTING_REPO="${LUNOBOT_ACCOUNTING:-unxed/lunobot}"
 CLAIMS_DIRTY=0   # 1 — круг запускался, а его захваты ещё не сняты
 
@@ -131,6 +134,14 @@ stop_active_round() {
     kill -TERM "${ACTIVE_TAIL_PID}" 2>/dev/null || true
     wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
   fi
+  if [[ -n "${ACTIVE_STDERR_PID}" ]]; then
+    kill -TERM "${ACTIVE_STDERR_PID}" 2>/dev/null || true
+    wait "${ACTIVE_STDERR_PID}" 2>/dev/null || true
+  fi
+  if [[ -n "${ACTIVE_STATUS_PID}" ]]; then
+    kill -TERM "${ACTIVE_STATUS_PID}" 2>/dev/null || true
+    wait "${ACTIVE_STATUS_PID}" 2>/dev/null || true
+  fi
   if (( CLAIMS_DIRTY )); then
     release_claims "раннер остановлен (${signal_name})" || true
   fi
@@ -208,6 +219,106 @@ JS
   export OPENCODE_CONFIG_CONTENT
 }
 
+# Жёсткий гейт фазы SKILL-FIX: отдельный плагин opencode разрешает только диагностику и починку
+# скилла оффлоадинга в свежем клоне unxed/AI. Всё остальное — Error с понятным сообщением.
+# Проверка целиком на JS (без внешних команд): разрешённые корни берутся из SKILLFIX_ROOTS.
+SKILLFIX_GATE_DIR="${HOME}/.lunobot/gate"
+install_skillfix_gate() {
+  mkdir -p "${SKILLFIX_GATE_DIR}"
+  cat >"${SKILLFIX_GATE_DIR}/skillfix-gate.js" <<'JS'
+import path from "node:path"
+const TOOL = { bash: "Bash", write: "Write", edit: "Edit", multiedit: "MultiEdit", patch: "Edit", apply_patch: "Edit", notebookedit: "NotebookEdit", read: "Read", glob: "Glob", grep: "Grep", list: "List", ls: "LS", notebookread: "NotebookRead" }
+const READONLY = new Set(["Read", "Glob", "Grep", "List", "LS", "NotebookRead"])
+const WRITE = new Set(["Write", "Edit", "MultiEdit", "NotebookEdit"])
+const BASH_WORDS = new Set(["git", "python3", "pytest", "cat", "ls", "grep", "sed", "head", "tail", "wc", "diff", "find", "aistudio"])
+function expand(p, cwd) {
+  let s = String(p || "")
+  if (s === "~" || s.startsWith("~/")) s = (process.env.HOME || "") + s.slice(1)
+  return path.resolve(cwd, s)
+}
+function under(target, root) {
+  const r = root.endsWith(path.sep) ? root : root + path.sep
+  return target === root || target.startsWith(r)
+}
+export const SkillFixGate = async ({ directory }) => ({
+  "tool.execute.before": async (input, output) => {
+    const tool = TOOL[String(input.tool).toLowerCase()] || input.tool
+    const a = output.args || {}
+    const cwd = directory || process.cwd()
+    const roots = (process.env.SKILLFIX_ROOTS || "").split(":").filter(Boolean).map((r) => expand(r, cwd))
+    const first = roots[0]
+    const fail = (reason) => { throw new Error("SKILLFIX GATE: " + reason) }
+    if (READONLY.has(tool)) {
+      const p = a.filePath || a.file_path || a.path
+      if (!p) return
+      const target = expand(p, cwd)
+      if (!roots.some((r) => under(target, r))) fail("read outside allowed roots: " + target)
+      return
+    }
+    if (WRITE.has(tool)) {
+      const p = a.filePath || a.file_path || a.path
+      if (!p) fail("write without path")
+      const target = expand(p, cwd)
+      const skillfixReport = roots[1] ? path.join(roots[1], "skillfix.md") : null
+      if (!first || (!under(target, first) && target !== skillfixReport)) {
+        fail("write outside unxed/AI clone: " + target)
+      }
+      return
+    }
+    if (tool === "Bash") {
+      let cmd = String(a.command || "").trim()
+      const m = cmd.match(/^cd\s+\S+\s*&&\s*(.*)$/s)
+      if (m) cmd = m[1].trim()
+      const words = cmd.split(/\s+/).filter(Boolean)
+      const head = words[0] || ""
+      if (!BASH_WORDS.has(head)) fail("bash command not allowed: " + head)
+      if (head === "aistudio") {
+        const sub = words[1] || ""
+        if (sub !== "diag" && sub !== "status") fail("aistudio subcommand not allowed: " + sub)
+      }
+      return
+    }
+    fail("tool not allowed: " + tool)
+  },
+})
+JS
+}
+
+# Фаза SKILL-FIX: оффлоадинг сбоит — роутеру разрешено чинить СКИЛЛ (unxed/AI), но не задачу Лунобота.
+run_skillfix() {
+  local round_num="$1" drive_log="$2" work_dir="$3" reason="$4"
+  local ai_fix="${work_dir}/ai-fix"
+  log "=== SKILL-FIX round ${round_num} START (${reason}) ==="
+  rm -rf -- "${ai_fix:?}"
+  if ! timeout 180 gh repo clone unxed/AI "${ai_fix}" -- -q >/dev/null 2>&1; then
+    log "ERROR: SKILL-FIX: cannot clone unxed/AI into ${ai_fix}"
+    return 1
+  fi
+  install_skillfix_gate
+  local sf_task
+  sf_task=$(cat <<'SFTASK'
+Offloading failed in this Lunobot round. You may use intelligence ONLY to diagnose and fix the offload SKILL in the current directory (an unxed/AI clone), never the Lunobot task. Evidence: @DRIVE_LOG@/stderr.log, @DRIVE_LOG@/result.json, @DRIVE_LOG@/drive.md and the diag bundle directories named in DIAG lines (under ~/.offload-browser/diag). Find the root cause, fix the skill, run `cd skills && python3 -m pytest -q . aistudio-offload grok-offload deepseek-offload mistral-offload`; if green, commit with the evidence and push to main; then run `git -C ~/AI-repo pull --ff-only`. If you cannot fix it, write the diagnosis to @DRIVE_LOG@/skillfix.md and stop.
+SFTASK
+  )
+  sf_task="${sf_task//@DRIVE_LOG@/${drive_log}}"
+  local sf_log="${LOG_DIR}/skillfix-${round_num}-$(date -u '+%Y%m%d-%H%M%S').log"
+  local sf_exit=0
+  (
+    cd "${ai_fix}" || exit 1
+    export SKILLFIX_ROOTS="${ai_fix}:${drive_log}:${HOME}/.offload-browser/diag"
+    OPENCODE_CONFIG_CONTENT="{\"plugin\":[\"file://${SKILLFIX_GATE_DIR}/skillfix-gate.js\"]}" \
+      timeout --foreground "${SKILLFIX_TIMEOUT}" opencode run \
+      --model "${MODEL}" \
+      --title "Lunobot-${BOT_NUMBER} skill-fix round ${round_num}" \
+      --auto \
+      --format json \
+      -- "${sf_task}" \
+      >"${sf_log}" 2>&1
+  ) || sf_exit=$?
+  log "=== SKILL-FIX round ${round_num} END (exit ${sf_exit}, log ${sf_log}) ==="
+  return 0
+}
+
 runner_deadline_instructions() {
   local start_epoch="$1"
   local cutoff_epoch=$((start_epoch + ROUND_TIMEOUT - 10))
@@ -273,6 +384,30 @@ run_round() {
   ACTIVE_PID=$!
   CLAIMS_DIRTY=1
   ACTIVE_PGID="$(ps -o pgid= -p "${ACTIVE_PID}" 2>/dev/null | tr -d ' ' || true)"
+  # живой хвост stderr движка drive в терминал и лог раннера с префиксом [drive]
+  if [[ -f "${drive_log}/stderr.log" ]] || mkdir -p "${drive_log}" 2>/dev/null; then
+    tail -n +1 -F "${drive_log}/stderr.log" 2>/dev/null \
+      | while IFS= read -r line; do
+          printf '[drive] %s\n' "${line}" | tee -a "${log_file}"
+        done &
+    ACTIVE_STDERR_PID=$!
+  fi
+  # периодический снимок aistudio status --runs (только строки текущего drive) в лог с префиксом [status]
+  (
+    while sleep 60; do
+      kill -0 "${ACTIVE_PID:-0}" 2>/dev/null || break
+      aistudio status --runs 2>/dev/null | while IFS= read -r sline; do
+        case "${sline}" in
+          *health=DEAD*|*health=failed*|*health=finished*) continue ;;
+        esac
+        local_pid="$(printf '%s' "${sline}" | sed -n 's/^pid=\([0-9][0-9]*\).*/\1/p')"
+        if [[ -n "${local_pid}" ]]; then
+          printf '[status] %s\n' "${sline}" | tee -a "${log_file}"
+        fi
+      done
+    done
+  ) &
+  ACTIVE_STATUS_PID=$!
   # лог — JSON (стоимость и токены по шагам для journal.py); в терминал — текст, вызовы инструментов, ошибки
   tail --pid="${ACTIVE_PID}" -n +1 -f "${log_file}" | jq -Rr --unbuffered '
     (fromjson? // null) as $j
@@ -293,8 +428,45 @@ run_round() {
   ACTIVE_PGID=""
   wait "${ACTIVE_TAIL_PID}" 2>/dev/null || true
   ACTIVE_TAIL_PID=""
+  if [[ -n "${ACTIVE_STDERR_PID}" ]]; then
+    kill -TERM "${ACTIVE_STDERR_PID}" 2>/dev/null || true
+    wait "${ACTIVE_STDERR_PID}" 2>/dev/null || true
+    ACTIVE_STDERR_PID=""
+  fi
+  if [[ -n "${ACTIVE_STATUS_PID}" ]]; then
+    kill -TERM "${ACTIVE_STATUS_PID}" 2>/dev/null || true
+    wait "${ACTIVE_STATUS_PID}" 2>/dev/null || true
+    ACTIVE_STATUS_PID=""
+  fi
   release_claims "круг ${round_num} раннера $(basename "$0") окончен (код ${exit_code})" \
     "${log_file}" "${round_num}" "${exit_code}" "$((SECONDS - started))" || true
+
+  # разбор result.json и aistudio diag; решаем, нужна ли фаза SKILL-FIX
+  local drive_exit="" drive_steps="" drive_model="" drive_reason="" need_skillfix=0
+  local result_json="${drive_log}/result.json"
+  if [[ -f "${result_json}" ]]; then
+    drive_exit="$(jq -r '.exit // empty' "${result_json}" 2>/dev/null || true)"
+    drive_steps="$(jq -r '.steps // empty' "${result_json}" 2>/dev/null || true)"
+    drive_model="$(jq -r '.last_model // empty' "${result_json}" 2>/dev/null || true)"
+    drive_reason="$(jq -r '.reason // empty' "${result_json}" 2>/dev/null || true)"
+    log "drive exit=${drive_exit:-?} steps=${drive_steps:-?} model=${drive_model:-?}"
+    [[ -n "${drive_reason}" ]] && log "drive reason: ${drive_reason}"
+    case "${drive_exit}" in
+      0|4|5) need_skillfix=0 ;;
+      *) need_skillfix=1 ;;
+    esac
+  else
+    log "drive result.json missing at ${result_json}"
+    need_skillfix=1
+  fi
+  if (( need_skillfix )) || [[ -z "${drive_exit}" || "${drive_exit}" != "0" ]]; then
+    aistudio diag 2>&1 | while IFS= read -r dline; do
+      printf '[diag] %s\n' "${dline}" | tee -a "${log_file}"
+    done || true
+  fi
+  if (( need_skillfix )); then
+    run_skillfix "${round_num}" "${drive_log}" "${work_dir}" "result.json exit=${drive_exit:-missing}" || true
+  fi
 
   # проверка на token limit
   if check_token_limit "${log_file}"; then
