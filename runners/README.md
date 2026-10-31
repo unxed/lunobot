@@ -8,6 +8,7 @@
 | Скрипт | Среда и модель | Номер |
 |---|---|---|
 | `lunobot-round-claude.sh sonnet\|opus` | Claude Code, `EFFORT=high` по умолчанию | 1 |
+| `lunobot-round-haiku.sh 1\|2` | Claude Code Haiku-менеджер + роутеры Haiku с оффлоадом в Gemini/Mistral (unxed/AI), гейт `aistudio guard --manager`, потолок воркеров 2 | 1 или 2 |
 | `lunobot-round.sh` | opencode, Nemotron 3 Ultra Free | 1 |
 | `lunobot-round-luna-high.sh` | opencode, GPT-6 Luna High | 2 |
 | `lunobot-round-muse.sh` | opencode, Muse Spark 1.3 Free | 2 |
