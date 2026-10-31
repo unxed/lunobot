@@ -17,6 +17,10 @@ export GIT_TERMINAL_PROMPT=0
 # glm-5.3-flash-free: бесплатна сейчас, класс Flash/Haiku (LUNOBOT.md § 1: «легче» Sonnet/Terra ->
 # Лунобот-2), а сама она только маршрутизирует: всю работу делает Gemini.
 MODEL="${LUNOBOT_ROUTER_MODEL:-${LUNOBOT_MANAGER_MODEL:-opencode/glm-5.3-flash-free}}"   # provider/model#variant
+# Модель Gemini для drive. auto берёт hard-tier (Pro) на каждый шаг, а на бесплатном аккаунте AI Studio
+# Pro недоступны («Unlock ... Pro models» / Permission denied): каждый шаг терял бы время на отказ и откат.
+# По умолчанию — сильнейшая доступная Flash; переопределяется LUNOBOT_DRIVE_MODEL (например, auto при доступе к Pro).
+DRIVE_MODEL="${LUNOBOT_DRIVE_MODEL:-gemini-3.8-flash}"
 MANAGER_ID="$(basename "${MODEL%%#*}")"   # id роутера для OFFLOAD_CALLER и подписи
 SESSION_NAME="lunobot-2"               # имя сессии (Lunobot-2)
 BOT_NUMBER=2                           # неизвестный/лёгкий класс -> 2; общий lock с muse и luna-high
@@ -254,9 +258,9 @@ run_round() {
   task="${task//@DEADLINE@/$(runner_deadline_instructions "$(date -u +%s)")}"
   printf '%s\n' "${task}" >"${task_file}"
   local drive_timeout=$((ROUND_TIMEOUT - 120))
-  local prompt="Run exactly this one command and output its stdout verbatim, nothing else: OFFLOAD_CALLER=${MANAGER_ID} timeout ${drive_timeout} aistudio drive --task-file ${task_file} -f /tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md -C ${work_dir} --deadline-min $((drive_timeout / 60 - 2)) --log ${drive_log}"
+  local prompt="Run exactly this one command and output its stdout verbatim, nothing else: OFFLOAD_CALLER=${MANAGER_ID} timeout ${drive_timeout} aistudio drive -m ${DRIVE_MODEL} --task-file ${task_file} -f /tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md -C ${work_dir} --deadline-min $((drive_timeout / 60 - 2)) --log ${drive_log}"
 
-  log "Starting opencode router (model: ${MODEL}) -> aistudio drive ..."
+  log "Starting opencode router (model: ${MODEL}) -> aistudio drive (model: ${DRIVE_MODEL}) ..."
   cd "${WORKDIR}"
   # Stream output to the terminal and log while preserving the command status.
   OFFLOAD_CALLER="${MANAGER_ID}" setsid timeout --foreground "${ROUND_TIMEOUT}" opencode run \
