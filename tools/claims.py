@@ -601,6 +601,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         if a.op == "keys":
+            if not a.args:
+                print("keys: нужна строка захвата", file=sys.stderr)
+                return 2
             print("\n".join(keys(a.args[0])))
             return 0
         if a.op == "list":

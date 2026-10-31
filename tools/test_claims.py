@@ -1,11 +1,14 @@
 import io
 import os
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
 from contextlib import redirect_stdout, redirect_stderr
 from datetime import datetime, timedelta, timezone
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import claims
 
@@ -71,6 +74,12 @@ class KeysTest(unittest.TestCase):
                          ["freeze"])
         self.assertEqual(claims.keys(f"20-10-2026 10:00:00 Я {ME}, прекращаю работу: команда владельца"),
                          [f"note-1-{NODE}"])
+    def test_keys_cli_without_arg_returns_error(self):
+        err = io.StringIO()
+        with redirect_stderr(err):
+            code = claims.main(["keys"])
+        self.assertEqual(code, 2)
+        self.assertIn("нужна строка захвата", err.getvalue())
 
 
 class GitCase(unittest.TestCase):
