@@ -11,6 +11,7 @@
 | `lunobot-round.sh` | opencode, Nemotron 3 Ultra Free | 1 |
 | `lunobot-round-luna-high.sh` | opencode, GPT-6 Luna High | 2 |
 | `lunobot-round-muse.sh` | opencode, Muse Spark 1.3 Free | 2 |
+| `lunobot-round-opencode-gemini.sh [--check]` | opencode, менеджер `LUNOBOT_MANAGER_MODEL` (по умолчанию GLM 5.3 Flash Free), воркер Gemini через `aistudio` (unxed/AI, skills/aistudio-offload); гейт `aistudio guard --manager` подключён плагином opencode `tool.execute.before` (живой прогон в opencode не проверен); `--check` — только предусловия | 2 |
 
 В режиме одного круга потолок воркеров (б) — 1 (LUNOBOT.md § 5): промпт каждого раннера
 говорит это явно, менеджер в потолок не входит.
