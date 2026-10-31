@@ -2267,3 +2267,72 @@ class NoTagsSessionTest(unittest.TestCase):
                 mock.patch.object(train, "TAG_AFTER_MERGE", {"unxed/vtui"}):
             self.assertIsNone(train.tag_next("unxed/vtui"))
             self.assertIsNone(train.tag_untagged_main("unxed/vtui"))
+
+
+class MainCiBusyTest(unittest.TestCase):
+    def setUp(self):
+        self.pr = {"number": 7, "head": {"sha": "dd27884", "ref": "lunobot/train/f4/x"}, "base": {"sha": "base"}}
+        self.rollup = ([{"status": "COMPLETED"}], [], [], [])
+        self.patches = [
+            mock.patch.object(train, "train_pr", return_value=self.pr),
+            mock.patch.object(train, "rollup", return_value=self.rollup),
+            mock.patch.object(train, "compare", return_value={"commits": []}),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in reversed(self.patches):
+            p.stop()
+
+    def fake_api(self, runs_queued=(), runs_in_progress=(), fail_build=False):
+        def api_mock(path, *args, check=True):
+            if "build.yml/runs" in path:
+                if fail_build:
+                    raise SystemExit("gh error")
+                if "status=queued" in path:
+                    return {"workflow_runs": list(runs_queued)}
+                if "status=in_progress" in path:
+                    return {"workflow_runs": list(runs_in_progress)}
+            return {}
+        return api_mock
+
+    def test_in_progress_run_blocks_merge(self):
+        now = datetime.now(timezone.utc)
+        run_obj = {"id": 123, "run_started_at": (now - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")}
+        with mock.patch.object(train, "api", side_effect=self.fake_api(runs_in_progress=[run_obj])), \
+             mock.patch.object(train, "run") as run_mock, \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(train.train_step("o/r", "sign"), 0)
+        self.assertIn("на main идёт CI (прогон 123)", out.getvalue())
+        run_mock.assert_not_called()
+
+    def test_queued_run_blocks_merge(self):
+        now = datetime.now(timezone.utc)
+        run_obj = {"id": 456, "created_at": (now - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")}
+        with mock.patch.object(train, "api", side_effect=self.fake_api(runs_queued=[run_obj])), \
+             mock.patch.object(train, "run") as run_mock, \
+             contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(train.train_step("o/r", "sign"), 0)
+        self.assertIn("на main идёт CI (прогон 456)", out.getvalue())
+        run_mock.assert_not_called()
+
+    def test_old_run_does_not_block_merge(self):
+        now = datetime.now(timezone.utc)
+        run_obj = {"id": 789, "run_started_at": (now - timedelta(minutes=50)).isoformat().replace("+00:00", "Z")}
+        with mock.patch.object(train, "api", side_effect=self.fake_api(runs_in_progress=[run_obj])), \
+             mock.patch.object(train, "run", return_value=_proc()) as run_mock, \
+             mock.patch.object(train, "should_cancel_main_run", return_value=False), \
+             mock.patch.object(train, "mark_checking"), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.train_step("o/r", "sign"), 0)
+        self.assertTrue(any("refs/heads/main" in str(a) for call in run_mock.call_args_list for a in call[0]))
+
+    def test_api_error_does_not_block_merge(self):
+        with mock.patch.object(train, "api", side_effect=self.fake_api(fail_build=True)), \
+             mock.patch.object(train, "run", return_value=_proc()) as run_mock, \
+             mock.patch.object(train, "should_cancel_main_run", return_value=False), \
+             mock.patch.object(train, "mark_checking"), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.train_step("o/r", "sign"), 0)
+        self.assertTrue(any("refs/heads/main" in str(a) for call in run_mock.call_args_list for a in call[0]))
