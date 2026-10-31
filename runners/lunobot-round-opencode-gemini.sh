@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# lunobot-round-opencode-gemini.sh — круги Lunobot: менеджер/роутер — бесплатная модель opencode,
-# воркер — Google Gemini (веб-интерфейс AI Studio через `aistudio` из unxed/AI, skills/aistudio-offload).
+# lunobot-round-opencode-gemini.sh — круги Lunobot по схеме «роутер»: бесплатная модель opencode только
+# запускает ОДНУ команду `aistudio drive` и пересказывает её вывод (не читает, не думает, не выбирает работу);
+# ВСЁ мышление, включая чтение LUNOBOT.md и весь круг, делает Gemini (веб-интерфейс AI Studio, `aistudio`
+# из unxed/AI, skills/aistudio-offload), а команды, которые он просит, выполняет сам движок.
 # `--check` — только проверка предусловий (opencode, gh, aistudio, jq, flock) и выход.
 
 set -euo pipefail
@@ -11,15 +13,15 @@ export NO_PROXY=127.0.0.1,localhost
 export GIT_TERMINAL_PROMPT=0
 
 # ── настройки ─────────────────────────────────────────────────────────
-# Менеджер — бесплатная модель opencode (`opencode models | grep free`), переопределяется переменной.
+# Роутер — бесплатная модель opencode (`opencode models | grep free`), переопределяется переменной.
 # glm-5.3-flash-free: бесплатна сейчас, класс Flash/Haiku (LUNOBOT.md § 1: «легче» Sonnet/Terra ->
 # Лунобот-2), а сама она только маршрутизирует: всю работу делает Gemini.
-MODEL="${LUNOBOT_MANAGER_MODEL:-opencode/glm-5.3-flash-free}"   # provider/model#variant
-MANAGER_ID="$(basename "${MODEL%%#*}")"   # id менеджера для OFFLOAD_CALLER и подписи
+MODEL="${LUNOBOT_ROUTER_MODEL:-${LUNOBOT_MANAGER_MODEL:-opencode/glm-5.3-flash-free}}"   # provider/model#variant
+MANAGER_ID="$(basename "${MODEL%%#*}")"   # id роутера для OFFLOAD_CALLER и подписи
 SESSION_NAME="lunobot-2"               # имя сессии (Lunobot-2)
 BOT_NUMBER=2                           # неизвестный/лёгкий класс -> 2; общий lock с muse и luna-high
 ROUND_TIMEOUT=3600                     # Gemini медленнее: aistudio code до 900 с на попытку
-AI_REPO="${AI_REPO:-${HOME}/AI-repo}"  # клон unxed/AI (агент gemini-router для opencode)
+AI_REPO="${AI_REPO:-${HOME}/AI-repo}"  # клон unxed/AI (агент drive-router для opencode)
 export PATH="${HOME}/.npm-global/bin:${HOME}/.local/bin:${PATH}"
 WORKDIR="${HOME}"
 INTERVAL_MIN=15
@@ -163,44 +165,42 @@ MSG
     bad=1
   fi
   if command -v opencode >/dev/null 2>&1 && ! opencode models 2>/dev/null | grep -qxF "${MODEL%%#*}"; then
-    echo "MISSING: модель ${MODEL%%#*} не найдена в 'opencode models' (задай LUNOBOT_MANAGER_MODEL=...)" >&2; bad=1
+    echo "MISSING: модель ${MODEL%%#*} не найдена в 'opencode models' (задай LUNOBOT_ROUTER_MODEL=...)" >&2; bad=1
   fi
   return "${bad}"
 }
 
-# агент gemini-router (opencode) из unxed/AI — менеджер может отдать работу субагентом
+# агент drive-router (opencode) из unxed/AI (справочно; сам круг запускается через `opencode run` с минимальным промптом)
 install_router_agent() {
-  local src="${AI_REPO}/skills/aistudio-offload/agents/opencode/gemini-router.md"
-  local dst="${HOME}/.config/opencode/agent/gemini-router.md"
+  local src="${AI_REPO}/skills/aistudio-offload/agents/opencode/drive-router.md"
+  local dst="${HOME}/.config/opencode/agent/drive-router.md"
   if [[ -f "${src}" ]]; then
     mkdir -p "$(dirname "${dst}")"
     cmp -s "${src}" "${dst}" 2>/dev/null || cp -f "${src}" "${dst}"
-  else
-    log "WARNING: ${src} не найден; агент gemini-router не установлен, менеджер работает через aistudio напрямую"
   fi
 }
 
-# Жёсткий гейт менеджера: плагин opencode (tool.execute.before) прогоняет каждый вызов инструмента
-# через `aistudio guard --manager` (тот же PreToolUse-гейт, что у Claude Code; exit 2 — блок).
+# Жёсткий гейт роутера: плагин opencode (tool.execute.before) прогоняет каждый вызов инструмента
+# через `aistudio guard` (режим роутера: разрешена одна команда `aistudio ...`, остальные инструменты блокируются; exit 2 — блок).
 # Имена и аргументы инструментов opencode переводятся в формат Claude Code. Сбой гейта = блок (fail closed).
 GATE_DIR="${HOME}/.lunobot/gate"
-install_manager_gate() {
+install_router_gate() {
   mkdir -p "${GATE_DIR}"
-  cat >"${GATE_DIR}/manager-gate.js" <<'JS'
+  cat >"${GATE_DIR}/router-gate.js" <<'JS'
 import { spawnSync } from "node:child_process"
 const TOOL = { bash: "Bash", write: "Write", edit: "Edit", multiedit: "MultiEdit", patch: "Edit", apply_patch: "Edit", notebookedit: "NotebookEdit" }
-export const ManagerGate = async ({ directory }) => ({
+export const RouterGate = async ({ directory }) => ({
   "tool.execute.before": async (input, output) => {
     const tool = TOOL[String(input.tool).toLowerCase()] || input.tool
     const a = output.args || {}
     const ev = { tool_name: tool, cwd: directory || process.cwd(),
       tool_input: { command: a.command, file_path: a.filePath || a.file_path || a.path } }
-    const r = spawnSync("aistudio", ["guard", "--manager"], { input: JSON.stringify(ev), encoding: "utf8", timeout: 30000 })
-    if (r.status !== 0) throw new Error((r.stderr || "MANAGER GATE: aistudio guard failed").trim())
+    const r = spawnSync("aistudio", ["guard"], { input: JSON.stringify(ev), encoding: "utf8", timeout: 30000 })
+    if (r.status !== 0) throw new Error((r.stderr || "ROUTER GATE: aistudio guard failed").trim())
   },
 })
 JS
-  OPENCODE_CONFIG_CONTENT="{\"plugin\":[\"file://${GATE_DIR}/manager-gate.js\"]}"
+  OPENCODE_CONFIG_CONTENT="{\"plugin\":[\"file://${GATE_DIR}/router-gate.js\"]}"
   export OPENCODE_CONFIG_CONTENT
 }
 
@@ -212,19 +212,13 @@ runner_deadline_instructions() {
     "$(date -u -d "@${cutoff_epoch}" '+%Y-%m-%d %H:%M:%S UTC')" "$(date -u -d "@${persist_epoch}" '+%Y-%m-%d %H:%M:%S UTC')"
 }
 
-# Шаблон промпта: одинарные кавычки — обратные апострофы и $( ) не выполняются оболочкой.
+# Файл задачи круга пишет САМ РАННЕР (одинарные кавычки: обратные апострофы и $( ) не выполняются оболочкой).
 # Подстановка только @…@ через ${var//…/…} (результат подстановки заново не раскрывается).
-PROMPT_TEMPLATE=$(cat <<'PROMPT'
-Ты — Лунобот-@BOT@ (менеджер: @MANAGER@; воркер: Google Gemini через AI Studio). Сделай ОДИН полный круг работы по инструкции из /tmp/lunobot-@BOT@/LUNOBOT.md: проверь OWNER_QUEUE.md, tick-all, выбери работу по §5, сделай шаг, запиши в учёт, ретро. Не останавливайся, пока круг не завершён. @DEADLINE@ Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1 (LUNOBOT.md § 5): одновременно работает не больше одного воркера, менеджер не в счёт; освободился — следующую задачу тому же воркеру (ПЕРЕДАЙ ВОРКЕРУ), второго не запускай. Воркер здесь — Gemini.
+TASK_TEMPLATE=$(cat <<'TASK'
+Ты — Лунобот-@BOT@ (id узла: @NODE@). Ты — Google Gemini, ты думаешь и решаешь сам; команды в оболочке за тебя выполняет движок, ты просишь их по одной (протокол выше). Подпись (LUNOBOT.md, modules/writing.md): роутер — @MANAGER@ (только запускает движок), исполнитель — модель Gemini из строки answered by в логе драйва.
 
-ВСЯ СОДЕРЖАТЕЛЬНАЯ РАБОТА — У GEMINI. Ты сам НИКОГДА не пишешь код, анализ, триаж, тексты комментариев/PR/ретро и правки markdown: ты читаешь состояние, пишешь файл задачи (task*.md или каталог tasks/), запускаешь aistudio, проверяешь результат (git diff для чтения, тесты, CI), коммитишь и пушишь. Твои собственные правки и запись файлов в shell заблокированы гейтом (aistudio guard --manager). Команды, всегда с жёстким timeout и всегда с OFFLOAD_CALLER=@MANAGER@ в начале:
-- код: OFFLOAD_CALLER=@MANAGER@ timeout 1500 aistudio code --task-file task.md -C <репозиторий> -p <файл> -p <файл> [-t "<тест>"]
-- всё остальное (анализ, триаж, текст ответа в тикет, ретро): OFFLOAD_CALLER=@MANAGER@ timeout 900 aistudio ask -f <файл> -o ответ.md "<короткая инструкция>"
-- либо субагент gemini-router (задача — путь к файлу задачи, репозиторий, тест).
-Передавай только нужные файлы: контекст (+задача) ограничен 400000 символами; выход 3 / CONTEXT_TOO_LARGE — сузь список -p/-f сам. Текст задачи — только в файле, никогда в аргументе в двойных кавычках с обратными апострофами или $( ) (оболочка их выполнит). Не передавай секреты. После любой ненулевой команды выполни aistudio diag и процитируй строку DIAG с причиной в отчёте и в учёте; не зависай молча (смотри aistudio status --runs). Нет ответа Gemini — запиши блокировку в учёт, не делай работу сам. В подписи (LUNOBOT.md, modules/writing.md) укажи обе модели: роутер @MANAGER@, исполнитель — модель из строки answered by / actual_model в выводе aistudio.
-
-После круга раннер снимет все захваты твоего id (release.py, LUNOBOT.md § 1): незаконченное оставь запушенной веткой с записью в status (§ 7.5), не в /tmp. В ретро запиши рефлексию круга (journal.py, § 4 п. 6). Ответь кратко итогом круга.
-PROMPT
+ЗАДАЧА: сделай ОДИН полный круг Лунобота по инструкции LUNOBOT.md (она приложена к этому запросу): сначала OWNER_QUEUE.md, tick-all, выбери работу по § 5, сделай один шаг, запиши в учёт, рефлексия через journal.py (§ 4 п. 6). Режим одного круга из скрипта-раннера: потолок воркеров (б) на этот круг — 1. Рабочий каталог — пустая рабочая папка; репозитории клонируй туда (gh repo clone). Незаконченное оставь запушенной веткой с записью в status (§ 7.5); в конце круга освободи свои захваты (release.py). @DEADLINE@ Не начинай шаг, который нельзя безопасно припарковать. Если делать нечего или ты заблокирован — ответь действием blocked с причиной; не придумывай работу.
+TASK
 )
 
 # ── один чистый круг Lunobot ─────────────────────────────────────────
@@ -242,13 +236,27 @@ run_round() {
   curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/LUNOBOT.md" \
     -o "/tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md" || { log "ERROR: cannot fetch LUNOBOT.md"; return 1; }
 
-  # 3) промпт: шаблон + подстановки @…@ (без eval, без разбора обратных апострофов)
-  local prompt="${PROMPT_TEMPLATE}"
-  prompt="${prompt//@BOT@/${BOT_NUMBER}}"
-  prompt="${prompt//@MANAGER@/${MANAGER_ID}}"
-  prompt="${prompt//@DEADLINE@/$(runner_deadline_instructions "$(date -u +%s)")}"
+  # 2) id узла из tools/node.py репозитория (без клона: скачиваем один файл)
+  local node_id="unknown"
+  curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/tools/node.py" \
+    -o "/tmp/lunobot-${BOT_NUMBER}/node.py" 2>/dev/null \
+    && node_id="$(python3 "/tmp/lunobot-${BOT_NUMBER}/node.py" 2>/dev/null || echo unknown)"
 
-  log "Starting opencode (model: ${MODEL}) ..."
+  # 3) файл задачи круга пишет сам раннер; роутеру достаётся только команда запуска
+  local task_file="/tmp/lunobot-${BOT_NUMBER}/round-task.md"
+  local work_dir="/tmp/lunobot-${BOT_NUMBER}/work"
+  local drive_log="${LOG_DIR}/drive-${round_num}-${ts}"
+  rm -rf -- "${work_dir:?}"; mkdir -p "${work_dir}" "${drive_log}"
+  local task="${TASK_TEMPLATE}"
+  task="${task//@BOT@/${BOT_NUMBER}}"
+  task="${task//@NODE@/${node_id}}"
+  task="${task//@MANAGER@/${MANAGER_ID}}"
+  task="${task//@DEADLINE@/$(runner_deadline_instructions "$(date -u +%s)")}"
+  printf '%s\n' "${task}" >"${task_file}"
+  local drive_timeout=$((ROUND_TIMEOUT - 120))
+  local prompt="Run exactly this one command and output its stdout verbatim, nothing else: OFFLOAD_CALLER=${MANAGER_ID} timeout ${drive_timeout} aistudio drive --task-file ${task_file} -f /tmp/lunobot-${BOT_NUMBER}/LUNOBOT.md -C ${work_dir} --deadline-min $((drive_timeout / 60 - 2)) --log ${drive_log}"
+
+  log "Starting opencode router (model: ${MODEL}) -> aistudio drive ..."
   cd "${WORKDIR}"
   # Stream output to the terminal and log while preserving the command status.
   OFFLOAD_CALLER="${MANAGER_ID}" setsid timeout --foreground "${ROUND_TIMEOUT}" opencode run \
@@ -306,13 +314,13 @@ run_round() {
 # ── основной цикл ────────────────────────────────────────────────────
 main() {
   if [[ "${1:-}" == "--check" ]]; then
-    check_prereqs && echo "OK: предусловия выполнены (менеджер ${MODEL}, Лунобот-${BOT_NUMBER})"
+    check_prereqs && echo "OK: предусловия выполнены (роутер ${MODEL}, Лунобот-${BOT_NUMBER})"
     exit $?
   fi
   check_prereqs || { echo "Предусловия не выполнены — раунды не запускаются." >&2; exit 1; }
   acquire_runner_lock || exit 1
   install_router_agent
-  install_manager_gate
+  install_router_gate
   log "=== Lunobot-opencode-gemini runner started (PID $$) ==="
   log "Model: ${MODEL}, interval: ${INTERVAL_MIN} min, logs: ${LOG_DIR}"
 
