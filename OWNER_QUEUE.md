@@ -65,7 +65,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
 Состояние: свободно
-Прогресс 31-10-2026 14:22:44 UTC (Лунобот-1 (node e65adfdb29b05535c1eb5c7a; LNX)): захват снят — круг 1 раннера lunobot-round-haiku.sh окончен (код 0); продолжать по тикету поручения и status/.
+Прогресс 31-10-2026 14:55:00 UTC (Лунобот-1 (node e65adfdb29b05535c1eb5c7a; LNX)): анализ D-05 unxed/f4#2162 не выполнен — роутер Gemini упёрся в rate limit и Permission denied на gemini-3.1-pro-preview; план не записан; захват снят; повторить анализ в следующем круге
 
 ## account-240
 Заметка владельца: https://github.com/unxed/lunobot/issues/240
