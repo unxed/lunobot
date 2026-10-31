@@ -1993,6 +1993,10 @@ def train_step(repo, sign):
         # Без единой проверки поезд не зелёный, а ещё не проверялся (21-10-2026, unxed/f4#2128).
         print(f"поезд #{n} в пути: {len(pending)} из {len(checks)} проверок ещё идут")
         return 0
+    busy = main_ci_busy(repo)
+    if busy:
+        print(f"поезд #{n} ждёт: на main идёт CI (прогон {busy['id']}), вливание отложено до следующего цикла")
+        return 0
     ff = run("gh", "api", "-X", "PATCH", f"repos/{repo}/git/refs/heads/main",
              "-f", f"sha={head}", "-F", "force=false", check=False)
     if ff.returncode and push_ref(repo, "main", head):
@@ -2090,6 +2094,30 @@ def main_push_runs_in_progress(repo, head):
         return [r for r in runs if r["event"] == "push" and r["status"] != "completed"]
     except (Exception, SystemExit):  # noqa: BLE001
         return []
+
+
+MAIN_CI_WAIT_MAX_MIN = 40
+
+
+def main_ci_busy(repo):
+    """Есть ли свежий (до MAIN_CI_WAIT_MAX_MIN мин) идущий прогон build.yml на main.
+    Отложенное вливание бережёт минуты CI от отмены при concurrency (unxed/lunobot#262)."""
+    try:
+        for st in ("in_progress", "queued"):
+            resp = api(f"repos/{repo}/actions/workflows/build.yml/runs?branch=main&event=push&status={st}&per_page=1", check=False)
+            runs = resp.get("workflow_runs", []) if isinstance(resp, dict) else []
+            for r in runs:
+                started = r.get("run_started_at") or r.get("created_at")
+                if not started:
+                    continue
+                started_dt = datetime.fromisoformat(started.replace("Z", "+00:00"))
+                if started_dt.tzinfo is None:
+                    started_dt = started_dt.replace(tzinfo=timezone.utc)
+                if (datetime.now(timezone.utc) - started_dt).total_seconds() < MAIN_CI_WAIT_MAX_MIN * 60:
+                    return r
+    except (Exception, SystemExit):  # noqa: BLE001
+        pass
+    return None
 
 
 def should_cancel_main_run(repo):
