@@ -1980,6 +1980,24 @@ def transit_warn(repo):
               "(§ 7.2 п. 4) и поставь `проверяют`")
 
 
+def capacity_cancelled(cancelled):
+    """Сколько отменённых проверок отменил сам GitHub за нехватку hosted-раннера. В аннотации job'а:
+    «The job was not acquired by Runner of type hosted even after multiple attempts» (+ «Due to capacity
+    constraints, jobs targeting macOS arm64 runners may experience longer queue times»). Это не код и не
+    флейк: перезапуск встаёт в ту же очередь. 04-11-2026 поезд unxed/f4#2259 три попытки подряд (14:37, 15:03,
+    15:34) терял `Test (darwin/arm64 …)` через 15 минут очереди, `health` дал «ИНЦИДЕНТ ПРОЦЕССА», и круг
+    потратил ~10 минут на выяснение причины, чинить в которой нечего."""
+    n = 0
+    for c in cancelled:
+        m = re.search(r"github\.com/([^/]+/[^/]+)/actions/runs/\d+/job/(\d+)", c.get("detailsUrl") or "")
+        if not m:
+            continue
+        notes = api(f"repos/{m.group(1)}/check-runs/{m.group(2)}/annotations", check=False)
+        if isinstance(notes, list) and any("not acquired by Runner" in (a.get("message") or "") for a in notes):
+            n += 1
+    return n
+
+
 def train_step(repo, sign):
     pr = train_pr(repo)
     if not pr:
@@ -1993,6 +2011,10 @@ def train_step(repo, sign):
     # leave staging parked for hours behind an already lost job.
     if cancelled:
         rerun(cancelled)
+        starved = capacity_cancelled(cancelled)
+        if starved:
+            print(f"поезд #{n}: {starved} из {len(cancelled)} отмен — у GitHub нет свободного hosted-раннера "
+                  "(capacity): код не виноват, чинить нечего, перезапуск уже сделан")
         if pending:
             print(f"поезд #{n}: {len(cancelled)} проверок отменены — перезапустил; "
                   f"ещё {len(pending)} проверок идут")
