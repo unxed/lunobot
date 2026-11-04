@@ -594,6 +594,34 @@ class EjectConflictDiagnosticsTest(unittest.TestCase):
         close_train.assert_not_called()
 
 
+class EjectStagingRevertTrailerTest(unittest.TestCase):
+    """04-11-2026 unxed/f4#2263 и #2264: откат от eject не нёс Staging-Revert:, blocks_cut его не видел,
+    и поезд резался до откатанного коммита (quick на откате ещё шёл) и вёз его снова."""
+
+    def test_eject_commit_carries_staging_revert_trailer_that_blocks_cut(self):
+        sha = "90307a13" + "b" * 32
+        amended = []
+
+        def run(*cmd, **kwargs):
+            if cmd[:2] == ("git", "log"):
+                return _proc(0, 'Revert "x"\n\nThis reverts commit ' + sha + ".\n")
+            if cmd[:3] == ("git", "commit", "-q"):
+                amended.append(cmd[-1] if cmd[-2] == "-m" else cmd[-3])
+            return _proc()
+
+        pr = {"number": 7, "html_url": "https://github.com/o/r/pull/7"}
+        with mock.patch.object(train, "train_pr", return_value=pr), \
+                mock.patch.object(train, "run", side_effect=run), \
+                mock.patch.object(train, "close_train"), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.eject("o/r", [sha], "failed check"), 0)
+
+        self.assertEqual(len(amended), 1)
+        self.assertIn("Выкинут из поезда: failed check", amended[0])
+        self.assertIn("\nStaging-Revert: https://github.com/o/r/pull/7", amended[0])
+        self.assertTrue(train.blocks_cut({"commit": {"message": amended[0]}}))
+
+
 class HealRerunTest(unittest.TestCase):
     def test_red_staging_rerun_uses_checked_rest_endpoint(self):
         last = {"html_url": "https://github.com/o/r/actions/runs/42",
