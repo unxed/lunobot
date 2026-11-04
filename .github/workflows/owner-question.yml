@@ -37,7 +37,7 @@ jobs:
         env:
           IN_TEXT: ${{ inputs.text }}
         run: |
-          python3 -c 'import os,sys; from owner_questions import check_question, GATE_MESSAGE; r=check_question(os.environ["IN_TEXT"]); r and (print("::error::отклонено: %s. %s" % (r, GATE_MESSAGE)) or sys.exit(1))'
+          PYTHONPATH=tools python3 -c 'import os,sys; from owner_questions import check_question, GATE_MESSAGE; r=check_question(os.environ["IN_TEXT"]); r and (print("::error::отклонено: %s. %s" % (r, GATE_MESSAGE)) or sys.exit(1))'
       - name: Записать вопрос
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
