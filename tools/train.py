@@ -777,11 +777,21 @@ def pick_green(repo, main_sha, staging_sha, runs):
     return None
 
 
+def cut_missing_staging_message(repo, staging):
+    """«Нет ветки» — только при ответе GitHub «Not Found». Пустой ответ или другое тело — сбой API
+    (сеть, лимит, 5xx): 04-11-2026 `tick-all` по f4 написал «нет ветки lunobot/staging», хотя ветка есть,
+    и это стоило лишнего разбора; повтор прошёл."""
+    if isinstance(staging, dict) and staging.get("message") in ("Not Found", "Branch not found"):
+        return f"нет ветки {STAGING} в {repo}"
+    detail = staging.get("message") if isinstance(staging, dict) else "пустой ответ"
+    return f"не удалось прочитать ветку {STAGING} в {repo} (ошибка API: {detail}) — ветка не признана отсутствующей, повтори tick"
+
+
 def cut(repo, sign):
     main_sha = api(f"repos/{repo}/branches/main")["commit"]["sha"]
     staging = api(f"repos/{repo}/branches/{STAGING}", check=False)
     if not staging or "commit" not in staging:
-        sys.exit(f"нет ветки {STAGING} в {repo}")
+        sys.exit(cut_missing_staging_message(repo, staging))
     cmp = compare(repo, main_sha, staging["commit"]["sha"])
     if cmp["behind_by"]:
         r = run("gh", "api", f"repos/{repo}/merges", "-f", f"base={STAGING}", "-f", "head=main",
