@@ -65,7 +65,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 04-11-2026 02:36:29 UTC
-Прогресс 04-11-2026 02:36:29 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): следующий атомарный шаг по плану account-216 — unxed/f4#2159; продолжаю по status/2115.md
+Прогресс 04-11-2026 02:44:44 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): f4#2159: припаркована протокольная основа encoder K/k/M, byte fixtures; детали и sandbox run в projects/f4/status/2159.md, далее подключение событий к вводу и compact negotiation
 
 ## account-240
 Заметка владельца: https://github.com/unxed/lunobot/issues/240
