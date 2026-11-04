@@ -64,8 +64,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: f4
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 04-11-2026 02:36:29 UTC
-Прогресс 04-11-2026 02:44:44 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): f4#2159: припаркована протокольная основа encoder K/k/M, byte fixtures; детали и sandbox run в projects/f4/status/2159.md, далее подключение событий к вводу и compact negotiation
+Состояние: свободно
+Прогресс 04-11-2026 02:58:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 1 раннера lunobot-round-luna-high.sh окончен (код 124); продолжать по тикету поручения и status/.
 
 ## account-240
 Заметка владельца: https://github.com/unxed/lunobot/issues/240
@@ -83,8 +83,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: учёт
 Поручение: взять unxed/pureffi на обслуживание: подключить в projects/INDEX.md, завести паспорт и учётные файлы, затем исправлять открытые проблемы атомарными PR по приоритету.
 Критерий: pureffi добавлен в INDEX с рабочим паспортом и триажем; все порученные исправления влиты с зелёным CI, прогресс ведётся в issue до завершения.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 24-10-2026 17:39:35 UTC
-Прогресс 24-10-2026 17:41:32 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): unxed/pureffi main: run [40105634930](https://github.com/unxed/pureffi/actions/runs/40105634930) success на SHA `441d5b62d291f8534c156d505b9d69656e060f8b`; run [40105876416](https://github.com/unxed/pureffi/actions/runs/40105876416) success; текущий main [e6e6228d51d3e19caafaee07f96543a7c3ab7ae6](https://github.com/unxed/pureffi/commit/e6e6228d51d3e19caafaee07f96543a7c3ab7ae6).
+Состояние: свободно
+Прогресс 04-11-2026 02:58:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 1 раннера lunobot-round-luna-high.sh окончен (код 124); продолжать по тикету поручения и status/.
 
 
 
