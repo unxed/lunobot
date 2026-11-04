@@ -170,6 +170,26 @@ stop_active_round() {
   exit "${exit_status}"
 }
 
+# ── самообновление раннера (EVOLUTION.md, 04-11-2026) ────────────────
+# Узел запускал копию раннера от 21-10: промпт круга (в нём правило чтения одним сообщением, жалоба #286)
+# жил в ней, и правка в main до узла не доходила. Перед каждым кругом берём свежую версию этого же скрипта
+# из main и, если она отличается и проходит `bash -n`, подменяем файл (mv — новый inode) и перезапускаемся;
+# lock (fd 9) переживает exec, второй раз его не берём. Нет сети или файл не пишется — работаем со своей копией.
+self_update() {
+  [[ "${LUNOBOT_NO_SELF_UPDATE:-0}" == 1 ]] && return 0
+  local self new
+  self="$(readlink -f "$0")"
+  [[ -w "${self}" ]] || return 0
+  new="$(mktemp "${self}.new.XXXXXX")" || return 0
+  if curl -fsSL "https://raw.githubusercontent.com/unxed/lunobot/refs/heads/main/runners/$(basename "${self}")" -o "${new}" \
+     && [[ -s "${new}" ]] && bash -n "${new}" 2>/dev/null && ! cmp -s "${new}" "${self}"; then
+    chmod --reference="${self}" "${new}" && mv -f -- "${new}" "${self}" || { rm -f -- "${new}"; return 0; }
+    log "Runner updated from main; restarting"
+    LUNOBOT_REEXEC=1 exec bash "${self}" "$@"
+  fi
+  rm -f -- "${new}"
+}
+
 # ── один чистый круг Lunobot ─────────────────────────────────────────
 run_round() {
   local round_num="$1"
@@ -246,7 +266,7 @@ run_round() {
 
 # ── основной цикл ────────────────────────────────────────────────────
 main() {
-  acquire_runner_lock || exit 1
+  if [[ "${LUNOBOT_REEXEC:-0}" != 1 ]]; then acquire_runner_lock || exit 1; fi
   log "=== Lunobot-Luna High runner started (PID $$) ==="
   log "Model: ${MODEL}, interval: ${INTERVAL_MIN} min, logs: ${LOG_DIR}"
 
@@ -254,6 +274,7 @@ main() {
 
   local round=1
   while true; do
+    self_update "$@"
     local attempt=1
     while (( attempt <= MAX_RETRIES )); do
       local rc=0
