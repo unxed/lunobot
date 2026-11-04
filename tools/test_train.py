@@ -560,6 +560,37 @@ class TrainStepCancellationTest(unittest.TestCase):
 
 
 class EjectConflictDiagnosticsTest(unittest.TestCase):
+    def test_ejected_commit_is_marked_as_staging_revert(self):
+        pr = {"number": 2261, "html_url": "https://github.com/o/r/pull/2261"}
+        sha = "db720328" + "a" * 32
+        commit_message = "Revert \"bad change\"\n\nThis reverts commit " + sha + ".\n"
+        calls = []
+
+        def run(*cmd, **kwargs):
+            calls.append((cmd, kwargs))
+            if cmd[:2] == ("git", "clone"):
+                return _proc()
+            if cmd[:2] == ("git", "revert"):
+                return _proc()
+            if cmd[:4] == ("git", "log", "-1", "--format=%B"):
+                return _proc(0, commit_message)
+            if cmd[:3] == ("git", "commit", "-q"):
+                return _proc()
+            if cmd[:2] == ("git", "push"):
+                return _proc()
+            self.fail(f"unexpected command: {cmd}")
+
+        with mock.patch.object(train, "train_pr", return_value=pr), \
+                mock.patch.object(train, "run", side_effect=run), \
+                mock.patch.object(train, "close_train"), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(train.eject("o/r", [sha], "failed Windows tests"), 0)
+
+        message = next(args[args.index("-m") + 1]
+                       for args, _ in calls if args[:3] == ("git", "commit", "-q"))
+        self.assertIn("Staging-Revert: https://github.com/o/r/pull/2261", message)
+        self.assertIn("Выкинут из поезда: failed Windows tests", message)
+
     def test_revert_conflict_preserves_error_and_paths_without_mutating_refs(self):
         sha = "db720328" + "a" * 32
         conflict = _proc(1, "", "CONFLICT (modify/delete): internal/app/actions_table.go\n"

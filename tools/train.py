@@ -2224,7 +2224,8 @@ def eject(repo, shas, reason):
                 return 1
             msg = run("git", "log", "-1", "--format=%B", cwd=d).stdout
             run("git", "commit", "-q", "--amend", "-m",
-                f"{msg.rstrip()}\n\nВыкинут из поезда: {reason}", cwd=d)
+                f"{msg.rstrip()}\n\nStaging-Revert: {pr['html_url']}\n"
+                f"Выкинут из поезда: {reason}", cwd=d)
         run("git", "push", "-q", "origin", f"HEAD:{STAGING}", cwd=d)
     if pr:
         close_train(repo, pr, f"Красный поезд; выкинуты из staging: "
