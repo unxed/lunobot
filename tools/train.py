@@ -2223,8 +2223,12 @@ def eject(repo, shas, reason):
                       "Вердикт бисекта сохранён, повторного бисекта не будет.")
                 return 1
             msg = run("git", "log", "-1", "--format=%B", cwd=d).stdout
+            # Трейлер Staging-Revert: обязателен — по нему cut() видит откат после последнего зелёного
+            # quick (blocks_cut) и ждёт quick на вершине; без него поезд #2264 unxed/f4 04-11-2026
+            # (как и #2263) был порезан до откатанного коммита и повёз его снова.
+            link = pr["html_url"] if pr else "eject"
             run("git", "commit", "-q", "--amend", "-m",
-                f"{msg.rstrip()}\n\nВыкинут из поезда: {reason}", cwd=d)
+                f"{msg.rstrip()}\n\nВыкинут из поезда: {reason}\n\nStaging-Revert: {link}", cwd=d)
         run("git", "push", "-q", "origin", f"HEAD:{STAGING}", cwd=d)
     if pr:
         close_train(repo, pr, f"Красный поезд; выкинуты из staging: "
