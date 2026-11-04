@@ -10,7 +10,8 @@
 мониторинга» иначе попадал в список на каждом круге). Запросы-возможности
 (`enhancement`) и тикеты без метки `bug` не выводятся никогда. Вывод — только список
 «может быть завершён»: завершена ли работа (влитый PR, нет незавершённых частей),
-решает читающий тикет.
+решает читающий тикет. Тикет со status-файлом `projects/<проект>/status/<N>.md` не выводится:
+работа не завершена.
 
 Использование:
     python3 tools/close_candidates.py f4 [--repo unxed/f4] [--days 14]
@@ -71,14 +72,20 @@ def default_repo(project):
     return m.group(1) if m else f"unxed/{project}"
 
 
-def candidates(rows, repo, days, now=None, bug_issues=None):
+def candidates(rows, repo, days, now=None, bug_issues=None, status_dir=None):
     """`bug_issues` — {номер: тикет} из одного списка открытых тикетов с меткой bug: строки вне него
-    пропускаются без запроса (иначе по запросу на каждую строку TRIAGE, у f4 дольше 100 с)."""
+    пропускаются без запроса (иначе по запросу на каждую строку TRIAGE, у f4 дольше 100 с).
+    `status_dir` — `projects/<проект>/status`: тикет, у которого там есть `<N>.md`, не кандидат — status-файл
+    удаляют, когда работа сделана (§ 4 п. 2), значит он есть, пока работа не завершена (04-11-2026 f4#1255,
+    f4#2068, dn#31: все три в списке при незавершённых частях)."""
     now = now or dt.datetime.now(dt.timezone.utc)
     owner = repo.split("/")[0].lower()
     out, skipped = [], []
     for row in rows:
         n = int(row["number"])
+        if status_dir is not None and (Path(status_dir) / f"{n}.md").exists():
+            skipped.append((n, f"есть status/{n}.md — работа не завершена"))
+            continue
         if bug_issues is not None and n not in bug_issues:
             skipped.append((n, "нет метки bug: нет среди открытых тикетов с этой меткой"))
             continue
@@ -134,7 +141,8 @@ def main(argv=None):
     try:
         bugs = {i["number"]: i for i in api(f"repos/{repo}/issues?state=open&labels=bug")
                 if "pull_request" not in i}
-        out, skipped = candidates(triage_rows(a.project), repo, a.days, bug_issues=bugs)
+        out, skipped = candidates(triage_rows(a.project), repo, a.days, bug_issues=bugs,
+                                  status_dir=ROOT / "projects" / a.project / "status")
     except RuntimeError as e:
         print(e, file=sys.stderr)
         return 2
