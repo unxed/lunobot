@@ -1474,6 +1474,18 @@ class MarkCheckingStagingPartTest(unittest.TestCase):
         mc.assert_called_once_with(self.REPO, {5}, self.SIGN, "H")
 
 
+
+class CutMissingStagingMessageTest(unittest.TestCase):
+    def test_not_found_is_missing_branch(self):
+        msg = train.cut_missing_staging_message("o/r", {"message": "Not Found"})
+        self.assertIn("нет ветки", msg)
+
+    def test_empty_or_other_response_is_api_failure(self):
+        for resp in (None, {"message": "Server Error"}):
+            msg = train.cut_missing_staging_message("o/r", resp)
+            self.assertNotIn("нет ветки", msg)
+            self.assertIn("ошибка API", msg)
+
 if __name__ == "__main__":
     unittest.main()
 
