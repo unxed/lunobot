@@ -2348,3 +2348,15 @@ class MainCiBusyTest(unittest.TestCase):
              contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(train.train_step("o/r", "sign"), 0)
         self.assertTrue(any("refs/heads/main" in str(a) for call in run_mock.call_args_list for a in call[0]))
+
+class CapacityCancelledTest(unittest.TestCase):
+    URL = "https://github.com/unxed/f4/actions/runs/41849486432/job/126656565858"
+
+    def test_counts_only_runner_starved_jobs(self):
+        starved = [{"message": "The job was not acquired by Runner of type hosted even after multiple attempts"}]
+        with mock.patch.object(train, "api", side_effect=[starved, [{"message": "other"}], None]) as api:
+            n = train.capacity_cancelled([{"detailsUrl": self.URL}, {"detailsUrl": self.URL},
+                                          {"detailsUrl": self.URL}, {"detailsUrl": "https://example.com/x"}])
+        self.assertEqual(n, 1)
+        self.assertEqual(api.call_args_list[0].args[0], "repos/unxed/f4/check-runs/126656565858/annotations")
+        self.assertEqual(api.call_count, 3)
