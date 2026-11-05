@@ -106,7 +106,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 05-11-2026 23:02:15 UTC
-Прогресс 05-11-2026 22:43:11 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 17 раннера lunobot-round-luna-high.sh окончен (код 0); продолжать по тикету поручения и status/.
+Прогресс 05-11-2026 23:05:18 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): часть 42 запаркована в unxed/sandbox, ветка `tmp/19d3/sandbox-280-hide-series-extended-1105`, sha `a53c18d219f457be6ff9621978e78cfddcca967e`; запущен faststone-gui-initial.yml, run 42126751998, точный SHA подтверждён; осталось разобрать assertions и определить дальнейшую проверку поведения панели 8.5.
 
 --
 
