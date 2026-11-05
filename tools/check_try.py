@@ -108,6 +108,19 @@ def commit_mentions_ticket(message, repo, number):
     return bool(re.search(pattern, message or ""))
 
 
+def pull_mentions_ticket(pulls, repo, number):
+    """В связанном влитом в main PR есть точный `Touch: owner/repo#N`."""
+    touch = re.compile(rf"(?im)^\s*Touch:\s*{re.escape(repo)}#{number}\b")
+    return any(pull.get("merged_at") and pull.get("base", {}).get("ref") == "main"
+               and touch.search(pull.get("body") or "") for pull in pulls)
+
+
+def merged_pull_mentions_ticket(sha, repo, number):
+    """Touch учитывается только в PR, связанном GitHub именно с указанным commit SHA."""
+    pulls = check_triage.gh_one(f"/repos/{repo}/commits/{sha}/pulls")
+    return pull_mentions_ticket(pulls, repo, number)
+
+
 def commit_in_main(repo, sha):
     """True — коммит достижим из main или его PR влит в main, False — нет, None — коммита нет (404).
 
@@ -142,8 +155,10 @@ def main():
     premature = premature_tries(
         rows, lambda n: check_triage.gh_pages(f"/repos/{repo}/issues/{n}/comments?per_page=100"),
         lambda sha: commit_in_main(repo, sha),
-        lambda sha, number: commit_mentions_ticket(
-            check_triage.gh_one(f"/repos/{repo}/commits/{sha}")["commit"]["message"], repo, number),
+        lambda sha, number: (
+            commit_mentions_ticket(
+                check_triage.gh_one(f"/repos/{repo}/commits/{sha}")["commit"]["message"], repo, number)
+            or merged_pull_mentions_ticket(sha, repo, number)),
         repo=repo)
     for number, sha, reason in premature:
         print(f"[преждевременное «Пробуйте!»] {repo}#{number}: коммит {sha} — {reason}; "

@@ -1,5 +1,6 @@
 import datetime
 import unittest
+from unittest.mock import patch
 
 import check_try
 
@@ -141,6 +142,23 @@ class PrematureTryTest(unittest.TestCase):
             self.assertTrue(check_try.commit_mentions_ticket(message, "unxed/f4", 1976), message)
         for message in no:
             self.assertFalse(check_try.commit_mentions_ticket(message, "unxed/f4", 1976), message)
+
+    def test_touch_in_exact_merged_pr_for_commit_confirms_ticket(self):
+        pulls = [{"merged_at": "2026-11-05T07:19:15Z", "base": {"ref": "main"},
+                  "body": "Touch: unxed/dn#177\n\nDetails"}]
+        with patch.object(check_try.check_triage, "gh_one", return_value=pulls) as gh_one:
+            self.assertTrue(check_try.merged_pull_mentions_ticket("afd917b5", "unxed/dn", 177))
+        gh_one.assert_called_once_with("/repos/unxed/dn/commits/afd917b5/pulls")
+
+    def test_unrelated_sha_without_linked_pr_does_not_confirm_ticket(self):
+        with patch.object(check_try.check_triage, "gh_one", return_value=[]):
+            self.assertFalse(check_try.merged_pull_mentions_ticket("deadbeef", "unxed/dn", 177))
+
+    def test_linked_merged_pr_without_touch_does_not_confirm_ticket(self):
+        pulls = [{"merged_at": "2026-11-05T07:19:15Z", "base": {"ref": "main"},
+                  "body": "Fixes an unrelated issue"}]
+        with patch.object(check_try.check_triage, "gh_one", return_value=pulls):
+            self.assertFalse(check_try.merged_pull_mentions_ticket("afd917b5", "unxed/dn", 177))
 
     def test_old_ticket_is_not_fetched(self):
         def fail(number):
