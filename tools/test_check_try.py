@@ -142,6 +142,33 @@ class PrematureTryTest(unittest.TestCase):
         for message in no:
             self.assertFalse(check_try.commit_mentions_ticket(message, "unxed/f4", 1976), message)
 
+    def ticket_named(self, message, pulls, number=177, repo="unxed/dn"):
+        calls = []
+
+        def fetch(path):
+            calls.append(path)
+            return {"commit": {"message": message}} if path.endswith("/commits/afd917b") else pulls
+
+        got = check_try.ticket_named_at_commit(repo, "afd917b", number, fetch)
+        return got, calls
+
+    def test_ticket_in_pr_body_of_merge_commit_counts(self):
+        merge = "Merge pull request #188 from unxed/lunobot/pr/unxed-dn-177-paste-help"
+        pull = {"title": "Paste help", "body": "Touch: unxed/dn#177\n\nПробуйте"}
+        self.assertEqual(self.ticket_named(merge, [pull]), (True, [
+            "/repos/unxed/dn/commits/afd917b", "/repos/unxed/dn/commits/afd917b/pulls"]))
+
+    def test_ticket_in_pr_title_counts(self):
+        self.assertTrue(self.ticket_named("Merge pull request #188", [{"title": "Paste help (#177)", "body": None}])[0])
+
+    def test_ticket_in_commit_message_does_not_ask_for_pulls(self):
+        self.assertEqual(self.ticket_named("fix\n\nTouch: #177", [])[1], ["/repos/unxed/dn/commits/afd917b"])
+
+    def test_other_ticket_in_pr_body_is_still_foreign(self):
+        pull = {"title": "Other", "body": "Touch: unxed/dn#1770 and other/repo#177"}
+        self.assertFalse(self.ticket_named("Merge pull request #188", [pull])[0])
+        self.assertFalse(self.ticket_named("Merge pull request #188", [])[0])
+
     def test_old_ticket_is_not_fetched(self):
         def fail(number):
             raise AssertionError("старый тикет не запрашивается")
