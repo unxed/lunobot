@@ -68,7 +68,7 @@ def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RE
     """[(номер, sha, причина)]: «Пробуйте!» последних дней на коммит, который не тот или не в `main`.
 
     in_main(sha) -> True / False / None (None — такого коммита в репозитории нет);
-    about(sha, номер) -> True / False: в сообщении коммита назван этот тикет. Проверка срабатывает,
+    about(sha, номер) -> True / False: этот тикет назван в сообщении коммита или в описании его PR. Проверка срабатывает,
     только если тикет не назван ни в одном из коммитов комментария (шаг из нескольких коммитов
     называет их все, тикет — в одном).
     """
@@ -108,6 +108,20 @@ def commit_mentions_ticket(message, repo, number):
     return bool(re.search(pattern, message or ""))
 
 
+def ticket_named_at_commit(repo, sha, number, fetch):
+    """Тикет назван в сообщении коммита ИЛИ в заголовке/описании любого PR этого коммита.
+
+    В проектах с режимом `PR` «Пробуйте!» ссылается на merge-коммит PR («Merge pull request #188 from …»):
+    `Touch: owner/repo#N` лежит в описании PR, а не в сообщении merge-коммита. fetch(путь) -> JSON
+    GitHub API (`check_triage.gh_one`); список PR запрашивается, только если сообщение тикета не называет.
+    """
+    message = fetch(f"/repos/{repo}/commits/{sha}")["commit"]["message"]
+    if commit_mentions_ticket(message, repo, number):
+        return True
+    return any(commit_mentions_ticket(f"{pull.get('title') or ''}\n{pull.get('body') or ''}", repo, number)
+               for pull in fetch(f"/repos/{repo}/commits/{sha}/pulls"))
+
+
 def commit_in_main(repo, sha):
     """True — коммит достижим из main или его PR влит в main, False — нет, None — коммита нет (404).
 
@@ -142,8 +156,7 @@ def main():
     premature = premature_tries(
         rows, lambda n: check_triage.gh_pages(f"/repos/{repo}/issues/{n}/comments?per_page=100"),
         lambda sha: commit_in_main(repo, sha),
-        lambda sha, number: commit_mentions_ticket(
-            check_triage.gh_one(f"/repos/{repo}/commits/{sha}")["commit"]["message"], repo, number),
+        lambda sha, number: ticket_named_at_commit(repo, sha, number, check_triage.gh_one),
         repo=repo)
     for number, sha, reason in premature:
         print(f"[преждевременное «Пробуйте!»] {repo}#{number}: коммит {sha} — {reason}; "
