@@ -106,7 +106,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 05-11-2026 17:16:50 UTC
-Прогресс 05-11-2026 17:20:24 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): часть 40 припаркована в unxed/sandbox `tmp/19d3/sandbox-280-edge-hide-diagnostic-1105`, sha `4f3dc61550c02b4bc3e526a3c3df7b9ad9998bc2`; запустить точный диагностический GUI workflow и разобрать top hide evidence.
+Прогресс 05-11-2026 17:21:10 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): diagnostics committed/pushed as `4f3dc61550c02b4bc3e526a3c3df7b9ad9998bc2`; run 42073668742 is in progress on exact sha, `ubuntu-24.04`; analyze archived window/pointer evidence after completion.
 
 --
 
