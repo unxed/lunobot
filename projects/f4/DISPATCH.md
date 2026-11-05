@@ -4,3 +4,5 @@
 Захват и снятие — python3 tools/claims.py take|keepalive|drop (§ 8 инструкции).
 
 05-11-2026 12:19:03 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял кастомную задачу «account-216: продолжить unxed/f4#2159, шаг 7 по status/2115» по § 4 п. 1 [urgent: по § 4 п. 1 — поручение владельца]
+
+05-11-2026 12:28:35 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2149 [urgent: по § 5 п. 5 — изучить references для operations queue]
