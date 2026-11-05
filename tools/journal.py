@@ -180,7 +180,10 @@ def metrics(path, fmt=None):
     m = {"log_format": fmt}
     said = []  # собственные слова бота (текст ассистента), без вывода инструментов: учёт публичный
     if fmt == "claude":
-        results, usage = [], Counter()
+        # Claude Code шлёт каждый блок ответа (thinking, text, tool_use) отдельным событием с тем же message.id
+        # и тем же usage — суммируем usage один раз на вызов модели (последнее событие вызова), иначе токены
+        # завышаются в 2–3 раза (журнал 04–05-11-2026: ~460 тыс. cache_read «на ход» при контексте 140–245 тыс.)
+        results, calls, subagents, n = [], {}, 0, 0
         for line in text.splitlines():
             try:
                 j = json.loads(line)
@@ -189,14 +192,27 @@ def metrics(path, fmt=None):
             if j.get("type") == "result":
                 results.append(j)
             if j.get("type") == "assistant":
-                for c in (j.get("message") or {}).get("content") or []:
+                msg = j.get("message") or {}
+                for c in msg.get("content") or []:
                     if c.get("type") == "text" and c.get("text", "").strip():
                         said.append(c["text"].strip())
                     elif c.get("type") == "tool_use":
                         said.append(f"▶ {c.get('name')} {json.dumps(c.get('input'), ensure_ascii=False)[:160]}")
-                u = (j.get("message") or {}).get("usage") or {}
-                for k in ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"):
-                    usage[k] += u.get(k) or 0
+                        if c.get("name") in ("Agent", "Task") and not j.get("parent_tool_use_id"):
+                            subagents += 1
+                n += 1
+                calls[msg.get("id") or f"_{n}"] = (bool(j.get("parent_tool_use_id")), msg.get("usage") or {})
+        keys = ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens")
+        usage = Counter({k: 0 for k in keys})
+        for _, u in calls.values():
+            for k in keys:
+                usage[k] += u.get(k) or 0
+        # цена хода растёт с контекстом: вызовы и наибольший контекст основного инстанса — опора разбора (модуль round)
+        ctx = [sum(u.get(k) or 0 for k in keys if k != "output_tokens") for sub, u in calls.values() if not sub]
+        m["calls"] = len(ctx)
+        m["ctx_max"] = max(ctx, default=0)
+        m["subagents"] = subagents
+        m["subagent_calls"] = sum(1 for sub, _ in calls.values() if sub)
         if results:
             m["cost_usd"] = round(max(r.get("total_cost_usd") or 0 for r in results), 4)
             m["turns"] = sum(r.get("num_turns") or 0 for r in results)
@@ -262,17 +278,25 @@ def digest(recs):
     for r in rounds:
         by[(r.get("runner") or "?", r.get("model") or "?")].append(r)
     lines += ["## Круги по раннерам и моделям", "",
-              "| раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом |",
-              "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+              "| раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом "
+              "| вызовов, медиана | контекст макс., тыс., медиана | субагентов |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     did = {(r["id"], r.get("round")): bool(r.get("did")) for r in refl}
+
+    def med(rs, key, scale=1):
+        v = [r[key] / scale for r in rs if isinstance(r.get(key), (int, float)) and r.get(key)]
+        return f"{statistics.median(v):.0f}" if v else "—"
+
     for (runner, model), rs in sorted(by.items()):
         dur = [r.get("duration_s", 0) / 60 for r in rs if r.get("duration_s")]
         cost = [r["cost_usd"] for r in rs if isinstance(r.get("cost_usd"), (int, float))]
         useful = sum(1 for r in rs if did.get((r["id"], r.get("round"))))
+        sub = [r["subagents"] for r in rs if isinstance(r.get("subagents"), int)]
+        price = f" {med(rs, 'calls')} | {med(rs, 'ctx_max', 1000)} | {sum(sub) if sub else '—'} |"
         lines.append(f"| {runner} | {model} | {len(rs)} | {sum(1 for r in rs if r.get('exit') == 124)} | "
                      f"{statistics.median(dur):.0f} | {sum(cost):.2f} | "
-                     f"{statistics.median(cost) if cost else 0:.2f} | {useful} |" if dur else
-                     f"| {runner} | {model} | {len(rs)} | — | — | {sum(cost):.2f} | — | {useful} |")
+                     f"{statistics.median(cost) if cost else 0:.2f} | {useful} |{price}" if dur else
+                     f"| {runner} | {model} | {len(rs)} | — | — | {sum(cost):.2f} | — | {useful} |{price}")
     bad = [r for r in rounds if r.get("tail")]
     if bad:
         lines += ["", "## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова", ""]

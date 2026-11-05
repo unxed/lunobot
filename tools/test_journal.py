@@ -88,7 +88,7 @@ class JournalGitTest(unittest.TestCase):
             self.quiet(journal.add, self.a, SIGN1, {"kind": "reflection", "round": i, "did": ["x"],
                                                     "friction": [{"tag": "read-instruction", "text": "долго"}]})
         text = journal.digest(journal.read(self.a))
-        self.assertIn("| claude | opus | 2 | 0 | 20 | 10.00 | 5.00 | 2 |", text)
+        self.assertIn("| claude | opus | 2 | 0 | 20 | 10.00 | 5.00 | 2 | — | — | — |", text)
         self.assertIn("**read-instruction** — 2×", text)
 
     def test_claim_take_and_drop_are_journaled(self):
@@ -143,6 +143,31 @@ class MetricsTest(unittest.TestCase):
         m = journal.metrics(self.write("\n".join(json.dumps(x, ensure_ascii=False) for x in lines)))
         self.assertEqual((m["cost_usd"], m["turns"], m["tokens"]["cache_read_input_tokens"]), (5.25, 32, 100))
         self.assertFalse(m["rate_limited"])
+
+    def test_claude_blocks_of_one_call_are_counted_once(self):
+        # один вызов модели — несколько событий (thinking, tool_use) с тем же id и тем же usage
+        u1 = {"input_tokens": 2, "output_tokens": 50, "cache_read_input_tokens": 1000,
+              "cache_creation_input_tokens": 200}
+        u2 = {"input_tokens": 1, "output_tokens": 20, "cache_read_input_tokens": 1500,
+              "cache_creation_input_tokens": 100}
+        lines = [{"type": "assistant", "message": {"id": "m1", "usage": u1, "content": [{"type": "thinking"}]}},
+                 {"type": "assistant", "message": {"id": "m1", "usage": u1, "content": [
+                     {"type": "tool_use", "name": "Agent", "input": {}}]}},
+                 {"type": "assistant", "parent_tool_use_id": "t1",
+                  "message": {"id": "s1", "usage": dict(u2, cache_read_input_tokens=9000), "content": []}},
+                 {"type": "assistant", "message": {"id": "m2", "usage": u2, "content": [{"type": "text", "text": "ok"}]}},
+                 {"type": "result", "num_turns": 2, "total_cost_usd": 1.0, "result": "итог"}]
+        m = journal.metrics(self.write("\n".join(json.dumps(x, ensure_ascii=False) for x in lines)))
+        self.assertEqual(m["tokens"]["cache_read_input_tokens"], 1000 + 9000 + 1500)
+        self.assertEqual(m["tokens"]["output_tokens"], 50 + 20 + 20)
+        self.assertEqual((m["calls"], m["ctx_max"], m["subagents"], m["subagent_calls"]), (2, 1601, 1, 1))
+
+    def test_digest_shows_price_of_a_round(self):
+        recs = [{"kind": "round", "id": SIGN1, "ts": f"2026-11-05T0{i}:00:00Z", "round": i, "runner": "claude",
+                 "model": "opus", "duration_s": 1200, "cost_usd": 2.0, "exit": 0, "calls": calls, "ctx_max": ctx,
+                 "subagents": 1} for i, (calls, ctx) in enumerate(((40, 150000), (60, 250000)))]
+        text = journal.digest(recs)
+        self.assertIn("| claude | opus | 2 | 0 | 20 | 4.00 | 2.00 | 0 | 50 | 200 | 2 |", text)
 
     def test_opencode_json_steps_are_summed(self):
         lines = [{"type": "step_start", "part": {}},
