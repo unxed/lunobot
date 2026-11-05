@@ -10,7 +10,7 @@
 - Отладка GitHub CI: да
 - Диагностический workflow: sandbox.yml
 - Режим публикации: поезда
-- Релизы: тег v* → workflow (`build.yml`, push тега `v*.*.*`); схема: vX.Y.Z-<стадия> (последний `v0.3.0-beta`, он Latest); плавающий `nightly` (prerelease, job Nightly прогона `main`) — не трогать
+- Релизы: тег v* → workflow (`build.yml`, push тега `v*.*.*`); схема: vX.Y.Z-<стадия> (последний тег смотри `git ls-remote --tags --refs --sort=-v:refname`, на 05-11-2026 `v0.4.0-beta`, он Latest); плавающий `nightly` (prerelease, job Nightly прогона `main`) — не трогать
 - Покрытие: Codecov, `go test -coverpkg=./...`; целевое — 70 % по проекту и 80 % на своих
   изменениях. В `.github/codecov.yml` проверки помечены informational, то есть PR они
   не блокируют: держать число вверх — обязанность Лунобота, а не гейта
