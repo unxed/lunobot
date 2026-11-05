@@ -10,7 +10,10 @@
                   (`update-branch` или sync-ветка `lunobot/urgent/<N>-sync`, модуль merge); просить автора обновить
                   ветку ещё раз нельзя;
   [запрет устарел] — PR из строки «PR не трогать» паспорта уже не открыт: убери строку из `PROJECT.md`.
-Справочная строка (не работа, на код возврата не влияет):
+Справочные строки (не работа, на код возврата не влияют):
+  [нет прав] — люди написали в PR, где мы ни разу не писали и у токена нет прав записи (чужой upstream, PR
+                  мейнтейнера): ответить нельзя, это не `[ждёт ответа]` (gate-false-positive ×3, 05-11-2026,
+                  blue-panels/mcommander#451);
   [не трогать] — владелец велел PR не трогать (строка `- PR не трогать: #N — <ссылка на слово владельца>` в
                   `projects/<проект>/PROJECT.md`); остальные строки по этому PR не печатаются.
 Код 1 — есть строки работы (не повод останавливать круг), 0 — нет, 2 — ошибка доступа.
@@ -96,6 +99,17 @@ def waiting(evs):
     return theirs if theirs > ours else None
 
 
+def ours_ever(evs):
+    """Есть ли в PR хоть одно наше событие (комментарий, отзыв, коммит)."""
+    return any(who == "мы" for _, who in evs)
+
+
+def can_write(repo_info):
+    """Токен может писать в репозиторий PR (push или triage): ответить в PR возможно."""
+    perms = repo_info.get("permissions") or {}
+    return bool(perms.get("push") or perms.get("triage") or perms.get("maintain") or perms.get("admin"))
+
+
 def main(argv):
     if len(argv) != 1:
         print(__doc__)
@@ -124,6 +138,10 @@ def main(argv):
                          api(f"repos/{repo}/pulls/{n}/reviews?per_page=100"),
                          api(f"repos/{repo}/pulls/{n}/commits?per_page=100"), us)
             ts = waiting(evs)
+            if ts and not ours_ever(evs) and not can_write(api(f"repos/{repo}")):
+                print(f"[нет прав] {repo}#{n} — люди писали {ts}, но мы в этом PR не писали и прав записи в "
+                      "репозитории у токена нет: ответить нельзя")
+                ts = None
             if ts:
                 h = (now - datetime.fromisoformat(ts.replace("Z", "+00:00"))).total_seconds() / 3600
                 print(f"[ждёт ответа] {repo}#{n} «{p['title'][:60]}» — люди писали/пушили {ts} ({h:.0f} ч назад) "
