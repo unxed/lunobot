@@ -34,6 +34,7 @@
   github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1 run --new-from-rev=origin/main ./...`
   (14-10-2026 golden-тест `cmd/vtui-replay` с `defer f.Close()` приземлился с зелёным `go test`
   и покрасил `quick` на `Lint`/errcheck — исправление пришлось приземлять `land --fix-staging`).
+  В vtui нет `.golangci-strict.yml` (только `.golangci.yml`): строгий whole-tree профиль f4 здесь не гоняй, команда песочницы — `go vet <пакеты> && golangci-lint --new-from-rev=origin/main ./... && go test -count=1 <пакеты>` (05-11-2026).
 - Релизы: после мержа в main тегируй следующий последовательный `vX.Y.Z`
   (смотри `gh api repos/unxed/vtui/tags --jq '.[0].name'`) на коммите мержа
   и пушь тег — только так f4 сможет подтянуть исправление через go.mod.
