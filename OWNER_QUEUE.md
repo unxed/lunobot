@@ -65,7 +65,7 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: f4
 Поручение: вести unxed/f4#2115 — спека «far2l compatibility» для двухпанельников, аудиты unxed/dn и blue-panels/mcommander (код в форке unxed/mcommander, PR в upstream), подзадачи отдельными тикетами; завести паспорт projects/mcommander/ и строку в конце projects/INDEX.md.
 Критерий: спека влита в f4 (шаг 3); аудиты f4, dn, mcommander опубликованы, пробелы заведены тикетами и закрыты до заявленного уровня; в README f4 ссылки на прошедшие аудит проекты (шаг 9).
-Состояние: свободно
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 05-11-2026 04:36:46 UTC
 Прогресс 05-11-2026 02:58:10 UTC (Лунобот-1 (node 19d368003c6c048e43dbec70; LNX)): unxed/f4#2162 D-05 в staging; unxed/f4#285 шаг 3 (hover заголовка, unxed/vtui) припаркован — ветка tmp/19d3/f4-285-title-hover sha 93fd401f033b, песочница https://github.com/unxed/vtui/actions/runs/41958488981; дальше land и bump vtui в f4.
 
 ## account-240
