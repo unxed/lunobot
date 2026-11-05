@@ -1,64 +1,59 @@
 # Рефлексия флота — сводка
 
-Записей: 58; период: 2026-11-05T06:39:54Z … 2026-11-05T08:21:29Z.
+Записей: 38; период: 2026-11-05T08:25:02Z … 2026-11-05T09:58:58Z.
 Генерирует `journal.py digest` (Лунобот-1, § 4 п. 6). Правила разбора — модуль round, «Рефлексия».
 
 ## Круги по раннерам и моделям
 
 | раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| lunobot-round-claude.sh | sonnet | 3 | 0 | 22 | 10.36 | 3.10 | 0 |
-| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 4 | 1 | 25 | 0.00 | 0.00 | 1 |
+| lunobot-round-claude.sh | sonnet | 2 | 0 | 18 | 4.55 | 2.27 | 2 |
+| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 3 | 2 | 30 | 0.00 | 0.00 | 0 |
 
 ## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова
 
-- 2026-11-05T06:43:41Z lunobot-round-luna-high.sh круг 27, код 124:
+- 2026-11-05T08:49:52Z lunobot-round-luna-high.sh круг 29, код 124:
+  > ▶ read
+  > ▶ glob
   > ▶ shell
-  > ▶ shell
-  > ▶ subagent
-  > ▶ shell
+  > ▶ read
   > Error: {"type": "unknown", "message": "Transport: The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"}
-- 2026-11-05T08:18:39Z lunobot-round-luna-high.sh круг 29, код 1:
+- 2026-11-05T09:21:03Z lunobot-round-luna-high.sh круг 29, код 124:
   > ▶ shell
   > ▶ shell
-  > Круг 29 завершён: шаг по f4#2124 запаркован в ветке vtui `tmp/19d3/f4-2124-wheel-20261105` (SHA `3df52c2`), песочница ещё идёт; закрытый #2208 удалён из TRIAGE, гейт прошёл. Ретро записано в журнал.
-  >
-  > PR-жалоба [#303](https://github.com/unxed/lunobot/pull/303) запушена, но оставлена незавершённой: не привязан issue и проверка охватила 8 из 15 проектов. `main` не продвинулся; захваты снимет раннер.
+  > ▶ shell
+  > По ретро staging f4 и vtui зелёный, изменения f4 уже в `main`. Позже выяснилось, что main-прогон f4 завершился с ошибкой; `tick-all` сейчас обрабатывает предусмотренный повтор одного упавшего job, я е
+  > Error: {"type": "unknown", "message": "Transport: The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"}
 
 ## Трения (повторы сверху)
 
-- **gate-false-positive** — 3× (2 инст.)
-  - 2026-11-05T07:26:40Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): tv3-new PR вливались по зелёным linux+verdict без tv3-audit в песочнице (#47–#70), хотя паспорт требует песочницу; воркер запустил аудит для #71 — расхождение практики и паспорта
-  - 2026-11-05T08:07:10Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): check_try.py назвал «Пробуйте!» по unxed/dn#177 преждевременным: в режиме PR тикет в описании PR, а не в сообщении merge-коммита afd917b; исправлено жалобой unxed/lunobot#303 (на реальных данных: 1 ложная строка → 0)
-  - 2026-11-05T08:17:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): check_try.py flagged dn#177 despite merged PR unxed/dn#188 body containing Touch: unxed/dn#177; merge commit afd917b lacks that ticket in its message. Complaint PR: https://github.com/unxed/lunobot/pull/303.
 - **read-instruction** — 3× (1 инст.)
-  - 2026-11-05T06:55:27Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): ядро (2 Read) + round/manager/trains/env-claude-code, затем releases/cleanup: до первого захвата прошло ~6 мин круга из 30
-  - 2026-11-05T07:26:40Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): ядро (809 строк, 2 Read) + round/manager/env-claude-code/trains/cleanup/releases (~190 КБ) прочитаны за ~5 минут из 30; round и manager дублируют друг друга
-  - 2026-11-05T08:07:10Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): Ядро (~31k токенов в двух Read) + round, manager, env-claude-code, trains, merge, writing, cleanup, releases: около 9 минут из 30 до первого захвата (07:52 → 07:56 захват, воркер в 07:57)
-- **tool-train.py** — 2× (2 инст.)
-  - 2026-11-05T06:55:27Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): train.py health <repo> --sign ... печатает «укажите ровно один репозиторий» и выходит с кодом 0 — вводит в заблуждение, потеряна 1 команда
-  - 2026-11-05T07:33:24Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый вызов health завершился exit 2 из-за лишнего --sign; повтор с точной сигнатурой дал результат f4 healing.
+  - 2026-11-05T08:36:49Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): ядро (2 Read, обрезка на 25000 токенов) + round, manager, env-claude-code, trains: первый захват в 08:33:49 при старте 08:30 — ~4 мин; позже releases, cleanup, writing ещё ~2 мин
+  - 2026-11-05T09:08:21Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): ядро + round/manager/env/trains: ~7 чтений подряд, первый захват только через ~4 мин круга
+  - 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): ядро (2 Read) + 5 модулей round/manager/trains/env/cleanroom читались до первого захвата ~5 минут; захват account-240 в 09:38
+- **deadline** — 2× (1 инст.)
+  - 2026-11-05T08:36:49Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): запуск воркера в 08:34 из 30-минутного круга (срок 09:00): релизный f4 (82 коммита) и красный-парковка не поместились, остались на следующий круг
+  - 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): аудит sandbox после merge-main занимает ~10 минут: PR tv3-new#72 пришлось догонять main и ждать аудит ещё раз из-за служебного VERDICT.md-коммита бота
+- **gate-false-positive** — 2× (1 инст.)
+  - 2026-11-05T08:36:49Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): check_try показал unxed/dn#177 как преждевременное «Пробуйте!»: коммит afd917b — влитый PR unxed/dn#188, Touch в теле PR (account-304 у Лунобота-2 уже чинит)
+  - 2026-11-05T09:08:21Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): check_try.py: unxed/dn#177 помечен преждевременным, хотя merge-коммит PR #188 в main; Touch лежит в теле PR
 - **duplicate-work** — 1× (1 инст.)
-  - 2026-11-05T06:55:27Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): мои until-циклы с pgrep -f совпадали с собственной bash-командой и давали ложное «tick-all идёт» ~10 минут
+  - 2026-11-05T09:08:21Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): Лунобот-2 параллельно взял триаж #162/#108 и dn#177, пересечение по гейтам снято захватом
 - **env-claude-code** — 1× (1 инст.)
-  - 2026-11-05T08:07:10Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): в круге раннера потолок воркеров 1, а шаги account-240 (cleanroom) сами требуют вложенного исполнителя; правило не говорит, считается ли он воркером потолка
+  - 2026-11-05T09:08:21Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): воркер a35c4f174380b5a0d оказался killed без уведомления; пришлось возобновлять SendMessage
 - **env-opencode** — 1× (1 инст.)
-  - 2026-11-05T08:17:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Shared /tmp/lunobot-2/f4 clone had extensive pre-existing edits; left untouched and delegated through an isolated step clone.
-- **rule-unclear-§5** — 1× (1 инст.)
-  - 2026-11-05T07:26:40Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): свободные блоки OWNER_QUEUE (216/240/280) идут раньше обычной работы, но в круге на 30 минут с одним воркером взять блок целиком нереально; взяты сначала созревший CI.md и откат staging — трактовка
-- **tool-acct_line** — 1× (1 инст.)
-  - 2026-11-05T08:07:10Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): первый acct_line.py remove projects/dn/CI.md ответил «нет в origin/main» (код 2) при существующем файле, повтор через минуту прошёл — вероятно гонка с пушем janitor
-- **tool-acct_line.py** — 1× (1 инст.)
-  - 2026-11-05T06:55:27Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): acct_line.py не принимает --sign с суффиксом воркера (dn#188): запись CI.md/BRANCHES.md подписана id без суффикса, расхождение со status
+  - 2026-11-05T09:42:19Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Общий клон /tmp/lunobot-2/f4 оказался с множеством незапрошенных изменений; не трогал его, воркер использовал отдельный клон.
+- **push-race** — 1× (1 инст.)
+  - 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): push OWNER_QUEUE.md отклонён (cannot lock ref) из-за коммита janitor; решено pull --rebase + повтор, 1 лишний ход
+- **tool-cleanroom-tools** — 1× (1 инст.)
+  - 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): cleanroom-tools (mkroom2.sh, land.py) привязаны к каталогу прежней сессии: следующее замечание tv3#12 не начато уже 3 круга подряд, воркер потратил остаток круга на PR/мержи
 
 ## Идеи
 
-- 2026-11-05T06:55:27Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): release_due.py: печатать, сколько суток кандидат голодает, и сразу проверять блокирующие p1–2 bug (иначе релиз берут и тут же откладывают, как f4 v0.5.0-beta)
-- 2026-11-05T06:55:27Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): train.py health: код 2 при лишних аргументах; acct_line.py: принимать суффикс воркера в --sign
-- 2026-11-05T07:26:40Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): tick мог бы сам возвращать тикет в свободен при Staging-Revert (сейчас руками, f4#2153)
-- 2026-11-05T07:26:40Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): в кругах раннера на 30 минут блоки OWNER_QUEUE нужно дробить заранее в status/ на шаги в 10–15 минут
-- 2026-11-05T08:07:10Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): check_try: брать PR по commits/<sha>/pulls — сделано в unxed/lunobot#303, нужен review
-- 2026-11-05T08:07:10Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): в модуле manager явно сказать, что изолированный исполнитель cleanroom не входит в потолок (б) круга раннера
-- 2026-11-05T08:17:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Teach check_try.py to resolve ticket association from the exact merged PR body/head commit when a merge commit message lacks Touch; preserve detection of foreign SHA.
+- 2026-11-05T08:36:49Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): release_due: кандидат unxed/f4 (14.9 сут с v0.4.0-beta) — взять релиз f4 в начале следующего круга, пока порог (б) не дошёл до 7 суток голодания
+- 2026-11-05T09:08:21Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): release_due: f4 кандидат (83 коммита с Touch, 14.9 сут от v0.4.0-beta) — взять релиз следующим слотом, тег тяжёлый, учесть потолок (а)
+- 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): перенести cleanroom-tools в репозиторий учёта/sandbox без привязки к каталогу сессии, чтобы воркер начинал замечание cleanroom сразу
+- 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): f4: release_due.py — кандидат на релиз (15 сут с v0.4.0-beta, 83 коммита Touch), взять отдельным воркером в следующем круге (модуль releases)
+- 2026-11-05T09:52:44Z Лунобот-1 (node 19d368003c6c048e43dbec70; LNX): аудит/CI tv3-new: не требовать повторный круг, когда main ушёл только VERDICT.md-коммитом бота
 
-Захватов снято: 20, медиана удержания 2 мин, дольше 2 ч: 0.
+Захватов снято: 12, медиана удержания 3 мин, дольше 2 ч: 0.
