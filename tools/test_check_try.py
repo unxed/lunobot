@@ -56,6 +56,42 @@ class PrematureTryTest(unittest.TestCase):
     def row(self, updated="2026-10-16T09:00:00Z"):
         return {"state": "свободен", "updated": updated}
 
+    def test_commit_reverted_in_main_is_premature(self):
+        body = "Исправление в main: https://github.com/unxed/f4/commit/90307a1\n\n— Пробуйте!"
+        found = check_try.premature_tries(
+            {2237: self.row()}, lambda n: {2237: [{"body": body}]}[n], lambda sha: True, None,
+            now=self.NOW, reverted=lambda sha: sha == "90307a1")
+        self.assertEqual(found, [(2237, "90307a1", "коммит откатан в main (Revert)")])
+
+    def test_commit_not_reverted_is_fine(self):
+        body = "Исправление в main: https://github.com/unxed/f4/commit/90307a1\n\n— Пробуйте!"
+        found = check_try.premature_tries(
+            {2237: self.row()}, lambda n: {2237: [{"body": body}]}[n], lambda sha: True, None,
+            now=self.NOW, reverted=lambda sha: False)
+        self.assertEqual(found, [])
+
+    def test_revert_search_ignores_the_commit_itself(self):
+        full = "9" * 40
+        calls = []
+
+        def fake(path):
+            calls.append(path)
+            if path.startswith("/repos/unxed/f4/commits/"):
+                return {"sha": full}
+            return {"items": [{"sha": full, "commit": {"message": "Fix"}},
+                              {"sha": "a" * 40, "commit": {"message": f"Revert x\n\nThis reverts commit {full}.\n"}}]}
+
+        original = check_try.check_triage.gh_one
+        check_try.check_triage.gh_one = fake
+        try:
+            self.assertTrue(check_try.commit_reverted_in_main("unxed/f4", "9999999"))
+            only_self = lambda path: ({"sha": full} if "/commits/" in path else
+                                      {"items": [{"sha": full, "commit": {"message": "Fix"}}]})
+            check_try.check_triage.gh_one = only_self
+            self.assertFalse(check_try.commit_reverted_in_main("unxed/f4", "9999999"))
+        finally:
+            check_try.check_triage.gh_one = original
+
     def test_commit_not_in_main_is_premature(self):
         body = "Исправление в main: https://github.com/unxed/f4/commit/9effe76\n\n— Пробуйте!"
         got = self.run_check({1: self.row()}, {1: [{"body": body}]}, lambda sha: False)
