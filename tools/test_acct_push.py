@@ -31,6 +31,10 @@ class PushRetryTest(unittest.TestCase):
         sh(self.a, "push", "-q", "origin", "HEAD:main")
         sh(self.a, "branch", "-q", "--set-upstream-to=origin/main")
         subprocess.run(["git", "clone", "-q", self.bare, self.b], check=True, capture_output=True)
+        # `pull --rebase` внутри acct_push.py идёт без -c user.*: в CI нет глобальной личности git
+        for repo in (self.a, self.b):
+            sh(repo, "config", "user.name", "t")
+            sh(repo, "config", "user.email", "t@t")
         self.logs = []
 
     def tearDown(self):
