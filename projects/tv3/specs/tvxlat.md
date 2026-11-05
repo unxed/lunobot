@@ -82,7 +82,7 @@ Events are built by clearing an event, setting What = evKeyDown, the control key
 
 * TvEvents: the TEvent record (What, KeyDown with KeyCode, CharScan.CharCode, ControlKeyState, Text bytes, TextLength) and evKeyDown.
 * TvKeys: kbCtrlShift, kbAltShift (control key state masks) and, for the tests, kbAltS, kbCtrlR, kbLeftAlt, kbLeftCtrl.
-* TvUtf8: a validating UTF-8 decoder (bytes, count -> code point and byte count, False if invalid) and an encoder (for tests).
+* TvCharset: `Utf8DecodeAt(S, Pos, out Cp, out Len): Boolean` (False for an invalid or truncated sequence, with Len = 1, and for a Pos outside the text, with Len = 0; the only UTF-8 decoder: this unit has none of its own). TvUtf8: `Utf32To8` (encoder, for tests).
 * TvTermIO: ModdedKeyCode(KeyCode, Largest): for an upper-case letter code A..Z returns the Ctrl key code (Largest = 1) or Alt key code (Largest = 2) of that letter, 0 when there is none.
 * SysUtils: Trim, UpperCase.
 

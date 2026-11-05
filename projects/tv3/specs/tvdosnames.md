@@ -82,7 +82,8 @@ Notes on edge cases: the empty string maps to the empty string in all routines. 
 ## 4. Dependencies
 
 * TvCodePg: `CpToUnicode(Byte): LongWord` (Unicode value of a byte of the current page), `CpFromUnicode(LongWord): Byte` (0 when the page lacks the character), `CpSelect(Integer)` (used by the tests to choose page 866).
-* TvUtf8: `Utf8Enabled: Boolean`, `Utf8Encode(CodePoint, Buffer): Integer` (bytes written), `Utf8Decode(Bytes pointer, Available: Integer, out CodePoint: LongWord, out Used: Integer): Boolean` (False for an invalid or truncated sequence).
+* TvUtf8: `Utf32To8(CodePoint, Bytes): SizeInt` (bytes written).
+* TvCharset: `Utf8DecodeAt(S, Pos, out Cp, out Len): Boolean` (False for an invalid or truncated sequence, with Len = 1; the only UTF-8 decoder: this unit has none of its own).
 * Standard: SysUtils (hexadecimal conversion in both directions).
 
 ## 5. Checks for a test program

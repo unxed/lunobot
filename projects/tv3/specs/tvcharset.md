@@ -34,6 +34,7 @@ function CharsetListId(I: Integer): LongInt;
 function CharsetToUtf8(Id: LongInt; const Raw: AnsiString): AnsiString;
 function CharsetFromUtf8(Id: LongInt; const Text: AnsiString; out Lost: Integer): AnsiString;
 function Utf8Valid(const S: AnsiString): Boolean;
+function Utf8DecodeAt(const S: AnsiString; Pos: SizeInt; out Cp: Cardinal; out Len: Integer): Boolean;
 function IsPlainAscii(const S: AnsiString): Boolean;
 function CharsetGuess(const Raw: AnsiString; const Candidates: array of LongInt): LongInt;
 ```
@@ -93,6 +94,8 @@ Encoding (from UTF-8): bytes below $80 are single units; valid sequences are dec
 Utf8Valid: True when S consists entirely of valid UTF-8: shortest forms only (C0, C1 never lead), no surrogates (ED A0..BF forbidden), nothing above U+10FFFF (F4 90.. and F5..FF forbidden), no truncated sequence, no stray continuation bytes. The empty string is valid. Examples: the UTF-8 "Privet" valid; the cp866 bytes of "Privet" not valid; "plain" valid; C0 80 not valid.
 IsPlainAscii: True when no byte is >= $80 (the empty string is plain ASCII).
 
+Utf8DecodeAt(S, Pos, Cp, Len): the one decoder of UTF-8 text of the library; the routines of this unit, TvDosNames and TvXlat use it and keep no decoder of their own. Pos is the one-based position of the first byte of a character. When the bytes from Pos on form a valid, complete sequence (rules of Utf8Valid above) the result is True, Cp is the code point and Len the number of bytes of the sequence (1..4). When they do not, the result is False, Cp is U+FFFD and Len is 1, so that a caller which treats the byte as one invalid character advances by Len. When Pos is below 1 or above Length(S) the result is False, Cp is U+FFFD and Len is 0. Utf8Valid is the loop of Utf8DecodeAt over S. Examples: 'A' gives True, 41, 1; D0 9F gives True, 041F, 2; E2 82 AC gives True, 20AC, 3; F0 9F 98 80 gives True, 1F600, 4; C0 80 gives False, FFFD, 1; ED A0 80 gives False, FFFD, 1; E2 82 (truncated) gives False, FFFD, 1; Pos = 0 or Length + 1 gives False, FFFD, 0.
+
 ### 3.9 Cache and thread-safety
 
 CharsetFromUtf8 for a table set builds a reverse table (code point -> byte, sorted) the first time it is called for that id and keeps only the one most recently used; calling it with another id rebuilds it. This is a single global cache with no locking: CharsetFromUtf8 must not be called from several threads at once. All other routines are pure and reentrant.
@@ -138,7 +141,7 @@ The implementer should generate the tables from the mapping files named above ra
 
 ## 5. Dependencies
 
-* TvUtf8 (implementation only): a validating UTF-8 decoder (given bytes and an available count, reports validity, the code point and the number of bytes used; rules as in TvUStr's `Utf8Decode`) and a UTF-8 encoder (code point to 1..4 bytes, returns the count; `Utf8Encode`).
+* TvUtf8 (implementation only): a UTF-8 encoder (`Utf32To8`: code point to 1..4 bytes, returns the count). Validation is Utf8DecodeAt of this unit, not a routine of TvUtf8.
 * No other library units. Standard units: none required.
 
 ## 6. What the tests pin down (tests/t_charset.pas)
