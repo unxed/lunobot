@@ -1,6 +1,6 @@
 #!/bin/sh
 # cycle.sh KEY STEM TEST "implementer N" What BRANCH : rebuild commits on fresh main, push -f, wait CI, collect results to KEY/cycle.out and KEY/room/ci.txt
-D=/tmp/lunobot-1/work/tv3-cont-10271905
+D=/tmp/lunobot-1/work/tv3-part2-1105-1322
 k=$1; s=$2; t=$3; impl=$4; what=$5; br=$6; R=$D/$k/room/repo; O=$D/$k/cycle.out
 : > $O
 n=$(ls $D/$k | grep -c '^save'); sv=$D/$k/save$n; mkdir -p $sv

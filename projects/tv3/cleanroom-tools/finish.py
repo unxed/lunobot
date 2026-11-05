@@ -2,7 +2,7 @@
 """finish.py KEY STEM TESTSTEM IMPLEMENTER WHAT : three commits (interface, implementation, tests+names) in KEY/room/repo.
 Env SPEC=<id>: unit made from a specification (spec in KEY/spec/<id>.md), else translation with KEY/inputs.tsv."""
 import sys, os, json, re, subprocess, hashlib, shutil
-D = "/tmp/lunobot-1/work/tv3-cont-10271905"
+D = "/tmp/lunobot-1/work/tv3-part2-1105-1322"
 key, stem, tstem, impl, what = sys.argv[1:6]
 R = f"{D}/{key}/room/repo"
 COMMIT = "b4831e2ca16652db327fb7cc964f1c8c2d512524"
@@ -45,10 +45,23 @@ def repo_inputs(extra):
         h = hashlib.sha256(run("git", "show", f"HEAD:{p}")).hexdigest()
         out.append({"origin": f"repository:{p}", "sha256": h})
     return out
+def old_rec(path):
+    r = subprocess.run(["git", "show", f"HEAD:provenance/{path}.json"], cwd=R, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    return json.loads(r.stdout) if r.returncode == 0 else None
+OLD = {}
 def write_rec(path, inputs, blobs):
+    if path not in OLD: OLD[path] = old_rec(path)
+    prev = OLD[path]
+    if prev:
+        prevb = [v["blob"] for v in prev["versions"]]
+        blobs = prevb + [b for b in blobs if b not in prevb]
+        implx = prev["implementer"] if impl in prev["implementer"] else prev["implementer"] + ", " + impl
+    else:
+        implx = impl
     rec = {"path": path, "kind": "specification" if SPEC else "translation", "sources": sources, "inputs": inputs,
-           "implementer": impl, "proofs": [],
+           "implementer": implx, "proofs": [],
            "versions": [{"blob": b, "commit": None, "pr": None, "audit_run": None} for b in blobs]}
+    if prev: rec["versions"] = [v for v in prev["versions"]] + [{"blob": b, "commit": None, "pr": None, "audit_run": None} for b in blobs if b not in prevb]
     p = f"{R}/provenance/{path}.json"; os.makedirs(os.path.dirname(p), exist_ok=True)
     json.dump(rec, open(p, "w"), indent=2); open(p, "a").write("\n")
 def index():
