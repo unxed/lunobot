@@ -142,6 +142,19 @@ class PrematureTryTest(unittest.TestCase):
         for message in no:
             self.assertFalse(check_try.commit_mentions_ticket(message, "unxed/f4", 1976), message)
 
+    def test_pr_description_names_ticket_for_merge_commit(self):
+        merge = {"commit": {"message": "Merge pull request #188 from unxed/lunobot/pr/x\n\nhelp: Clipboard"}}
+        pr = [{"title": "help: Clipboard", "body": "Touch: unxed/dn#177\n\nThe topic now says..."}]
+        self.assertTrue(check_try.commit_or_pr_mentions_ticket(merge, lambda: pr, "unxed/dn", 177))
+        self.assertFalse(check_try.commit_or_pr_mentions_ticket(merge, lambda: pr, "unxed/dn", 178))
+        self.assertFalse(check_try.commit_or_pr_mentions_ticket(merge, lambda: [], "unxed/dn", 177))
+
+    def test_commit_message_is_enough_without_asking_pulls(self):
+        def fail():
+            raise AssertionError("PR не запрашивается, когда сообщение коммита называет тикет")
+        commit = {"commit": {"message": "fix\n\nTouch: #1976"}}
+        self.assertTrue(check_try.commit_or_pr_mentions_ticket(commit, fail, "unxed/f4", 1976))
+
     def test_old_ticket_is_not_fetched(self):
         def fail(number):
             raise AssertionError("старый тикет не запрашивается")

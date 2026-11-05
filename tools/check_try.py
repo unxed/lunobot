@@ -108,6 +108,20 @@ def commit_mentions_ticket(message, repo, number):
     return bool(re.search(pattern, message or ""))
 
 
+def commit_or_pr_mentions_ticket(commit, pulls, repo, number):
+    """Тикет назван в сообщении коммита или в заголовке/описании влитого PR этого коммита.
+
+    В режиме `PR` (dn, bp, tv3, …) тикет стоит в описании PR (`Touch: owner/repo#N`), а сообщение
+    merge-коммита — только «Merge pull request #N from …»: по одному сообщению «Пробуйте!» на
+    такой коммит выглядело бы чужим (unxed/dn#177, 05-11-2026). `pulls` — результат
+    `commits/<sha>/pulls`, запрашивается лениво только когда сообщение тикет не называет.
+    """
+    if commit_mentions_ticket(commit["commit"]["message"], repo, number):
+        return True
+    return any(commit_mentions_ticket(f"{pr.get('title') or ''}\n{pr.get('body') or ''}", repo, number)
+               for pr in pulls())
+
+
 def commit_in_main(repo, sha):
     """True — коммит достижим из main или его PR влит в main, False — нет, None — коммита нет (404).
 
@@ -142,8 +156,9 @@ def main():
     premature = premature_tries(
         rows, lambda n: check_triage.gh_pages(f"/repos/{repo}/issues/{n}/comments?per_page=100"),
         lambda sha: commit_in_main(repo, sha),
-        lambda sha, number: commit_mentions_ticket(
-            check_triage.gh_one(f"/repos/{repo}/commits/{sha}")["commit"]["message"], repo, number),
+        lambda sha, number: commit_or_pr_mentions_ticket(
+            check_triage.gh_one(f"/repos/{repo}/commits/{sha}"),
+            lambda: check_triage.gh_one(f"/repos/{repo}/commits/{sha}/pulls"), repo, number),
         repo=repo)
     for number, sha, reason in premature:
         print(f"[преждевременное «Пробуйте!»] {repo}#{number}: коммит {sha} — {reason}; "
