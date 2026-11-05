@@ -51,6 +51,21 @@ class WaitingTest(unittest.TestCase):
         self.assertIsNone(check_prs.waiting(evs))
 
 
+class NoRightsTest(unittest.TestCase):
+    def test_ours_ever(self):
+        # blue-panels/mcommander#451: maintainer's PR, we never wrote there
+        evs = check_prs.events(PR, [c("2026-10-20T09:00:00Z", "ilia-maslakov")], [], [], [], "unxed")
+        self.assertFalse(check_prs.ours_ever(evs))
+        evs = check_prs.events(PR, [c("2026-10-20T09:00:00Z", "unxed")], [], [], [], "unxed")
+        self.assertTrue(check_prs.ours_ever(evs))
+
+    def test_can_write(self):
+        self.assertFalse(check_prs.can_write({"permissions": {"admin": False, "push": False, "pull": True}}))
+        self.assertFalse(check_prs.can_write({}))
+        self.assertTrue(check_prs.can_write({"permissions": {"push": True}}))
+        self.assertTrue(check_prs.can_write({"permissions": {"triage": True}}))
+
+
 class HoldsTest(unittest.TestCase):
     def test_parse_owner_hold_lines(self):
         text = ("# f4\n\n- Код: https://github.com/unxed/f4\n"
