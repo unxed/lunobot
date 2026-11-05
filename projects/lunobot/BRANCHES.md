@@ -8,5 +8,3 @@
 22-10-2026 17:31:00 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/urgent/255-triage-pagination` для https://github.com/unxed/lunobot/issues/255
 
 23-10-2026 06:48:50 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `complaint/pulse-completed-rounds` для https://github.com/unxed/lunobot/issues/265, PR https://github.com/unxed/lunobot/pull/266
-
-05-11-2026 02:16:20 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/urgent/298-rounds-failing-test` для https://github.com/unxed/lunobot/issues/298
