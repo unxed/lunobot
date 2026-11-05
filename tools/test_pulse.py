@@ -52,10 +52,14 @@ class PulseTest(unittest.TestCase):
 
     def test_rounds_failing_keeps_latest_failed_logical_rounds(self):
         recs = []
-        for n in range(3):
+        for n in range(2):
             recs += [rec("round", f"2026-10-22T10:{n * 2:02d}:00Z", exit=124, runner="r", round=n),
-                     rec("round", f"2026-10-22T10:{n * 2 + 1:02d}:00Z", exit=124, runner="r", round=n)]
-        self.assertIn("rounds-failing", self.keys(recs))
+                     rec("round", f"2026-10-22T10:{n * 2 + 1:02d}:00Z", exit=0, runner="r", round=n)]
+        for n in range(3):
+            recs += [rec("round", f"2026-10-22T10:{10 + n * 2:02d}:00Z", exit=0, runner="r", round=n + 2),
+                     rec("round", f"2026-10-22T10:{11 + n * 2:02d}:00Z", exit=124, runner="r", round=n + 2)]
+        alarm = dict(pulse.alarms(recs, NOW))["rounds-failing"]
+        self.assertIn("за 6 ч упали 3 из 5 кругов", alarm)
 
     def test_missing_digest_with_active_lunobot1(self):
         recs = [rec("reflection", "2026-10-19T10:00:00Z", friction=[]), rec("round", "2026-10-22T10:00:00Z", exit=0),
