@@ -1,5 +1,7 @@
 import datetime as dt
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import close_candidates as cc
@@ -44,6 +46,20 @@ class CandidatesTest(unittest.TestCase):
             out, skipped = cc.candidates([{"number": "7", "state": "проверяют"}], "unxed/f4", 14, now=NOW)
         self.assertEqual(out, [])
         self.assertIn("моложе", skipped[0][1])
+
+    def test_status_file_means_work_is_not_finished(self):
+        # 04-11-2026 f4#1255, f4#2068, dn#31: status-файл есть, значит часть работы осталась.
+        issue = {"labels": [{"name": "bug"}], "user": {"login": "unxed", "type": "User"},
+                 "created_at": "2026-09-01T10:00:00Z"}
+        rows = [{"number": "7", "state": "проверяют"}, {"number": "8", "state": "проверяют"}]
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "7.md").write_text("# unxed/f4#7\n", encoding="utf-8")
+            with mock.patch.object(cc, "api_issue", return_value=issue), mock.patch.object(cc, "api", return_value=[TRY]):
+                out, skipped = cc.candidates(rows, "unxed/f4", 14, now=NOW, status_dir=d)
+        self.assertEqual([o[0] for o in out], [8])
+        self.assertEqual([s[0] for s in skipped], [7])
+        self.assertIn("status/7.md", skipped[0][1])
+        self.assertIn("работа не завершена", skipped[0][1])
 
     def test_bulk_list_skips_without_per_issue_request(self):
         bug = {"labels": [{"name": "bug"}], "user": {"login": "unxed", "type": "User"},
