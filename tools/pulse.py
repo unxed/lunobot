@@ -43,6 +43,17 @@ def completed_rounds(rounds):
     return list(completed.values())
 
 
+def latest_attempts(rounds):
+    """Последняя попытка каждого логического круга; повторы не являются отдельными кругами."""
+    latest = {}
+    for r in rounds:
+        key = (r.get("id"), r.get("runner"), r["round"]) if r.get("round") is not None else (
+            r.get("id"), r.get("runner"), r["ts"])
+        if key not in latest or r.get("ts", "") > latest[key].get("ts", ""):
+            latest[key] = r
+    return list(latest.values())
+
+
 def alarms(recs, now=None):
     """Список (ключ, текст) тревог по записям журналов."""
     now = now or datetime.now(timezone.utc)
@@ -60,7 +71,7 @@ def alarms(recs, now=None):
     if l1 and refl_all and (not digests or max(digests) < d48) and refl_all[0]["ts"] < d24:
         out.append(("no-digest", "Лунобот-1 работает, а разбора рефлексии не было больше двух суток (`journal.py "
                     "digest`, модуль round) — разбери и выясни, почему не запускался"))
-    rounds6 = [r for r in recs if r["kind"] == "round" and r["ts"] >= d6]
+    rounds6 = [r for r in latest_attempts(r for r in recs if r["kind"] == "round") if r["ts"] >= d6]
     bad6 = [r for r in rounds6 if r.get("exit") not in (0, None) or r.get("rate_limited")]
     if len(rounds6) >= 3 and len(bad6) * 2 >= len(rounds6):
         who = Counter(f"{r.get('runner')}/{r.get('model')}" for r in bad6).most_common(3)

@@ -39,6 +39,24 @@ class PulseTest(unittest.TestCase):
         recs += [rec("reflection", "2026-10-22T11:00:00Z", friction=[])] * 3
         self.assertIn("rounds-failing", self.keys(recs))
 
+    def test_rounds_failing_counts_latest_attempt_per_logical_round(self):
+        recs = []
+        for n in range(4):
+            recs += [rec("round", f"2026-10-22T0{n + 6}:00:00Z", exit=124, runner="r", round=n),
+                     rec("round", f"2026-10-22T0{n + 6}:01:00Z", exit=0, runner="r", round=n)]
+        recs += [rec("round", f"2026-10-22T1{n}:00:00Z", exit=124, runner="r", round=n + 4)
+                 for n in range(4)]
+        recs += [rec("round", f"2026-10-22T09:{30 + n:02d}:00Z", exit=0, runner="r", round=n + 8)
+                 for n in range(2)]
+        self.assertNotIn("rounds-failing", self.keys(recs))
+
+    def test_rounds_failing_keeps_latest_failed_logical_rounds(self):
+        recs = []
+        for n in range(3):
+            recs += [rec("round", f"2026-10-22T10:{n * 2:02d}:00Z", exit=124, runner="r", round=n),
+                     rec("round", f"2026-10-22T10:{n * 2 + 1:02d}:00Z", exit=124, runner="r", round=n)]
+        self.assertIn("rounds-failing", self.keys(recs))
+
     def test_missing_digest_with_active_lunobot1(self):
         recs = [rec("reflection", "2026-10-19T10:00:00Z", friction=[]), rec("round", "2026-10-22T10:00:00Z", exit=0),
                 rec("reflection", "2026-10-22T10:10:00Z", friction=[])]
