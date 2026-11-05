@@ -106,6 +106,8 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 05-11-2026 17:16:50 UTC
+Прогресс 05-11-2026 17:20:24 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): часть 40 припаркована в unxed/sandbox `tmp/19d3/sandbox-280-edge-hide-diagnostic-1105`, sha `4f3dc61550c02b4bc3e526a3c3df7b9ad9998bc2`; запустить точный диагностический GUI workflow и разобрать top hide evidence.
+
 --
 
 Порядок работ (решение владельца, 04-11-2026): перевод dn и bp/fpide на диалект bp — не раньше, чем закончено переписывание tv3 вчистую и полностью работает стек tv3–dn–fpide. Только после этого dn переводится на bp, а fpide переименовывается в bpide и тоже переводится на bp. Тикеты: https://github.com/unxed/bp/issues/128 и https://github.com/unxed/dn/issues/185. Сейчас ничего не делать сверх соблюдения порядка.
