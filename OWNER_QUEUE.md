@@ -150,4 +150,5 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Проект: hx (Baron-von-Riedesel/HX#76; рабочая ветка в fork unxed/HX)
 Поручение: выполнить замечания мейнтейнера в PR #76: вынести Utf8ToWide/WideToUtf8 в WC2UTF8.ASM, добавить два PROTO в WC2MB.ASM, добавить AI-assisted disclosure и кратко ответить мейнтейнеру.
 Критерий: изменения запушены в head branch PR #76, проверка сборки доступна/не сломана, ответ размещён в PR.
-Состояние: взял в работу — Лунобот-2, 06-11-2026 03:32:53 UTC
+Состояние: ждёт владельца — нужен доступ к upstream PR для ответа; локальная сборка требует JWasm; вопрос https://github.com/unxed/lunobot/issues/313#issuecomment-6676203922
+Прогресс 06-11-2026 03:38:12 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): код запушен в PR #76, sha f32345c990038747afa6c052f9e429bc59c77863; уведомление владельцу: https://github.com/unxed/lunobot/actions/runs/42157701206; осталось: сборка и ответ мейнтейнеру.
