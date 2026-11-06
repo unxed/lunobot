@@ -105,11 +105,18 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: sandbox (faststone)
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
-Состояние: свободно
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 06-11-2026 18:34 UTC
 Прогресс 06-11-2026 17:47:57 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 47 раннера lunobot-round-luna-high.sh окончен (код 0); продолжать по тикету поручения и status/.
 
 --
 
+
+## account-323
+Заметка владельца: https://github.com/unxed/lunobot/issues/323
+Проект: fix-it-in-wine
+Поручение: исследовать спрос на закрытое государственное Windows-приложение без Linux-альтернативы и подготовить showcase по фактическим данным; не публиковать в WineHQ без согласия владельца.
+Критерий: ранжированный shortlist с источниками и цифрами, выбранный showcase issue создан в unxed/fix-it-in-wine, отчёт и ссылка в issue #323, поручение закрыто.
+Состояние: свободно
 
 ## account-322
 Заметка владельца: https://github.com/unxed/lunobot/issues/322
