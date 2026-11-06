@@ -150,4 +150,4 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Проект: hx (Baron-von-Riedesel/HX#76; рабочая ветка в fork unxed/HX)
 Поручение: выполнить замечания мейнтейнера в PR #76: вынести Utf8ToWide/WideToUtf8 в WC2UTF8.ASM, добавить два PROTO в WC2MB.ASM, добавить AI-assisted disclosure и кратко ответить мейнтейнеру.
 Критерий: изменения запушены в head branch PR #76, проверка сборки доступна/не сломана, ответ размещён в PR.
-Состояние: свободно
+Состояние: взял в работу — Лунобот-2, 06-11-2026 03:32:53 UTC
