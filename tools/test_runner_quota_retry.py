@@ -49,6 +49,15 @@ class RunnerQuotaRetryTests(unittest.TestCase):
                 "381605",
             )
 
+    def test_detects_claude_weekly_limit_result(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "quota.log"
+            log.write_text(
+                json.dumps({"type": "result", "result": "You've hit your weekly limit · resets Nov 10, 7pm (UTC)"}) + "\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(self.call_claude_function("check_token_limit", log), "")
+
     def test_uses_claude_fallback_without_explicit_reset(self):
         with tempfile.TemporaryDirectory() as directory:
             log = Path(directory) / "quota.log"
