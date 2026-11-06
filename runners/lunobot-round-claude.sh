@@ -59,7 +59,7 @@ check_token_limit() {
           | if $j == null then .
             elif $j.type == "result" then ($j.result // "") + " " + ($j.subtype // "")
             else empty end' "${log_file}" 2>/dev/null \
-    | grep -qi -E "usage limit|hit your limit|rate limit|rate_limit|overloaded|quota exceeded|429|insufficient quota|billing|credit balance"
+    | grep -qi -E "usage limit|weekly limit|hit your limit|rate limit|rate_limit|overloaded|quota exceeded|429|insufficient quota|billing|credit balance"
 }
 
 quota_wait_seconds() {
