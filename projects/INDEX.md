@@ -20,3 +20,5 @@
 14. [pureffi](pureffi/PROJECT.md)
 15. [sandbox](sandbox/PROJECT.md)
 16. [marwin](marwin/PROJECT.md)
+17. [fix-it-in-wine](fix-it-in-wine/PROJECT.md)
+18. [dllmgr](dllmgr/PROJECT.md)
