@@ -151,10 +151,3 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Критерий: ранжированный shortlist с прямыми ссылками и фактическими свидетельствами; выбранный showcase issue создан, ссылка и краткий отчёт опубликованы в account-318, issue поручения закрыт.
 Состояние: ждёт владельца — `gh_post.py issue` получает HTTP 403 при создании в unxed/fix-it-in-wine, хотя API подтверждает admin/push и issues включены; уведомление: https://github.com/unxed/lunobot/actions/runs/42197485157
 Прогресс 06-11-2026 09:46 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): исследование и полный черновик shortlist/workflow сохранены в https://github.com/unxed/lunobot/issues/318#issuecomment-6681959048; целевой issue не создан из-за 403, обходить gh_post нельзя.
-
-## account-316
-Заметка владельца: https://github.com/unxed/lunobot/issues/316
-Проект: учёт
-Поручение: исправить повторный запуск кругов Claude после weekly quota: распознавать заявленное UTC-время сброса, ждать до него и сохранять короткий fallback для лимитов без времени; добавить регрессионный тест.
-Критерий: регрессионный тест на датированный weekly reset, корректный разбор и ограниченный retry; изменение запушено и ссылка записана в issue #316.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 06-11-2026 09:48:42 UTC
