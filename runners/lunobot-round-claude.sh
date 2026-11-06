@@ -62,6 +62,74 @@ check_token_limit() {
     | grep -qi -E "usage limit|hit your limit|rate limit|rate_limit|overloaded|quota exceeded|429|insufficient quota|billing|credit balance"
 }
 
+quota_wait_seconds() {
+  local log_file="$1"
+  local now_utc="${2:-}"
+  python3 - "${log_file}" "${TOKEN_LIMIT_WAIT}" "${now_utc}" <<'PY'
+import json
+import math
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+
+log_path, fallback_text, now_text = sys.argv[1:]
+fallback = int(fallback_text)
+try:
+    now = (datetime.fromisoformat(now_text.replace("Z", "+00:00"))
+           if now_text else datetime.now(timezone.utc))
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    now = now.astimezone(timezone.utc)
+except ValueError:
+    print(fallback)
+    raise SystemExit
+
+result = ""
+try:
+    with open(log_path, encoding="utf-8") as stream:
+        for line in stream:
+            try:
+                event = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if event.get("type") == "result":
+                result = str(event.get("result") or "")
+except OSError:
+    print(fallback)
+    raise SystemExit
+
+match = re.search(
+    r"\bresets?\s+([A-Z][a-z]{2})\s+(\d{1,2}),?\s+"
+    r"(\d{1,2})(?::(\d{2}))?\s*([ap]m)\s*\(UTC\)",
+    result,
+    re.IGNORECASE,
+)
+if not match:
+    print(fallback)
+    raise SystemExit
+
+month, day, hour, minute, ampm = match.groups()
+hour = int(hour) % 12 + (12 if ampm.lower() == "pm" else 0)
+minute = int(minute or 0)
+try:
+    reset = datetime(now.year, datetime.strptime(month.title(), "%b").month,
+                     int(day), hour, minute, tzinfo=timezone.utc)
+    if reset <= now:
+        next_year = reset.replace(year=reset.year + 1)
+        if next_year - now > timedelta(days=8):
+            print(fallback)
+            raise SystemExit
+        reset = next_year
+    delay = (reset - now).total_seconds()
+    if delay > timedelta(days=8).total_seconds():
+        print(fallback)
+    else:
+        print(max(5, math.ceil(delay) + 5))
+except ValueError:
+    print(fallback)
+PY
+}
+
 wait_token_reset() {
   local wait_time="$1"
   log "Token limit hit. Waiting ${wait_time}s for quota reset..."
@@ -214,7 +282,7 @@ run_round() {
 
   if check_token_limit "${log_file}"; then
     log "DETECTED: Token limit / rate limit in round output"
-    wait_token_reset "${TOKEN_LIMIT_WAIT}"
+    wait_token_reset "$(quota_wait_seconds "${log_file}")"
     return 2
   fi
 
