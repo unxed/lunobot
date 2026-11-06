@@ -142,3 +142,12 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Поручение: выполнить ручную проверку И0 `spike/spike0.sh` на FastStone; записать probe-логи, версии пакетов и результаты H1–H4, включая непроверенные гипотезы.
 Критерий: результаты проверки или конкретный блокер и следующий шаг отражены в unxed/lunobot#314.
 Состояние: ждёт владельца — в runner нет Wine, DISPLAY и FSViewer.exe; вопрос https://github.com/unxed/lunobot/issues/314#issuecomment-6676098373; notify run https://github.com/unxed/lunobot/actions/runs/42156958270
+
+--
+
+## account-313
+Заметка владельца: https://github.com/unxed/lunobot/issues/313
+Проект: hx (Baron-von-Riedesel/HX#76; рабочая ветка в fork unxed/HX)
+Поручение: выполнить замечания мейнтейнера в PR #76: вынести Utf8ToWide/WideToUtf8 в WC2UTF8.ASM, добавить два PROTO в WC2MB.ASM, добавить AI-assisted disclosure и кратко ответить мейнтейнеру.
+Критерий: изменения запушены в head branch PR #76, проверка сборки доступна/не сломана, ответ размещён в PR.
+Состояние: свободно
