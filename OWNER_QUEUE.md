@@ -141,4 +141,4 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Проект: dllmgr
 Поручение: выполнить ручную проверку И0 `spike/spike0.sh` на FastStone; записать probe-логи, версии пакетов и результаты H1–H4, включая непроверенные гипотезы.
 Критерий: результаты проверки или конкретный блокер и следующий шаг отражены в unxed/lunobot#314.
-Состояние: взял в работу — Лунобот-2, 06-11-2026 03:29:33 UTC
+Состояние: ждёт владельца — в runner нет Wine, DISPLAY и FSViewer.exe; вопрос https://github.com/unxed/lunobot/issues/314#issuecomment-6676098373; notify run https://github.com/unxed/lunobot/actions/runs/42156958270
