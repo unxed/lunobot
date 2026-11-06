@@ -114,4 +114,11 @@ id, адресат и проект не нужны (пишет с телефон
 
 --
 
-Marwin (WINdows + Marvin) — лёгкий аналог Wine на bp, MVP: консольные программы, витрина — Far2 и Far3 на Linux; без libc, сборка за секунды, winescape, бандлы, appdb с патчами в один клик, DOS-текстовые программы через DOSBox-X в консоли. Всё описано в https://github.com/unxed/bp/issues/129. Начинать только когда стабилизируется концепция bp (https://github.com/unxed/bp/issues/108) и позволяет порядок из https://github.com/unxed/bp/issues/128; до этого не брать.
+Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.com/unxed/Marwin#2 (ранее unxed/bp#129 и unxed/bp#220); начинать только когда стабилизируется концепция bp (https://github.com/unxed/bp/issues/108) и позволяет порядок из https://github.com/unxed/bp/issues/128; до этого не брать.
+
+## account-312
+Заметка владельца: https://github.com/unxed/lunobot/issues/312
+Проект: marwin
+Поручение: завести проект unxed/Marwin в учёте и начать dllmgr с И0/И1 концепции; не начинать runtime/cc580 до условий, указанных в очереди.
+Критерий: проект marwin добавлен последней строкой INDEX.md с паспортом и учётными файлами; первый атомарный шаг dllmgr по концепции опубликован проверяемым маршрутом, прогресс и ссылки отражены в issue #312.
+Состояние: взял в работу — Лунобот-2, 06-11-2026 02:00:00 UTC
