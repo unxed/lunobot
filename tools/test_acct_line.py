@@ -127,6 +127,25 @@ class AcctLineGitTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn(LINE.format(6), self.origin())
 
+    def test_add_reads_literal_backticks_from_text_file(self):
+        line = LINE.format(7).replace(" взял задачу ", " взял задачу `literal` ")
+        path = os.path.join(self.tmp.name, "row.txt")
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            f.write(line + "\n")
+        code, out = self.run_tool("add", "projects/dn/DISPATCH.md", "--text-file", path,
+                                  "-m", "dn#7: взял", "--sign", SIGN)
+        self.assertEqual(code, 0, out)
+        self.assertIn(line, self.origin())
+
+    def test_text_file_keeps_record_single_line_gate(self):
+        path = os.path.join(self.tmp.name, "rows.txt")
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            f.write(LINE.format(8) + "\n" + LINE.format(9))
+        code, out = self.run_tool("add", "projects/dn/DISPATCH.md", "--text-file", path,
+                                  "-m", "x", "--sign", SIGN)
+        self.assertEqual(code, 1, out)
+        self.assertIn("ОТКАЗ", out)
+
     def test_sign_without_node_is_refused(self):
         code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(4), "-m", "x", "--sign", "Лунобот-1")
         self.assertEqual(code, 2, out)
