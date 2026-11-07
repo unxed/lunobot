@@ -189,3 +189,9 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 
 ---
 
+## account-325
+Заметка владельца: https://github.com/unxed/lunobot/issues/325
+Проект: учёт
+Поручение: добавить в acct_line.py безопасный file-input для literal текста, сохранив позиционные аргументы.
+Критерий: тесты backticks и отказ newline в record-файлах; существующее поведение не меняется.
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 07-11-2026 14:25 UTC
