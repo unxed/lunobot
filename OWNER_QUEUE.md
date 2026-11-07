@@ -188,10 +188,3 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Прогресс 07-11-2026 00:45:32 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): следующий атомарный шаг запушен в unxed/HX `lunobot/pr/hx-76-set-console-output-cp`, sha `8d57cbd44ebea8f1f7258769ad50ba914cc72ac9`; PR API вернул 403, локальный JWasm/JWlink отсутствует; следующий шаг — получить возможность открытия PR и запустить сборку у мейнтейнера.
 
 ---
-
-## account-325
-Заметка владельца: https://github.com/unxed/lunobot/issues/325
-Проект: учёт
-Поручение: добавить в acct_line.py безопасный file-input для literal текста, сохранив позиционные аргументы.
-Критерий: тесты backticks и отказ newline в record-файлах; существующее поведение не меняется.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 07-11-2026 14:25 UTC
