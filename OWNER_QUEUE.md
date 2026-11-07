@@ -124,7 +124,7 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: dllmgr
 Поручение: понемногу исследовать Far Manager 3 под Wine по плану тикета, начиная с аудита WineHQ Bugzilla и разделения GUI conhost / Unix-terminal paths; не публиковать в WineHQ Bugzilla.
 Критерий: отдельные атомарные PR в unxed/dllmgr с воспроизводящими тестами и проверенными fixes, затем составной рецепт Far3; каждый шаг отражён в issue #322.
-Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 07-11-2026 03:03:57 UTC
+Состояние: ждёт владельца — GitHub credential returns HTTP 403 on push to unxed/dllmgr despite ADMIN permission; owner notified via https://github.com/unxed/lunobot/issues/322#issuecomment-6701484835 and notify run https://github.com/unxed/lunobot/actions/runs/42332917947
 --
 
 Порядок работ (решение владельца, 04-11-2026): перевод dn и bp/fpide на диалект bp — не раньше, чем закончено переписывание tv3 вчистую и полностью работает стек tv3–dn–fpide. Только после этого dn переводится на bp, а fpide переименовывается в bpide и тоже переводится на bp. Тикеты: https://github.com/unxed/bp/issues/128 и https://github.com/unxed/dn/issues/185. Сейчас ничего не делать сверх соблюдения порядка.
@@ -132,7 +132,7 @@ id, адресат и проект не нужны (пишет с телефон
 --
 
 Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.com/unxed/Marwin#2 (ранее unxed/bp#129 и unxed/bp#220); начинать только когда стабилизируется концепция bp (https://github.com/unxed/bp/issues/108) и позволяет порядок из https://github.com/unxed/bp/issues/128; до этого не брать.
-Прогресс 07-11-2026 03:03:57 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): прочитан обновлённый тикет; начинаю аудит текущего Far3 handoff и Bugzilla; без исполнения пока.
+Прогресс 07-11-2026 03:13:00 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): прочитаны Bugzilla reports и тексты вложений; pinned Far x64 SHA256 и первичный baseline/audit записаны в issue #322. Документный commit 394646a671b20fe10652500d160b3196afa64e15 не удалось запушить (HTTP 403); требуется восстановить запись, затем опубликовать docs/far3.md и продолжить по матрице.
 ## account-312
 Заметка владельца: https://github.com/unxed/lunobot/issues/312
 Проект: marwin
