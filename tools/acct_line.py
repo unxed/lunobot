@@ -179,7 +179,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("op", choices=["add", "remove"])
     ap.add_argument("file", help="путь от корня учётного репозитория")
-    ap.add_argument("text", help="add: строка целиком; remove: подстрока-ключ (несколько строк — с --all)")
+    ap.add_argument("text", nargs="?", help="add: строка целиком; remove: подстрока-ключ (несколько строк — с --all)")
+    ap.add_argument("--text-file", help="прочитать текст из UTF-8 файла без shell-интерпретации")
     ap.add_argument("--all", action="store_true", help="remove: убрать все строки с ключом одним коммитом")
     ap.add_argument("-m", "--message", required=True)
     ap.add_argument("--sign", required=True, help="id инстанса, как в подписи (§ 1)")
@@ -187,6 +188,11 @@ def main(argv=None):
     ap.add_argument("--remote", default="origin")
     ap.add_argument("--branch", default="main")
     a = ap.parse_args(argv)
+    if (a.text is None) == (a.text_file is None):
+        ap.error("укажите ровно один из позиционного text и --text-file")
+    if a.text_file is not None:
+        with open(a.text_file, encoding="utf-8", newline="") as f:
+            a.text = f.read()
     if not re.fullmatch(r"(?:Лунобот|Lunobot)-\d+ \(node [0-9a-f]{24}; (?:MSW|LNX|DAR|BSD)\)", a.sign):
         print("--sign: нужен полный id с номером, 24-значным узлом и платформой, например «Лунобот-1 (node a721a6d1487257292ae00780; LNX)»", file=sys.stderr)
         return 2

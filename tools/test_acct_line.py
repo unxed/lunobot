@@ -127,6 +127,33 @@ class AcctLineGitTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn(LINE.format(6), self.origin())
 
+    def test_text_file_preserves_literal_backticks(self):
+        row = LINE.format(7).replace("взял задачу", "взял задачу `literal`")
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="", delete=False) as f:
+            f.write(row)
+            name = f.name
+        try:
+            code, out = self.run_tool("add", "projects/dn/DISPATCH.md", "--text-file", name,
+                                      "-m", "dn#7: literal", "--sign", SIGN)
+        finally:
+            os.unlink(name)
+        self.assertEqual(code, 0, out)
+        self.assertIn(row, self.origin())
+
+    def test_text_file_rejects_embedded_newline_in_record(self):
+        before = sh(self.a, "--git-dir", self.bare, "rev-parse", "main")
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="", delete=False) as f:
+            f.write(LINE.format(8) + "\n" + LINE.format(9))
+            name = f.name
+        try:
+            code, out = self.run_tool("add", "projects/dn/DISPATCH.md", "--text-file", name,
+                                      "-m", "x", "--sign", SIGN)
+        finally:
+            os.unlink(name)
+        self.assertEqual(code, 1, out)
+        self.assertIn("ОТКАЗ", out)
+        self.assertEqual(sh(self.a, "--git-dir", self.bare, "rev-parse", "main"), before)
+
     def test_sign_without_node_is_refused(self):
         code, out = self.run_tool("add", "projects/dn/DISPATCH.md", LINE.format(4), "-m", "x", "--sign", "Лунобот-1")
         self.assertEqual(code, 2, out)
