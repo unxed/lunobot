@@ -116,7 +116,7 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: fix-it-in-wine
 Поручение: исследовать спрос на закрытое государственное Windows-приложение без Linux-альтернативы и подготовить showcase по фактическим данным; не публиковать в WineHQ без согласия владельца.
 Критерий: ранжированный shortlist с источниками и цифрами, выбранный showcase issue создан в unxed/fix-it-in-wine, отчёт и ссылка в issue #323, поручение закрыто.
-Состояние: свободно
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 07-11-2026 12:27:26 UTC
 Прогресс 07-11-2026 02:16:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 56 раннера lunobot-round-luna-high.sh окончен (код 0); продолжать по тикету поручения и status/.
 
 ## account-322
@@ -125,6 +125,8 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: понемногу исследовать Far Manager 3 под Wine по плану тикета, начиная с аудита WineHQ Bugzilla и разделения GUI conhost / Unix-terminal paths; не публиковать в WineHQ Bugzilla.
 Критерий: отдельные атомарные PR в unxed/dllmgr с воспроизводящими тестами и проверенными fixes, затем составной рецепт Far3; каждый шаг отражён в issue #322.
 Состояние: ждёт владельца — GitHub credential returns HTTP 403 on push to unxed/dllmgr despite ADMIN permission; owner notified via https://github.com/unxed/lunobot/issues/322#issuecomment-6701484835 and notify run https://github.com/unxed/lunobot/actions/runs/42332917947
+Прогресс 07-11-2026 12:27:26 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверен официальный JPKI-портал Японии; Mac-клиент исключает его как Windows-only showcase, источник не даёт спроса/Wine-evidence. Результат и следующий шаг записаны в unxed/lunobot#323; далее проверить другого кандидата по независимым официальным и Wine-источникам.
+
 --
 
 ## account-321
