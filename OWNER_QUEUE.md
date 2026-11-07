@@ -127,6 +127,13 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: ждёт владельца — GitHub credential returns HTTP 403 on push to unxed/dllmgr despite ADMIN permission; owner notified via https://github.com/unxed/lunobot/issues/322#issuecomment-6701484835 and notify run https://github.com/unxed/lunobot/actions/runs/42332917947
 --
 
+## account-321
+Заметка владельца: https://github.com/unxed/lunobot/issues/321
+Проект: dllmgr
+Поручение: при выполнении условия подхвата довести FastStone 8.5 под Wine 11.0 по unxed/dllmgr#12 и ветке `fix/faststone-wheel-cell`; не вмешиваться в PR и ветки, пока условие не выполнено.
+Критерий: PR #12 и wheel-cell доведены до merge в main dllmgr либо раздельных PR; симптомы unxed/dllmgr#8 исправлены или честно классифицированы; `dllmgr fix faststone` устанавливает проверенный набор на Wine 11.0.
+Состояние: ждёт владельца — условие подхвата из unxed/lunobot#321 ещё не подтверждено; до 24 часов без новых коммитов/комментариев или прямого разрешения не вмешиваться.
+
 Порядок работ (решение владельца, 04-11-2026): перевод dn и bp/fpide на диалект bp — не раньше, чем закончено переписывание tv3 вчистую и полностью работает стек tv3–dn–fpide. Только после этого dn переводится на bp, а fpide переименовывается в bpide и тоже переводится на bp. Тикеты: https://github.com/unxed/bp/issues/128 и https://github.com/unxed/dn/issues/185. Сейчас ничего не делать сверх соблюдения порядка.
 
 --
