@@ -124,8 +124,7 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: dllmgr
 Поручение: понемногу исследовать Far Manager 3 под Wine по плану тикета, начиная с аудита WineHQ Bugzilla и разделения GUI conhost / Unix-terminal paths; не публиковать в WineHQ Bugzilla.
 Критерий: отдельные атомарные PR в unxed/dllmgr с воспроизводящими тестами и проверенными fixes, затем составной рецепт Far3; каждый шаг отражён в issue #322.
-Состояние: свободно
-Прогресс 06-11-2026 19:06:25 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): взял поручение; проверен прежний shortlist из unxed/lunobot#318: Autenticação.gov исключён как open-source/Linux-supported, но новый подходящий closed-source гос-клиент пока не подтверждён. Следующий шаг: продолжить международный поиск точных Bugzilla/AppDB свидетельств.
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 07-11-2026 03:03:57 UTC
 --
 
 Порядок работ (решение владельца, 04-11-2026): перевод dn и bp/fpide на диалект bp — не раньше, чем закончено переписывание tv3 вчистую и полностью работает стек tv3–dn–fpide. Только после этого dn переводится на bp, а fpide переименовывается в bpide и тоже переводится на bp. Тикеты: https://github.com/unxed/bp/issues/128 и https://github.com/unxed/dn/issues/185. Сейчас ничего не делать сверх соблюдения порядка.
@@ -133,7 +132,7 @@ id, адресат и проект не нужны (пишет с телефон
 --
 
 Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.com/unxed/Marwin#2 (ранее unxed/bp#129 и unxed/bp#220); начинать только когда стабилизируется концепция bp (https://github.com/unxed/bp/issues/108) и позволяет порядок из https://github.com/unxed/bp/issues/128; до этого не брать.
-
+Прогресс 07-11-2026 03:03:57 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): прочитан обновлённый тикет; начинаю аудит текущего Far3 handoff и Bugzilla; без исполнения пока.
 ## account-312
 Заметка владельца: https://github.com/unxed/lunobot/issues/312
 Проект: marwin
