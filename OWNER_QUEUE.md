@@ -106,11 +106,10 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 07-11-2026 12:56:11 UTC
-Прогресс 07-11-2026 11:48:26 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): захват снят — круг 67 раннера lunobot-round-luna-high.sh окончен (код 0); продолжать по тикету поручения и status/.
 
 --
 
-Прогресс 07-11-2026 05:05:26 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): изучены handoff и актуальные CI evidence; последний GUI bootstrap (run 41965882671) подтверждён success на точном SHA 9cc8805cfbc784b81ddd90d8eaf415e667fe0921, GUI matrix status уже в status/280.md. Полный FastStone GUI запуск локально недоступен (нет DISPLAY/Wine/Xvfb/QEMU), а следующий существенный шаг требует долгого GitHub CI и не может быть безопасно завершён до срока этого круга; оставляю поручение активным и продолжение — отдельный атомарный GUI/CI шаг.
+Прогресс 07-11-2026 12:57:32 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#10 влит с зелёными точными проверками; следующий атомарный шаг — по HANDOFF.md.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
