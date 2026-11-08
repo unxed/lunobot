@@ -106,7 +106,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 08-11-2026 11:36 UTC
-Прогресс 08-11-2026 11:36 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверены exact-SHA GUI matrix/bootstrap runs 42415331046 и 42415331174 PR unxed/sandbox#11 на a4ae009; workflow checks зелёные, но top-scroll assertions падают (нет horizontal wheel/paint после LVM_SCROLL), продолжение — выяснить рендер при реальном смещении.
+Прогресс 08-11-2026 11:46 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): по поправке владельца в PR unxed/sandbox#11 запушен диагностический коммит 279e982e20fc378ced2e45f97ca2d362098ccf33: проверка HWND/last-error и item-geometry вместо scrollbar-позиции; GUI/bootstrap runs 42477036317 и 42477036309 запущены, итог не заявлен; подробности: https://github.com/unxed/lunobot/issues/280#issuecomment-6721071860.
 --
 
 ## account-323
