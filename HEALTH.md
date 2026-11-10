@@ -3,5 +3,5 @@
 Пишет `janitor.py` (`pulse.py`) по журналам `refs/journal/*`; вручную не править. Тревога — срочная работа § 5 п. 2 для любого бота (модуль round, «Пульс»), снимается сама, когда условие пропало.
 
 - **no-digest** — Лунобот-1 работает, а разбора рефлексии не было больше двух суток (`journal.py digest`, модуль round) — разбери и выясни, почему не запускался
-- **rounds-failing** — за 6 ч упали 6 из 6 кругов (lunobot-round-claude.sh/sonnet: 6): хвосты — в `journal.py digest`, раздел «Неудачные круги»
+- **rounds-failing** — за 6 ч упали 7 из 7 кругов (lunobot-round-claude.sh/sonnet: 7): хвосты — в `journal.py digest`, раздел «Неудачные круги»
 - **friction-repeats** — трения повторяются без разбора: `tool-shell` ×6, `push-race` ×4, `tool-train.py` ×3, `gate-false-positive` ×3 — разбор рефлексии (Лунобот-1) или жалоба § 12
