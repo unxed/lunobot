@@ -209,3 +209,9 @@ https://github.com/PhialsBasement/wine-adobe-installers/issues/6
 
 ---
 
+https://github.com/unxed/f4/pull/2300
+
+Надо доразобраться: если нужно доделать - доделать самим и вмержить, если не берём - закрыть.
+
+---
+
