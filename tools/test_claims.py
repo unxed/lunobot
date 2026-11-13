@@ -160,6 +160,21 @@ class TakeTest(GitCase):
         self.assertIn("занято", self.out)
         self.assertIn(line(1), self.out)
 
+    def test_take_prints_last_status_record(self):
+        os.makedirs(os.path.join(self.a, "projects/f4/status"), exist_ok=True)
+        self.put("projects/f4/status/9.md", "# 9\n\nстарая запись\n\n05-11-2026 10:00 UTC: часть 1 припарковано, ветка `tmp/19d3/x`\n")
+        sh(self.a, "add", "projects/f4/status/9.md")
+        sh(self.a, "commit", "-qm", "status")
+        sh(self.a, "push", "-q", "origin", "HEAD:main")
+        self.assertEqual(self.quiet(claims.take, self.a, "f4", line(9)), 0)
+        self.assertIn("status: projects/f4/status/9.md", self.out)
+        self.assertIn("припарковано", self.out)
+        self.assertNotIn("старая запись", self.out)
+
+    def test_take_without_status_file_prints_no_hint(self):
+        self.assertEqual(self.quiet(claims.take, self.a, "f4", line(10)), 0)
+        self.assertNotIn("status:", self.out)
+
     def test_take_of_auto_stamped_line_is_accepted(self):
         bare = "взял кастомную задачу «автоштамп» по § 5 п. 2 [urgent: по § 5 п. 2 — красный staging]"
         self.assertEqual(self.quiet(claims.take, self.a, "f4", claims.stamp_line(bare, ME)), 0)
