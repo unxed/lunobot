@@ -130,14 +130,60 @@ except ValueError:
 PY
 }
 
+quota_wait_seconds() {
+  local log_file="$1"
+  python3 - "$log_file" "$TOKEN_LIMIT_WAIT" <<'PY'
+import json
+import re
+import sys
+from datetime import datetime, timezone
+
+fallback = int(sys.argv[2])
+texts = []
+with open(sys.argv[1], encoding="utf-8") as log:
+    for line in log:
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            texts.append(line)
+            continue
+        if isinstance(event, dict) and event.get("type") == "result":
+            texts.extend(str(event.get(key, "")) for key in ("result", "subtype"))
+
+pattern = re.compile(r"\bresets\s+([A-Za-z]{3}\s+\d{1,2},\s+\d{1,2}(?::\d{2})?\s*[ap]m)\s*\(UTC\)", re.IGNORECASE)
+resets = [match.group(1) for text in texts for match in pattern.finditer(text)]
+if not resets:
+    print(fallback)
+    raise SystemExit
+
+value = re.sub(r"\s+", " ", resets[-1]).strip()
+fmt = "%b %d, %I:%M%p %Y" if ":" in value else "%b %d, %I%p %Y"
+now = datetime.now(timezone.utc)
+for year in (now.year, now.year + 1):
+    try:
+        reset = datetime.strptime(f"{value} {year}", fmt).replace(tzinfo=timezone.utc)
+    except ValueError:
+        continue
+    if reset > now:
+        print(max(1, int((reset - now).total_seconds()) + 5))
+        break
+else:
+    print(fallback)
+PY
+}
+
 wait_token_reset() {
   local wait_time="$1"
   log "Token limit hit. Waiting ${wait_time}s for quota reset..."
   local elapsed=0
+  local interval=5
+  if (( wait_time > 3600 )); then interval=300; fi
   while (( elapsed < wait_time )); do
     printf "\r[%3d/%3ds] " $((wait_time - elapsed)) "${wait_time}"
-    sleep 5
-    ((elapsed += 5))
+    local sleep_time=${interval}
+    if (( elapsed + sleep_time > wait_time )); then sleep_time=$((wait_time - elapsed)); fi
+    sleep "${sleep_time}"
+    ((elapsed += sleep_time))
   done
   echo
   log "Quota wait complete, retrying..."
