@@ -6,4 +6,7 @@
 
 ## Осталось
 
-Inspect the CI toolchain selection and current `main` run; update to a Go patch release containing the fix (expected 1.26.11), run required checks on the exact SHA, then rerun `train.py tick unxed/f4`. Do not bisect/eject the f4#1148 train commits: the failure is the Go standard library vulnerability, not demonstrated to be caused by those changes. Close the train only if the selected fix cannot safely unblock it. Claim key: `f4/train-2314`.
+Закрытый PR [unxed/f4#2315](https://github.com/unxed/f4/pull/2315) содержит исправление: Go toolchain обновлён до 1.26.11; полная матрица успешна на SHA `162f676c93cb307bff92b1df066ae695d1c646d9`. Мерж в `main` — `d23028e16335dcd711561bdb28a713d4d5059fc3`. `tick` закрыл красный поезд #2314 после продвижения main, затем влил main в staging. Для новой вершины staging `bb2652f6f6fde46e10e53073c6d798918e1c944f` идёт `quick` [#43636380330](https://github.com/unxed/f4/actions/runs/43636380330); не ждать результат, следующий `tick` продвинет поезд. Доезжание двух staged-коммитов до main ещё не подтверждено.
+
+
+14-11-2026 20:19:49 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): корневая причина красного поезда устранена существующим зелёным PR #2315; старый поезд закрыт. Staging синхронизирован с main, новый quick запущен на точном head SHA; оставлено для следующего tick без ожидания CI.
