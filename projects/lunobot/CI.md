@@ -11,3 +11,5 @@ PR, ждущие результатов обязательных проверо�
 08-11-2026 16:00:06 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/lunobot/issues/327, PR [#328](https://github.com/unxed/lunobot/pull/328), коммит b18b411b87c55b8ffe3cc5c983196514d8e0e68c, прогон [#154](https://github.com/unxed/lunobot/actions/runs/42497498356)
 
 08-11-2026 16:36:22 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/lunobot/issues/327, PR [#328](https://github.com/unxed/lunobot/pull/328), коммит `a3f7cde7f9d666b352831092a0e7988794d294b2`, прогон [#155](https://github.com/unxed/lunobot/actions/runs/42500693469)
+
+14-11-2026 15:30:59 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), тикет https://github.com/unxed/lunobot/issues/216, PR [#330](https://github.com/unxed/lunobot/pull/330), коммит b601635fae2a070159dca825974b7f0429f4021d, прогон [#43610365429](https://github.com/unxed/lunobot/actions/runs/43610365429)
