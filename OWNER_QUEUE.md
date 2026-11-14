@@ -201,7 +201,12 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 
 ---
 
-https://github.com/PhialsBasement/wine-adobe-installers/issues/6
+## account-331
+Заметка владельца: https://github.com/PhialsBasement/wine-adobe-installers/issues/6
 Решить проблему в рамках fix-it-in-wine/dllmgr. Рассказать им об этом по ссылочке выше, мол, вот фикс, причина в том-то, ставится так-то, велкам.
 
 Ещё один шоукейс будет!
+Проект: fix-it-in-wine
+Поручение: определить и выполнить безопасный атомарный шаг для решения issue PhialsBasement/wine-adobe-installers#6 в рамках fix-it-in-wine/dllmgr и сообщить авторам подтверждённые причину, fix и установку.
+Критерий: проверяемый fix опубликован в подходящем репозитории либо точный блокер и следующий шаг отражены в issue account-331; авторам дано только подтверждённое сообщение.
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 14-11-2026 20:04:29 UTC
