@@ -212,6 +212,6 @@ https://github.com/PhialsBasement/wine-adobe-installers/issues/6
 Поручение: доразобраться с unxed/f4#2300; если PR требует и допускает безопасную доводку — довести и влить, иначе закрыть с обоснованием.
 Критерий: PR #2300 влит на зелёных обязательных проверках либо закрыт с зафиксированной причиной и итогом.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 14-11-2026 08:04 UTC
-Прогресс 14-11-2026 08:06 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): диагностика PR #2303 и падения TestPanelsFrame_CopyShortcuts записана в https://github.com/unxed/lunobot/issues/329#issuecomment-6874290910; причина не подтверждена, ветки не менял; следующий шаг — воспроизвести/устранить сбой на sync PR и получить зелёные обязательные проверки.
+Прогресс 14-11-2026 08:07 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): #2303 failure is specific to its head; current main test passes (run 42466476835). Details and next step: https://github.com/unxed/lunobot/issues/329#issuecomment-6874305826; no branch changed, diagnosis remains.
 
 ---
