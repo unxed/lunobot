@@ -9,5 +9,3 @@
 04-11-2026 13:30:20 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/pr/128-terminal-only-persist для https://github.com/unxed/f4/issues/128
 
 04-11-2026 13:45:08 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/pr/2113-path-separator для https://github.com/unxed/f4/issues/2113
-
-14-11-2026 19:40:51 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/urgent/2314-govulncheck для unxed/f4#1148: исправить красный поезд #2314 обновлением Go
