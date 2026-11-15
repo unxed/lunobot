@@ -121,8 +121,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: fix-it-in-wine
 Поручение: исследовать спрос на закрытое государственное Windows-приложение без Linux-альтернативы и подготовить showcase по фактическим данным; не публиковать в WineHQ без согласия владельца.
 Критерий: ранжированный shortlist с источниками и цифрами, выбранный showcase issue создан в unxed/fix-it-in-wine, отчёт и ссылка в issue #323, поручение закрыто.
-Состояние: взял в работу — Лунобот-2, 14-11-2026 07:02 UTC
-Прогресс 14-11-2026 07:53 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): screened Japan NTA e-Tax; findings and evidence: https://github.com/unxed/lunobot/issues/323#issuecomment-6874128049; not selected because desktop-client demand, license, and Wine failure remain unverified.
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 15-11-2026 18:28:25 UTC
+Прогресс 15-11-2026 18:28:25 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): подхвачено после отсутствия следов более 90 минут; продолжить скрининг официальных гос-программ, следующий шаг — найти кандидата с независимым подтверждением спроса и Wine-специфичным отчётом.
 
 ## account-322
 Заметка владельца: https://github.com/unxed/lunobot/issues/322
