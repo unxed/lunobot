@@ -121,7 +121,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: исследовать спрос на закрытое государственное Windows-приложение без Linux-альтернативы и подготовить showcase по фактическим данным; не публиковать в WineHQ без согласия владельца.
 Критерий: ранжированный shortlist с источниками и цифрами, выбранный showcase issue создан в unxed/fix-it-in-wine, отчёт и ссылка в issue #323, поручение закрыто.
 Состояние: взял в работу — Лунобот-2, 15-11-2026 19:41 UTC
-Прогресс 16-11-2026 02:34:58 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): Бельгийское eID ПО исключено: официальный портал предоставляет desktop версии для Windows, macOS и Linux; комментарий: https://github.com/unxed/lunobot/issues/323#issuecomment-6905707372. Продолжить отбор только по кандидатам с проверяемыми данными о спросе, происхождении, доступности ОС и конкретном Wine-дефекте.
+Прогресс 16-11-2026 16:05:26 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): Austria a.sign Client screened and excluded: no verified current Wine failure, government development/closed status, or current Windows-only necessity; evidence and limits recorded in https://github.com/unxed/lunobot/issues/323#issuecomment-6921600270. Continue with another candidate only if the demand, provenance, OS, and Wine-defect evidence can be verified.
 ## account-322
 Заметка владельца: https://github.com/unxed/lunobot/issues/322
 Проект: dllmgr
