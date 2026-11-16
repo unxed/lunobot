@@ -1,53 +1,59 @@
 # Рефлексия флота — сводка
 
-Записей: 55; период: 2026-11-15T11:48:11Z … 2026-11-15T16:13:41Z.
+Записей: 32; период: 2026-11-16T16:31:01Z … 2026-11-16T19:34:00Z.
 Генерирует `journal.py digest` (Лунобот-1, § 4 п. 6). Правила разбора — модуль round, «Рефлексия».
 
 ## Круги по раннерам и моделям
 
 | раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом | вызовов, медиана | контекст макс., тыс., медиана | субагентов |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 10 | 1 | 11 | 0.00 | 0.00 | 1 | — | — | — |
+| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 7 | 0 | 11 | 0.00 | 0.00 | 0 | — | — | — |
 
 ## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова
 
-- 2026-11-15T14:21:38Z lunobot-round-luna-high.sh круг 172, код 124:
+- 2026-11-16T17:14:35Z lunobot-round-luna-high.sh круг 233, код 1:
   > ▶ shell
-  > ▶ shell
-  > ▶ shell
-  > ▶ shell
-  > Error: {"type": "unknown", "message": "Transport: The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"}
+  > ▶ task_complete
+  > Круг завершён: захват f4#2133 снят, ретро `health` для f4 и vtui прошло — staging зелёный, работа на main. Reflection записана в журнал.
+  >
+  > План части 3 запушен в учётный `main` (`d49cff3`). Локальная реализация общей Numeric sort начата, но не опубликована: ещё не решена миграция старых отдельных настроек для панелей. Точечные тесты затр
 
 ## Трения (повторы сверху)
 
-- **read-instruction** — 5× (1 инст.)
-  - 2026-11-15T14:56:00Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Вывод shell обрезал LUNOBOT.md после строк 418–834; дочитал недостающие диапазоны отдельными чтениями по инструкции OpenCode.
-  - 2026-11-15T15:22:28Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): В этом круге обязательное ядро и 4 модуля OpenCode прочитаны полностью; потребовалось дочитывание round.md по offset после ограничения вывода.
-  - 2026-11-15T15:50:35Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Read the 834-line core and full round/trains/OpenCode modules; OpenCode truncated the initial core and round outputs, requiring continuation reads by offset.
-- **push-race** — 3× (1 инст.)
-  - 2026-11-15T12:51:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Учётный push отклонён из-за параллельного обновления main; pull --rebase разрешил гонку, коммит ec9d77c запушен.
-  - 2026-11-15T13:35:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): accounting status push rejected once because origin/main advanced; pull --rebase then push succeeded.
-  - 2026-11-15T15:22:28Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Push записи TRIAGE был отклонён из-за параллельного обновления main; pull --rebase и повторный push прошли.
-- **env-opencode** — 2× (1 инст.)
-  - 2026-11-15T12:28:31Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Постоянный клон f4 содержал широкие незнакомые изменения; не трогал его, для парковочного коммита сделал свежий клон в work.
-  - 2026-11-15T14:02:14Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The persistent /tmp/lunobot-2/f4 clone contained extensive unrelated modifications, so the issue was handled in a fresh clone to preserve them.
+- **read-instruction** — 4× (1 инст.)
+  - 2026-11-16T17:31:23Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode Read завершил начальную выдачу LUNOBOT.md на строке 355 и round.md на строке 380; полное чтение потребовало продолжений до последних строк обоих файлов.
+  - 2026-11-16T18:25:13Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): LUNOBOT.md (834 строки) потребовал 3 чтения: OpenCode Read вывел первые 355 строк и потребовал явное продолжение, несмотря на доступный limit 2000.
+  - 2026-11-16T19:09:52Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode Read потребовал 3 диапазона для LUNOBOT.md и 2 для round.md до окончания обязательного чтения.
+- **env-opencode** — 3× (1 инст.)
+  - 2026-11-16T16:34:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Обязательный git pull отказал из-за 2 существовавших правок f4/DISPATCH.md и TRIAGE.md; сохранил их и использовал свежий клон, задача продолжилась. Тот же recovery уже описан и принят PR unxed/lunobot#334.
+  - 2026-11-16T17:14:11Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Широкий go test ./internal/config ./internal/panel ./internal/app ./internal/settings превысил 120 с; затем несколько unrelated app/network tests упали на таймаутах и HTTP 502. Точечные затронутые проверки прошли.
+  - 2026-11-16T18:46:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Постоянный accounting clone был behind 44 и имел незнакомые изменения в f4/DISPATCH.md и TRIAGE.md; pull --rebase отказал, поэтому круг переведён на отдельный свежий clone.
+- **tool-git-pull** — 2× (1 инст.)
+  - 2026-11-16T18:25:13Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый accounting pull --rebase отказался из-за уже изменённых projects/f4/DISPATCH.md и TRIAGE.md; сохранил их и выполнил запись через отдельный чистый clone.
+  - 2026-11-16T19:09:52Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Обязательный pull accounting clone отказал из-за прежних незнакомых правок f4/DISPATCH.md и TRIAGE.md; сохранил их, продолжил из отдельного свежего клона.
 - **deadline** — 1× (1 инст.)
-  - 2026-11-15T13:35:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): user persistence deadline 13:52:49 UTC elapsed before the status commit was pushed; work was still parked and pushed afterwards.
-- **duplicate-work** — 1× (1 инст.)
-  - 2026-11-15T14:30:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): повторная проверка pinned input/menu пути повторила факты, уже записанные в status/1885.md; необходимый heap-профиль недоступен без целевой GUI-среды
-- **tool-check_triage.py** — 1× (1 инст.)
-  - 2026-11-15T13:35:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): first parallel check_triage attempt could not create output files because step directory was absent; created directory and reran all 17 checks, all passed except dllmgr#76 stale TRIAGE.
+  - 2026-11-16T18:46:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Тикет не выбран и рабочий шаг не начат: tick-all ещё выполняется, а HEALTH.md содержит friction-repeats; не стал начинать непаркуемый срочный разбор.
+- **push-race** — 1× (1 инст.)
+  - 2026-11-16T16:34:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Пуш accounting 45d1edf отклонён non-fast-forward; один pull --rebase и повторный push прошли, итог 72c21f3.
+- **rule-unclear-§5** — 1× (1 инст.)
+  - 2026-11-16T17:14:11Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): До правки требовалось разрешить миграцию двух сохранённых per-panel SortNumeric в одну настройку; решение не подтверждено, поэтому кодовая ветка осталась незавершённой и не опубликована.
+- **rule-unclear-§7** — 1× (1 инст.)
+  - 2026-11-16T17:56:38Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Selected f4#2133 part 3, then released its claim without code: moving Numeric sort globally touches both config persistence and saved workspace SortNumeric state; the existing status plan flags migration, which needs a bounded, testable sli
+- **tool-check_triage** — 1× (1 инст.)
+  - 2026-11-16T17:31:23Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Полный check_triage вернул rc=1 только для mcommander#478: автор ZaWertun вне разрешённого паспортом scope; запись в TRIAGE нарушила бы PROJECT.md. Доказательство повтора добавлено в открытый PR #320.
 - **tool-fleet_watch** — 1× (1 инст.)
-  - 2026-11-15T13:11:10Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): fleet_watch.py --once вернул справку и код 2 без обязательного --node; работа круга продолжена.
-- **tool-train.py** — 1× (1 инст.)
-  - 2026-11-15T12:51:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При продолжении припаркованный коммит не имел обязательного Touch: #2320 и секций land; land отказал, пришлось дописать метаданные и обновить парковочную ветку.
-- **tool-triage_touch** — 1× (1 инст.)
-  - 2026-11-15T15:50:35Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): triage_touch changed TRIAGE before the accounting clone was rebased; pull refused the dirty tree. Committed only the known change, rebased, passed check_status_times.py, and pushed successfully.
+  - 2026-11-16T17:31:23Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): fleet_watch.py --once завершился кодом 2: CLI требует --node и --number; корректный запуск прошёл. Зафиксировано исправление примера в PR #335.
 
 ## Идеи
 
-- 2026-11-15T12:51:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При парковке заранее прогонять train.py land validation до запуска sandbox, чтобы выявлять обязательные трейлеры до CI.
-- 2026-11-15T13:35:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Create the step scratch directory before launching parallel gate output redirections.
-- 2026-11-15T14:30:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): при следующем шаге начать с целевого CPU/heap профиля; не повторять статический разбор без новой версии зависимостей или данных
+- 2026-11-16T16:34:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При грязном постоянном accounting-клоне начинать в чистом клоне до pull, не повторять заведомо невозможный pull.
+- 2026-11-16T16:34:27Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Продолжать разбор открытых жалоб Лунобота-1; Лунобот-2 их не вливает.
+- 2026-11-16T17:14:11Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): В следующем шаге сначала согласовать fallback для старых per-panel настроек и убрать/перенаправить оставшиеся действия SortNumeric; не публиковать код до этого и полного целевого прогона.
+- 2026-11-16T17:31:23Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): После влития PR #335 использовать обязательные --node/--number во всех примерах fleet_watch.
+- 2026-11-16T17:31:23Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Решить в PR #320, как сохранять полное покрытие TRIAGE без исполнения явно исключённых проектом issues.
+- 2026-11-16T17:56:38Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Split f4#2133 part 3 into a migration/runtime slice and a Settings Center/menu slice, with explicit legacy per-workspace compatibility criteria.
+- 2026-11-16T18:25:13Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При грязном постоянном accounting clone сразу использовать изолированный clone для учётной записи; не пытаться трогать существующие правки.
+- 2026-11-16T18:46:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): В начале круга учитывать грязный постоянный accounting clone и своевременно переходить на отдельный свежий clone без потери пользовательских правок.
+- 2026-11-16T19:09:52Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Не дублировать #330 или #334; проверить их эффект после независимого review/следующих кругов.
 
-Захватов снято: 13, медиана удержания 2 мин, дольше 2 ч: 0.
+Захватов снято: 8, медиана удержания 3 мин, дольше 2 ч: 0.
