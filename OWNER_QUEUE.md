@@ -113,9 +113,8 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 08-11-2026 16:07 UTC
-Прогресс 16-11-2026 13:21:54 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA runs 43754916780/43754916814 на `b0cb5b7ecec854cbd578f5c9ffa419dea44ac7dd` завершились success как workflows; GUI artifact подтверждает прежние top-scroll/paint failures и не доказывает дефект Wine. Подробности и следующий шаг записаны в projects/sandbox/status/280.md.
+Прогресс 16-11-2026 14:13:10 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): диагностический PR #12 влит после точных workflow runs; артефакт подтвердил отсутствие отрисовки после LVM_SCROLL и RedrawWindow, но не доказал Wine-дефект. Отчёт: https://github.com/unxed/lunobot/issues/280#issuecomment-6918829366. Следующий шаг — корректный scroll-state/paint baseline или Windows-reference.
 --
-
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
