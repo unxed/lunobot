@@ -114,7 +114,7 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
 --
-Прогресс 17-11-2026 10:15:37 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): перепроверены issue #280 и status/280.md: PR unxed/sandbox#14 влит, три точных workflow прошли, поведенческий вывод FastStone/Wine не заявлен. Следующий шаг из status/280.md: продолжить scroll-state investigation по точным артефактам, не менять код без доказательства.
+Прогресс 17-11-2026 10:47:46 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): Windows Server 2022 x86/x64 reference run 44067226618 запущен на main SHA f0d24659498379ad1c6a2ce71aab38928945a1d7; API baseline сопоставлен, новых выводов о FastStone/Wine нет. Результат и следующий шаг записаны в status/280.md и https://github.com/unxed/lunobot/issues/280#issuecomment-6945825053.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
