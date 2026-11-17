@@ -24,6 +24,7 @@ import datetime
 import json
 import re
 import sys
+import urllib.parse
 
 import check_triage
 
@@ -64,13 +65,16 @@ def commit_refs(body, repo=None):
             if not (repo and owner_repo and owner_repo.lower() != repo.lower())]
 
 
-def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RECENT_DAYS, repo=None):
+def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RECENT_DAYS, repo=None, reverted=None):
     """[(номер, sha, причина)]: «Пробуйте!» последних дней на коммит, который не тот или не в `main`.
 
     in_main(sha) -> True / False / None (None — такого коммита в репозитории нет);
     about(sha, номер) -> True / False: этот тикет назван в сообщении коммита или в описании его PR. Проверка срабатывает,
     только если тикет не назван ни в одном из коммитов комментария (шаг из нескольких коммитов
     называет их все, тикет — в одном).
+    reverted(sha) -> True / False: коммит, лежащий в `main`, откатан там же («This reverts commit <sha>»): бисект выбросил
+    его из поезда уже после «Пробуйте!» (f4#2237: 04-11-2026 коммит `90307a1` откачен `fca261a`, а автору
+    ушло «исправление уже в main»; автор 05-11 написал, что «всё то же»).
     """
     now = now or datetime.datetime.now(datetime.timezone.utc)
     found = []
@@ -90,6 +94,9 @@ def premature_tries(rows, fetch_comments, in_main, about=None, now=None, days=RE
                 broken = True
             elif not states[sha]:
                 found.append((number, sha, "коммит ещё не в main"))
+                broken = True
+            elif reverted is not None and reverted(sha):
+                found.append((number, sha, "коммит откатан в main (Revert)"))
                 broken = True
         # Шаг из двух коммитов (первый — «данные» с `Lunobot-Task:`, второй — с `Touch: #N`)
         # легитимно называет оба. Чужой sha (f4#1976) — когда тикет не назван НИ В ОДНОМ из
@@ -142,6 +149,18 @@ def commit_in_main(repo, sha):
     return any(p.get("merged_at") and p.get("base", {}).get("ref") == "main" for p in pulls)
 
 
+def commit_reverted_in_main(repo, sha):
+    """True — в `main` есть коммит с «This reverts commit <полный sha>» (поиск коммитов GitHub видит только main).
+
+    Поиск ищет по словам и отдаёт и сам коммит, поэтому каждый результат проверяется по тексту сообщения.
+    """
+    full = check_triage.gh_one(f"/repos/{repo}/commits/{sha}")["sha"]
+    query = urllib.parse.quote(f'repo:{repo} "This reverts commit {full}"')
+    data = check_triage.gh_one(f"/search/commits?q={query}&per_page=10")
+    return any(item.get("sha") != full and f"This reverts commit {full}" in (item.get("commit") or {}).get("message", "")
+               for item in data.get("items", []))
+
+
 def main():
     positional = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
     project = positional[0] if positional else "f4"
@@ -157,7 +176,7 @@ def main():
         rows, lambda n: check_triage.gh_pages(f"/repos/{repo}/issues/{n}/comments?per_page=100"),
         lambda sha: commit_in_main(repo, sha),
         lambda sha, number: ticket_named_at_commit(repo, sha, number, check_triage.gh_one),
-        repo=repo)
+        repo=repo, reverted=lambda sha: commit_reverted_in_main(repo, sha))
     for number, sha, reason in premature:
         print(f"[преждевременное «Пробуйте!»] {repo}#{number}: коммит {sha} — {reason}; "
               "верни `в пути` и поправь комментарий (§ 9), «Пробуйте!» — только когда исправление уже в main")
