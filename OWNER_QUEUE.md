@@ -113,9 +113,8 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
-Прогресс 17-11-2026 04:16:17 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобран exact-SHA API baseline run 44002410989; Wine/native comctl32 5.80 расходятся по wheel scroll state, без вывода о FastStone/Wine. Исправление формата diagnostic probe в unxed/sandbox#13 проверено и влито (merge `246ad08`). Следующий шаг — сопоставить baseline с FastStone scroll/paint evidence.
 --
-
+Прогресс 17-11-2026 07:33:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): точный run 43994341274 выявил format mismatch `%lu`/`int` у `SCROLLBARINFO.dxyLineButton`; исправлено `%d`, код запушен и запаркован на sha 5805e9513c5d3ea6ccfe3a42da009c41739777d3, открыт PR unxed/sandbox#14; три точных PR workflow идут, результат не заявляю.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
