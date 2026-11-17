@@ -113,7 +113,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 17-11-2026 00:01:50 UTC
-Прогресс 17-11-2026 00:01:50 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверяю точные артефакты GUI-пробы PR #12 и выбираю следующий измеримый шаг без предположений о поведении Windows.
+Прогресс 17-11-2026 00:06:09 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): запушен scroll-state probe в unxed/sandbox, ветка `tmp/19d3/sandbox-280-scrollstate-1117`, sha `4aa6ace6ce94e97859c09624b49826ca3b570069`; точный ListView baseline run 43984769763 идет, его результат не заявлен.
 --
 Прогресс 16-11-2026 22:25:47 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобран exact-SHA GUI artifact run 43754916780 на b0cb5b7; диагностика показывает wheel без сдвига item geometry, LVM_SCROLL сдвигает её на 3840 px, но thumbnail paint отсутствует даже после redraw. Это не Windows-сравнение и не доказательство дефекта Wine; следующий шаг — получить сопоставимый Windows/reference для scroll/paint перед изменением Wine или oracle.
 ## account-323
