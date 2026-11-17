@@ -114,7 +114,7 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
 --
-Прогресс 17-11-2026 07:33:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): точный run 43994341274 выявил format mismatch `%lu`/`int` у `SCROLLBARINFO.dxyLineButton`; исправлено `%d`, код запушен и запаркован на sha 5805e9513c5d3ea6ccfe3a42da009c41739777d3, открыт PR unxed/sandbox#14; три точных PR workflow идут, результат не заявляю.
+Прогресс 17-11-2026 08:27:55 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#14 merged as f0d24659498379ad1c6a2ce71aab38928945a1d7 after all three exact-head workflows passed; no Wine/FastStone behavior claim. Comment: https://github.com/unxed/lunobot/issues/280#issuecomment-6942772433. Next: continue scroll-state investigation from these artifacts.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
