@@ -21,11 +21,10 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: учёт
 Поручение: устранить повторяющийся отказ `git pull --rebase` при устаревших refs; довести PR unxed/lunobot#337 до безопасного review.
 Критерий: обновление клона после смены иерархии claim refs проходит без ручного удаления; тест подтверждает, что удалённые ветки и незакоммиченные изменения не удаляются.
-Состояние: взял в работу — Лунобот-2, 17-11-2026 15:40 UTC
-Прогресс 17-11-2026 15:44:01 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/lunobot#337 меняет pull на fetch.prune=true; локальный bare-origin repro подтвердил переход claims/project/ticket/part-1 → claims/project/ticket: pull прошёл, tracking ref обновлён, remote branch и uncommitted keep.txt сохранены. Осталось: независимый review/разрешённое влитие; обратный переход отдельно не прогонял в этом круге.
+Состояние: свободно
 
 --
-
+Прогресс 17-11-2026 17:34:13 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): оба перехода hierarchical claim refs проверены на локальном bare origin; fetch.prune=true удалил только stale tracking ref, удалённая ветка и локальный untracked файл сохранены. PR unxed/lunobot#337 остаётся без independent review Луноботом-1; следующий шаг — review.
 ## account-327
 Заметка владельца: https://github.com/unxed/lunobot/issues/327
 Проект: учёт
