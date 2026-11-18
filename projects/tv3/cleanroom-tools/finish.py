@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """finish.py KEY STEM TESTSTEM IMPLEMENTER WHAT : three commits (interface, implementation, tests+names) in KEY/room/repo.
-Env SPEC=<id>: unit made from a specification (spec in KEY/spec/<id>.md), else translation with KEY/inputs.tsv."""
+Env TV3_STEP_DIR=<absolute path> selects the step directory. SPEC=<id>: unit made from a
+specification (spec in KEY/spec/<id>.md), else translation with KEY/inputs.tsv."""
 import sys, os, json, re, subprocess, hashlib, shutil
-D = "/tmp/lunobot-1/work/tv3-part2-1105-1322"
+D = os.environ.get("TV3_STEP_DIR")
+if not D:
+    raise SystemExit("set TV3_STEP_DIR to this step's work directory")
+D = os.path.abspath(D)
 key, stem, tstem, impl, what = sys.argv[1:6]
 R = f"{D}/{key}/room/repo"
 COMMIT = "b4831e2ca16652db327fb7cc964f1c8c2d512524"

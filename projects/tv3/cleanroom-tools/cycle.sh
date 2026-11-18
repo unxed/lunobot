@@ -1,16 +1,18 @@
 #!/bin/sh
-# cycle.sh KEY STEM TEST "implementer N" What BRANCH : rebuild commits on fresh main, push -f, wait CI, collect results to KEY/cycle.out and KEY/room/ci.txt
-D=/tmp/lunobot-1/work/tv3-part2-1105-1322
+# TV3_STEP_DIR=/absolute/path cycle.sh KEY STEM TEST "implementer N" What BRANCH : rebuild, push, wait CI, collect results
+set -eu
+TOOLS=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+D=$(CDPATH= cd -- "${TV3_STEP_DIR:?set TV3_STEP_DIR to the step work directory}" && pwd)
 k=$1; s=$2; t=$3; impl=$4; what=$5; br=$6; R=$D/$k/room/repo; O=$D/$k/cycle.out
-: > $O
-n=$(ls $D/$k | grep -c '^save'); sv=$D/$k/save$n; mkdir -p $sv
-cp $R/src/$s.pas $R/tests/$t.pas $R/docs/API-NAMES.md $sv/
+: > "$O"
+n=$(find "$D/$k" -mindepth 1 -maxdepth 1 -type d -name 'save*' | wc -l); sv=$D/$k/save$n; mkdir -p "$sv"
+cp "$R/src/$s.pas" "$R/tests/$t.pas" "$R/docs/API-NAMES.md" "$sv/"
 git -C $R fetch -q origin 2>/dev/null || git -C $R remote add origin https://github.com/unxed/tv3-new.git && git -C $R fetch -q origin
 git -C $R reset -q --hard origin/main && git -C $R clean -fdq
-cp $sv/$s.pas $R/src/; cp $sv/$t.pas $R/tests/; cp $sv/API-NAMES.md $R/docs/
-[ -d $D/$k/orig ] && mv $D/$k/orig $D/$k/orig.$n
-(cd $D && python3 finish.py $k $s $t "$impl" $what) > $D/$k/finish.out 2>&1 || { cat $D/$k/finish.out > $O; echo "done FINISH-FAILED" >> $O; exit 1; }
-git -C $R push -q -f origin HEAD:refs/heads/$br 2>$D/$k/push.err || { echo "done PUSH-FAILED" >> $O; exit 1; }
+cp "$sv/$s.pas" "$R/src/"; cp "$sv/$t.pas" "$R/tests/"; cp "$sv/API-NAMES.md" "$R/docs/"
+if [ -d "$D/$k/orig" ]; then mv "$D/$k/orig" "$D/$k/orig.$n"; fi
+(cd "$TOOLS" && TV3_STEP_DIR="$D" python3 finish.py "$k" "$s" "$t" "$impl" "$what") > "$D/$k/finish.out" 2>&1 || { cat "$D/$k/finish.out" > "$O"; echo "done FINISH-FAILED" >> "$O"; exit 1; }
+git -C "$R" push -q -f origin "HEAD:refs/heads/$br" 2>"$D/$k/push.err" || { echo "done PUSH-FAILED" >> "$O"; exit 1; }
 H=$(git -C $R rev-parse HEAD); echo "pushed $H" >> $O
 RID=""
 for i in $(seq 1 40); do
