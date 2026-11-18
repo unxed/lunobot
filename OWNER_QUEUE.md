@@ -123,7 +123,7 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
 --
-Прогресс 17-11-2026 23:35:41 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA Windows Server 2022 run 44067226618 completed/success; x86/x64 ListView probes подтвердили comctl32 5.82.10586 и по три одинаковых wheel-return assertion failures, label probes сохранили 448 случаев без ошибок. Это API baseline, не GUI/E2E и не диагноз Wine; подробности и следующий шаг — в projects/sandbox/status/280.md.
+Прогресс 18-11-2026 00:10:11 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): сопоставлены Windows 5.82 API baseline и сохранённые Wine/FastStone данные; Windows API подтверждает горизонтальный wheel, но GUI/FastStone причинность не установлена. Детали/следующий проверяемый шаг — https://github.com/unxed/lunobot/issues/280#issuecomment-6964817116.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
