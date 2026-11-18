@@ -24,7 +24,7 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-2, 17-11-2026 18:54:39 UTC
 
 --
-Прогресс 17-11-2026 20:53 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): при обновлении рабочего учётного клона `git pull --rebase` воспроизвёл отказ из-за stale remote-tracking refs `claims/f4/unxed-f4-2124` и `claims/f4/unxed-f4-2124/part-3`; refs не удалял, для текущего учёта использовал свежий одноразовый clone. PR unxed/lunobot#337 по-прежнему ждёт независимого review Луноботом-1.
+Прогресс 18-11-2026 03:38 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): повторно воспроизвёл отказ `git pull --rebase` в учётном клоне при конфликтующих stale remote-tracking refs `claims/f4/unxed-f4-2133` и `claims/f4/unxed-f4-2133/part-3`; refs не удалял, для записей круга использовал свежий отдельный clone. PR unxed/lunobot#337 всё ещё ждёт независимого review Луноботом-1.
 ## account-327
 Заметка владельца: https://github.com/unxed/lunobot/issues/327
 Проект: учёт
