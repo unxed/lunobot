@@ -1,45 +1,62 @@
 # Рефлексия флота — сводка
 
-Записей: 19; период: 2026-11-17T16:14:54Z … 2026-11-17T17:39:34Z.
+Записей: 49; период: 2026-11-18T06:03:36Z … 2026-11-18T11:10:58Z.
 Генерирует `journal.py digest` (Лунобот-1, § 4 п. 6). Правила разбора — модуль round, «Рефлексия».
 
 ## Круги по раннерам и моделям
 
 | раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом | вызовов, медиана | контекст макс., тыс., медиана | субагентов |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 3 | 0 | 11 | 0.00 | 0.00 | 0 | — | — | — |
+| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 12 | 0 | 13 | 0.00 | 0.00 | 0 | — | — | — |
+
+## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова
+
+- 2026-11-18T06:03:59Z lunobot-round-luna-high.sh круг 309, код 1:
+  > ▶ shell
+  > ▶ task_complete
+  > Исправление f4#2133 проверено песочницей `#44247290963` на точном SHA и приземлено в `lunobot/staging` коммитом `77bf336b`. Quick для staging ещё выполняется (`healing`), поэтому восстановление пока н
+  >
+  > Повтор усечения инструкции добавлен в существующую жалобу [PR #330](https://github.com/unxed/lunobot/pull/330#issuecomment-6970520137); он ожидает независимого review и решения владельца.
 
 ## Трения (повторы сверху)
 
-- **read-instruction** — 5× (1 инст.)
-  - 2026-11-17T16:44:03Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Read returned LUNOBOT.md only through lines 355 and 764, and round.md through 380; completed all mandatory files using continuation reads before work.
-  - 2026-11-17T17:10:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode Read truncated the core and round module outputs; completed the required sections with continuation reads before actions.
-  - 2026-11-17T17:39:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode output truncated LUNOBOT.md at 355/764 and round.md at 380; three offset reads were needed to finish mandatory reading. Digest counted 4 prior events; added this recurrence to open PR #330.
-- **env-accounting** — 2× (1 инст.)
-  - 2026-11-17T16:44:03Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Persistent accounting checkout was on complaint/claims-stale-tracking-refs, so its HEALTH.md showed a stale alarm; verified queue and HEALTH from a fresh main clone before choosing work.
-  - 2026-11-17T17:39:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Persistent accounting checkout was on complaint/claims-stale-tracking-refs; git pull succeeded on that branch, so used a fresh main clone for authoritative queue and writes.
-- **gate-false-positive** — 1× (1 инст.)
-  - 2026-11-17T16:44:03Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): fix-it-in-wine check_triage hit GitHub API HTTP 403 rate limit once; one later run passed with 2 open tickets and matching TRIAGE.
-- **rule-unclear-§4** — 1× (1 инст.)
-  - 2026-11-17T16:17:21Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The persistent accounting checkout was on complaint/claims-stale-tracking-refs, not main; its HEALTH.md showed a stale friction alarm. Confirmed current queue and HEALTH.md from a separate clean main clone before finalizing the round.
-- **token-cost** — 1× (1 инст.)
-  - 2026-11-17T16:14:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The required journal read emitted 394 structured entries and was truncated in the tool preview; used the full returned evidence and the generated digest instead of repeating the read.
+- **env-opencode** — 3× (1 инст.)
+  - 2026-11-18T07:36:31Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The persistent f4 clone had 155 modified paths; used a fresh shallow work clone to protect those changes. `rg` was unavailable, so symbol searches used grep.
+  - 2026-11-18T08:27:04Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Persistent /tmp/lunobot-2/f4 clone had extensive unrelated modified/deleted files, so I left it untouched and used a fresh step clone.
+  - 2026-11-18T09:42:08Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый запуск train.py land из корня shell вернул «not a git repository»; повтор из workdir проекта успешно приземлил два коммита.
+- **push-race** — 3× (1 инст.)
+  - 2026-11-18T06:24:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The accounting push for f4#2133 TRIAGE was rejected once because origin/main advanced; pull --rebase and a fresh check_triage/check_ci passed before retry.
+  - 2026-11-18T09:42:08Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Пуш учёта 5b0e729d9 был отклонён из-за параллельного обновления main; pull --rebase и повторный push прошли.
+  - 2026-11-18T10:12:49Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый push учётного main получил non-fast-forward; pull --rebase и повторный push завершились успешно за один повтор.
+- **read-instruction** — 2× (1 инст.)
+  - 2026-11-18T07:59:36Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Ядро из 834 строк и полный модуль round потребовали дочитывания диапазонами после усечения Read; OpenCode env module предписывает этот путь, пропусков не было.
+  - 2026-11-18T10:45:25Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый shell cat инструкции полностью выполнился, но вывод UI показал только хвост; для проверки полноты LUNOBOT.md и round.md пришлось прочитать отдельными диапазонами согласно env-opencode §13.4.
+- **tool-gh_post** — 2× (1 инст.)
+  - 2026-11-18T06:24:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): gh_post.py check rejected the first f4#2306 comment because its Russian body had a Latin-script signature; corrected before publishing.
+  - 2026-11-18T07:59:36Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первая отправка комментария #280 отклонена гейтом: английский текст с кириллической подписью; после перевода всего сообщения на русский проверка и отправка прошли.
+- **tool-git** — 2× (1 инст.)
+  - 2026-11-18T08:55:33Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The nested tmp/19d3/... ref from a depth-50 clone was not treated as a branch by git switch --track; explicit remote-tracking ref creation and a local branch without tracking worked.
+  - 2026-11-18T10:45:25Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): `git pull --rebase` в основном accounting clone отказал на конфликте refs/origin/claims/f4/unxed-f4-2146 и .../part-1; refs не удалял, завёл свежий clone и запушил status/TRIAGE.
+- **deadline** — 1× (1 инст.)
+  - 2026-11-18T06:44:13Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): No code step was started because the persistence deadline was imminent; the existing /tmp/lunobot-2/f4 clone had extensive unrelated dirty changes, so editing it was unsafe.
+- **module-missed-§7.2** — 1× (1 инст.)
+  - 2026-11-18T09:19:43Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The prior status recorded only go test as pre-land validation, while f4 requires go vet and both golangci profiles too; land was correctly withheld and the full exact-SHA sandbox was started.
 - **tool-claims.py** — 1× (1 инст.)
-  - 2026-11-17T16:44:03Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): First claims invocation ran from /home/ivan and failed to locate tools/claims.py; reran via absolute path and obtained the required claim before editing.
+  - 2026-11-18T10:45:25Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первая команда drop использовала ключ без /part-1, claims.py безопасно отказал; захват снят повтором с точным ключом.
+- **tool-gate** — 1× (1 инст.)
+  - 2026-11-18T07:36:31Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The first focused sandbox failed only in internal/settings because the new SettingsCenter keys lacked Russian translations; one additional push and CI cycle was needed to add all 23 locale pairs.
 - **tool-gh** — 1× (1 инст.)
-  - 2026-11-17T17:10:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): One read-only `gh issue view` request combined mutually exclusive `--comments` and `--json`; GH rejected it without side effects.
-- **tool-test** — 1× (1 инст.)
-  - 2026-11-17T17:39:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Local bare-origin reproduction needed retries after branch-name collision, tracked-worktree pull rejection, and invalid loose-ref checks; final plumbing-based test passed both directions and preserved remote branch and untracked keep.txt.
+  - 2026-11-18T10:45:25Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): `gh run view` отклонил несуществующее JSON-поле htmlUrl; один корректирующий вызов с доступным полем url подтвердил success на точном SHA.
 - **tool-train.py** — 1× (1 инст.)
-  - 2026-11-17T17:10:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): tick-all's vtui compare request returned HTTP 500 after f4 completed; reran tick-all from a clean accounting clone.
+  - 2026-11-18T08:27:04Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Two health calls with an unsupported --sign were rejected; corrected to the documented one-argument form, with no side effect.
 
 ## Идеи
 
-- 2026-11-17T16:14:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Keep the existing PR #330 as the mechanism fix; the same root cause has now recurred again and was added to that PR for owner visibility.
-- 2026-11-17T16:17:21Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): At round start, verify the accounting checkout is on main before reading OWNER_QUEUE.md or HEALTH.md; use a fresh disposable clone if the primary checkout is on a task branch.
-- 2026-11-17T16:44:03Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Check that the accounting clone is on main before treating OWNER_QUEUE.md or HEALTH.md as authoritative.
-- 2026-11-17T17:39:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Keep PR #330 as the mechanism fix; after review, verify whether shorter instructions reduce continuation reads.
-- 2026-11-17T17:39:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Before reading OWNER_QUEUE/HEALTH, verify persistent accounting checkout branch is main; use a fresh isolated clone if not.
-- 2026-11-17T17:39:34Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Use git for-each-ref rather than inspecting loose ref paths in bare-origin tests.
+- 2026-11-18T06:24:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Keep a small per-language gh_post signature template in the round scratch directory before writing GitHub comments.
+- 2026-11-18T07:36:31Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): When adding a Settings Center catalog row, include its translated label and description in all 23 language files in the same atomic change.
+- 2026-11-18T08:55:33Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): For nested temporary refs, use an explicit refs/heads/...:refs/remotes/origin/... fetch refspec and create a local branch without --track.
+- 2026-11-18T09:19:43Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Keep the sandbox command and required checks together in the status entry so a parked land step cannot omit project-mandated lint/vet.
+- 2026-11-18T10:45:25Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для stale иерархических claim refs применять свежий отдельный clone, не удалять локальные refs вручную; продолжить #336/#337 после независимого review.
+- 2026-11-18T10:45:25Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для `gh run view --json` брать поля из `gh run view --help`; точный результат CI фиксировать вместе с headSha.
 
-Захватов снято: 5, медиана удержания 3 мин, дольше 2 ч: 0.
+Захватов снято: 9, медиана удержания 3 мин, дольше 2 ч: 0.
