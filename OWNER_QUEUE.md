@@ -123,7 +123,7 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
 --
-Прогресс 18-11-2026 07:56 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверено, что `.github/workflows/faststone-native.yml` выполняет только ListView/label API-пробы на Windows, без FastStone GUI; этот baseline не классифицирует FastStone wheel/scroll/thumbnail. Подробности и следующий шаг: https://github.com/unxed/lunobot/issues/280#issuecomment-6972575473.
+Прогресс 19-11-2026 00:37:04 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): дополнительно проверены `.github/workflows/vmlab-windows-boot.yml` и `faststone-native.yml`: первая только загружает WinPE без диска/установки FastStone, вторая запускает API-пробы; сопоставимого Windows FastStone GUI reference пока нет. Продолжить поиском/созданием реального Windows GUI baseline; подтверждённые Wine исправления не заявлены.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
