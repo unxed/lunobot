@@ -2273,7 +2273,7 @@ class RedTrainBehindMainTest(unittest.TestCase):
         drop.assert_called_once_with("o/r", ["bisect/7/base-x"])
         posted = next(call for call in api_mock.call_args_list
                       if call.args[0] == "repos/o/r/issues/7/comments")
-        self.assertIn(train.BASE_RED_HOLD_MARKER, posted.args[2])
+        self.assertIn(train.TRAIN_PAIR_HOLD_MARKER, posted.args[2])
         self.assertIn("поезд удержан до продвижения main", output.getvalue())
 
     def test_existing_red_base_marker_prevents_repeating_bisect(self):
@@ -2281,11 +2281,18 @@ class RedTrainBehindMainTest(unittest.TestCase):
         base = "b38655733d47711b92070f592b80aede2192f2c8"
         pr = {"number": 7, "head": {"sha": head}, "base": {"sha": base}, "html_url": "u"}
         failed = [{"name": "Test", "conclusion": "failure"}]
-        comment = {"body": f"<!-- {train.BASE_RED_HOLD_MARKER} base={base} head={head} -->"}
+        comment = {"body": f"<!-- {train.TRAIN_PAIR_HOLD_MARKER} base={base} head={head} -->"}
+
+        def api(path, *args, check=True):
+            if path.endswith("/issues/7/comments?per_page=100"):
+                return [comment]
+            if path == "repos/o/r/branches/lunobot/staging":
+                return {"commit": {"sha": head}}
+            self.fail(f"unexpected API request: {path}")
 
         with mock.patch.object(train, "failed_steps", return_value=[("Test", "Run Tests")]), \
                 mock.patch.object(train, "compare", return_value={"ahead_by": 0}), \
-                mock.patch.object(train, "api", return_value=[comment]), \
+                mock.patch.object(train, "api", side_effect=api), \
                 mock.patch.object(train, "bisect_refs") as refs, \
                 mock.patch.object(train, "close_train") as close, \
                 mock.patch.object(train, "rerun") as rerun, \
@@ -2295,7 +2302,73 @@ class RedTrainBehindMainTest(unittest.TestCase):
         refs.assert_not_called()
         close.assert_not_called()
         rerun.assert_not_called()
-        self.assertIn("контрольная база уже красная", output.getvalue())
+        self.assertIn("пара main/staging уже получила красный результат", output.getvalue())
+
+    def test_held_train_closes_without_retry_after_staging_advances(self):
+        head = "5c3bed6725c18561950ce6efd0527ceb0f47796b"
+        pr = {"number": 7, "head": {"sha": head}, "base": {"sha": "b" * 40}, "html_url": "u"}
+        comment = {"body": f"<!-- {train.TRAIN_PAIR_HOLD_MARKER} base={'b' * 40} head={head} -->"}
+
+        def api(path, *args, check=True):
+            if path.endswith("/issues/7/comments?per_page=100"):
+                return [comment]
+            if path == "repos/o/r/branches/lunobot/staging":
+                return {"commit": {"sha": "c" * 40}}
+            self.fail(f"unexpected API request: {path}")
+
+        with mock.patch.object(train, "failed_steps", return_value=[("Test", "Run Tests")]), \
+                mock.patch.object(train, "compare", return_value={"ahead_by": 0}), \
+                mock.patch.object(train, "api", side_effect=api), \
+                mock.patch.object(train, "close_train") as close, \
+                mock.patch.object(train, "bisect_refs") as refs, \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(train.red("o/r", pr, [{"conclusion": "failure"}]), 1)
+
+        close.assert_called_once()
+        refs.assert_not_called()
+        self.assertIn("устаревший поезд закрыт без повтора", output.getvalue())
+
+    def test_reverted_later_train_holds_pair_instead_of_resending_same_matrix(self):
+        head = "5c3bed6725c18561950ce6efd0527ceb0f47796b"
+        base = "b38655733d47711b92070f592b80aede2192f2c8"
+        pr = {"number": 7, "head": {"sha": head}, "base": {"sha": base}, "html_url": "u"}
+        failed = [{"name": "Test", "conclusion": "failure"}]
+        commits = [{"sha": "a" * 40, "commit": {"message": "step"}},
+                   {"sha": "b" * 40, "commit": {"message": "revert"}}]
+
+        def api(path, *args, check=True):
+            if path.endswith("/issues/7/comments?per_page=100"):
+                return []
+            if "/actions/runs?branch=bisect/7/0-test" in path:
+                return {"workflow_runs": [{"status": "completed", "conclusion": "failure",
+                                            "html_url": "bisect-run"}]}
+            if "/actions/runs?branch=bisect/7/base-test" in path:
+                return {"workflow_runs": [{"status": "completed", "conclusion": "success",
+                                            "html_url": "base-run"}]}
+            if path == "repos/o/r/branches/main":
+                return {"commit": {"sha": base}}
+            if path == "repos/o/r/issues/7/comments":
+                return {"id": 1}
+            self.fail(f"unexpected API request: {path}")
+
+        api_mock = mock.Mock(side_effect=api)
+        with mock.patch.object(train, "failed_steps", return_value=[("Test", "Run Tests")]), \
+                mock.patch.object(train, "compare", return_value={"ahead_by": 0}), \
+                mock.patch.object(train, "bisect_refs", return_value=["bisect/7/0-test", "bisect/7/base-test"]), \
+                mock.patch.object(train, "train_commits", return_value=commits), \
+                mock.patch.object(train, "reverted_later_in_train", return_value="b" * 40), \
+                mock.patch.object(train, "drop_bisect") as drop, \
+                mock.patch.object(train, "close_train") as close, \
+                mock.patch.object(train, "api", api_mock), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(train.red("o/r", pr, failed), 1)
+
+        close.assert_not_called()
+        drop.assert_called_once_with("o/r", ["bisect/7/0-test", "bisect/7/base-test"])
+        posted = next(call for call in api_mock.call_args_list
+                      if call.args[0] == "repos/o/r/issues/7/comments")
+        self.assertIn(train.TRAIN_PAIR_HOLD_MARKER, posted.args[2])
+        self.assertIn("поезд удержан без повтора", output.getvalue())
 
 
 class TagUntaggedMainTest(unittest.TestCase):
