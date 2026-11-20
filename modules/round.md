@@ -68,6 +68,13 @@ REST-вариант § 13.2), а перед первым
      gh api "search/issues?q=repo:<репозиторий>+is:issue+is:open&per_page=1" --jq .total_count
    ```
 
+    `search/issues` count lookups consume a shared GitHub Search quota: request per-project
+    counts sequentially or in small batches, never as one concurrent fan-out across all
+    projects. Keep the paginated issue lists and compare each project's full-list size with
+    its count; a mismatch means the snapshot is incomplete. This pacing applies only to the
+    shared-quota count requests: continue running independent project snapshots and read-only
+    gates in parallel where they do not consume that quota.
+
     Для нескольких проектов `git pull --rebase -q` выполняется один раз перед всем набором
     снимков; сами снимки по проектам идут без него (только чтение, параллельно можно). Фоновый
     `tick-all` пишет в тот же клон: пока он идёт, `pull` не запускай (§ 8).
