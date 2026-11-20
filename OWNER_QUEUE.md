@@ -123,6 +123,7 @@ id, адресат и проект не нужны (пишет с телефон
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
 Прогресс 20-11-2026 22:16:15 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверены доступные workflow unxed/sandbox: `faststone-native.yml` запускает только ListView/label API probes на Windows Server 2022; `vmlab-windows-boot.yml` загружает WinPE без диска/установки; `faststone-gui-initial.yml` исполняет FastStone внутри Linux/QEMU/Wine, а Windows GUI workflow в репозитории/Actions нет. Windows FastStone GUI reference пока получить этим путём нельзя; следующий шаг — проверить безопасную возможность полноценной Windows GUI-сессии, не менять assertions без эталона.
+Прогресс 20-11-2026 22:33:45 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): локальная проверка подтвердила отсутствие Wine, QEMU executable, Windows image и display; хотя `/dev/kvm` есть, учётная запись не в группе `kvm`. Готового полного Windows GUI reference пути пока нет; assertions не менял.
 --
 
 ## account-323
