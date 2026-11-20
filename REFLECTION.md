@@ -1,6 +1,6 @@
 # Рефлексия флота — сводка
 
-Записей: 22; период: 2026-11-20T03:42:16Z … 2026-11-20T06:16:07Z.
+Записей: 20; период: 2026-11-20T06:18:41Z … 2026-11-20T08:25:59Z.
 Генерирует `journal.py digest` (Лунобот-1, § 4 п. 6). Правила разбора — модуль round, «Рефлексия».
 
 ## Круги по раннерам и моделям
@@ -9,33 +9,40 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 5 | 0 | 15 | 0.00 | 0.00 | 0 | — | — | — |
 
+## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова
+
+- 2026-11-20T06:56:06Z lunobot-round-luna-high.sh круг 409, код 1:
+  > Круг завершён: `tick-all` и ретро-health показали зелёные staging и `main` для f4/vtui; очереди и гейты проверены, рефлексия записана.
+  > 
+  > Исправление `tv3#21` опубликовано в [PR #29](https://github.com/unxed/tv3/pull/29); CI зелёный на SHA `be7d549`. Учёт ветки, CI и состояние тикета синхронизированы, захват снят. Аудит — PASS.
+  > 
+  > `janitor` и удаляющую уборку не запускал: для этого не было отдельного разрешения после запрета на деструктивные действия.
+
 ## Трения (повторы сверху)
 
-- **tool-train.py** — 3× (1 инст.)
-  - 2026-11-20T04:26:41Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): First health invocation passed unsupported --sign and exited 2; reran with the documented single-repository form.
-  - 2026-11-20T05:29:40Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): First covered invocation omitted its required SHA and exited 2 with usage; retried with the current main SHA.
-  - 2026-11-20T06:11:46Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): First health invocation used an unsupported --sign argument (exit 2); reran both required health checks with the documented repository-only syntax.
-- **env-go** — 1× (1 инст.)
-  - 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первая локальная govulncheck на Go 1.26.6 выявила GO-2026-6604 в стандартной библиотеке, тогда как CI использует Go 1.26.11; повтор с GOTOOLCHAIN=go1.26.11 подтвердил отсутствие вызываемых уязвимостей.
+- **read-instruction** — 3× (1 инст.)
+  - 2026-11-20T06:54:17Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Shell output for the 834-line LUNOBOT.md was truncated; complete coverage required three offset reads (1–355, 356–764, 765–834).
+  - 2026-11-20T07:10:17Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): LUNOBOT.md был выдан до строки 355, продолжение потребовало ещё двух чтений до строки 834; все обязательные разделы дочитаны.
+  - 2026-11-20T07:40:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): До первого шага прочитаны ядро (834 строки), round (531), trains (284), env-opencode (47); перед land также trains-land (141) и sandbox (79). Предварительное чтение заняло несколько минут и дало длинный контекст.
+- **tool-git** — 2× (1 инст.)
+  - 2026-11-20T06:54:17Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initial accounting pull refused because generated projects/f4/DISPATCH.md was dirty; after inspecting its two-line diff, autoStash pull/rebase succeeded and restored the diff.
+  - 2026-11-20T07:10:17Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): После fetch глубокой ветки временный clone не позволил switch --track на вложенный remote ref; переключился на проверенный SHA e5087fc и продолжил работу.
 - **env-opencode** — 1× (1 инст.)
-  - 2026-11-20T05:05:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Read output truncated LUNOBOT.md at lines 355 and 764; used continuation reads through line 834, then round.md continuation at line 381.
-- **push-race** — 1× (1 инст.)
-  - 2026-11-20T05:29:40Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Accounting push was rejected once because origin/main advanced; pull --rebase and retry succeeded.
-- **read-instruction** — 1× (1 инст.)
-  - 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode Read усёк ядро на строках 355/764 и round.md на 380; до EOF понадобилось 3 чтения ядра и 2 round. Повтор описан в PR #330; следующий срез ждёт независимого review.
-- **tool-git** — 1× (1 инст.)
-  - 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): `git switch --track` на PR-ветку дважды завершился ошибкой после подготовки index/worktree с содержимым ветки; сохранил состояние и создал локальную ветку непосредственно от проверенного SHA.
+  - 2026-11-20T08:05:43Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Persistent /tmp/lunobot-2/f4 checkout contained over 100 pre-existing modified/deleted paths; avoided touching it and cloned clean f4 into the step directory.
+- **tool-fleet_watch.py** — 1× (1 инст.)
+  - 2026-11-20T07:40:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый вызов без --node и --number вернул usage/code 2; правильный вызов с node 19d368003c6c048e43dbec70 и number 2 завершился успешно.
+- **tool-gh** — 1× (1 инст.)
+  - 2026-11-20T07:10:17Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Сразу после workflow_dispatch список gh run list вернул предыдущий запуск 44685874166; использован URL из ответа dispatch и один gh run view подтвердил 44692509773 на точном SHA.
 - **tool-git-pull** — 1× (1 инст.)
-  - 2026-11-20T05:05:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): After taking f4#2297, the persistent accounting clone could not update a stale claim ref because origin/claims/f4/unxed-f4-2297 conflicts with the new /part-2 ref; left it untouched and used a fresh step clone for status pushes.
-- **tool-pull** — 1× (1 инст.)
-  - 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Обязательный pull постоянного accounting clone отказал из-за уже изменённого HEALTH.md; изменение сохранено, работа продолжена из чистого клона; новый коммит запушен после одного rebase из-за гонки main.
+  - 2026-11-20T07:40:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): pull --rebase в основном клоне учёта не смог обновить refs/remotes/origin/claims из-за старой плоской refs/f4/... при новой вложенной refs/f4/.../part-3; использован свежий clone, ничего не prune-илось. См. account-336 / PR #337.
+- **tool-train.py** — 1× (1 инст.)
+  - 2026-11-20T07:40:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый land отказал из-за отсутствия Touch: в commit e5087fce и раннем commit 09289528; пришлось изменить только сообщения двух commit, повторно запарковать и запустить land.
 
 ## Идеи
 
-- 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для длинных обязательных файлов задавать Read limit=2000 сразу; продолжать offset только при фактическом усечении.
-- 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): После независимого review #330 — продолжать только непересекающийся срез по принятому плану.
-- 2026-11-20T03:56:58Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для PR с уязвимостью зависимости проверять govulncheck на версии Go из CI, а не только на локальном системном Go.
-- 2026-11-20T04:26:41Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Continue #2297 by exposing per-history-ID toggles in settings and wiring the provider at bootstrap.
-- 2026-11-20T05:29:40Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Pass the SHA explicitly to train.py covered; retry an accounting push after pull --rebase when origin advances.
+- 2026-11-20T06:54:17Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Use the environment module’s offset-based reader for large instruction files from the first read.
+- 2026-11-20T07:40:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Уменьшить повторное чтение инструкции кэшированием неизменных модулей в рамках сессии; здесь все обязательные модули были прочитаны до выбора шага.
+- 2026-11-20T07:40:54Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Довести устранение коллизии иерархии remote refs по unxed/lunobot#336/#337; безопасный временный обход — свежий clone, не remote prune.
+- 2026-11-20T08:05:43Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Keep using isolated clean step clones when the persistent checkout is dirty.
 
-Захватов снято: 4, медиана удержания 4 мин, дольше 2 ч: 0.
+Захватов снято: 4, медиана удержания 6 мин, дольше 2 ч: 0.
