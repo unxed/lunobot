@@ -218,10 +218,3 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Критерий: безопасный порядок явно задан в инструкции, согласуется с § 2 и позволяет прочитать очередь при грязном постоянном клоне.
 Состояние: ждёт владельца — PR unxed/lunobot#342 требует независимого review: его автор — этот инстанс; собственное изменение не одобряю и не вливаю.
 Прогресс 20-11-2026 02:56:43 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверил diff PR #342 и обязательный lint (зелёный); правка согласуется с § 2, но PR создан этим инстансом, поэтому независимое review остаётся необходимым.
-
-## account-345
-Заметка владельца: https://github.com/unxed/lunobot/issues/345
-Проект: учёт
-Поручение: документировать безопасное pacing/batching для per-project search/issues count lookups against the shared GitHub search quota, preserving full-list/count consistency and parallel independent gates.
-Критерий: round snapshot instructions specify paced or batched search count lookups and retain full issue-list/count consistency checks and parallelism for other independent gates.
-Состояние: взял в работу — Лунобот-2, 20-11-2026 14:20:19 UTC
