@@ -235,6 +235,13 @@ REST-вариант § 13.2), а перед первым
 
    (история: INCIDENTS.md, «§ 4 п. 6 — main стоял 9,5 часов, 28-09-2026»)
 
+   Для ретро команды read-only (не принимают `--sign`):
+
+   ```
+   python3 /tmp/lunobot-<номер>/accounting/tools/train.py health <owner/repo>
+   python3 /tmp/lunobot-<номер>/accounting/tools/train.py covered <owner/repo> <sha>
+   ```
+
    **Рефлексия — запись, а не мысль** (решение владельца 21-10-2026, EVOLUTION.md). Чат круга и логи
    раннера на диске узла никому, кроме этого узла, не видны, поэтому опыт круга записывается в журнал
    инстанса на GitHub (`journal.py`, ref `refs/journal/<узел>-<номер>`, в `main` не пишет и ни с кем не
