@@ -122,8 +122,9 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 17-11-2026 01:15:11 UTC
+Прогресс 20-11-2026 22:16:15 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): проверены доступные workflow unxed/sandbox: `faststone-native.yml` запускает только ListView/label API probes на Windows Server 2022; `vmlab-windows-boot.yml` загружает WinPE без диска/установки; `faststone-gui-initial.yml` исполняет FastStone внутри Linux/QEMU/Wine, а Windows GUI workflow в репозитории/Actions нет. Windows FastStone GUI reference пока получить этим путём нельзя; следующий шаг — проверить безопасную возможность полноценной Windows GUI-сессии, не менять assertions без эталона.
 --
-Прогресс 19-11-2026 00:37:04 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): дополнительно проверены `.github/workflows/vmlab-windows-boot.yml` и `faststone-native.yml`: первая только загружает WinPE без диска/установки FastStone, вторая запускает API-пробы; сопоставимого Windows FastStone GUI reference пока нет. Продолжить поиском/созданием реального Windows GUI baseline; подтверждённые Wine исправления не заявлены.
+
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
