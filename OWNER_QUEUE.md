@@ -124,7 +124,7 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
 
 --
-Прогресс 21-11-2026 09:46:42 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): на exact SHA `48a04f7` проверены Wine run [44881758636](https://github.com/unxed/sandbox/actions/runs/44881758636) и native Windows run [44881758702](https://github.com/unxed/sandbox/actions/runs/44881758702): matched 1024×768 сохраняет расхождение wheel/thumbnail paint; следующий шаг — изолировать причины отдельно. Подробности в `projects/sandbox/status/280.md`.
+Прогресс 21-11-2026 09:52:03 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR [unxed/sandbox#16](https://github.com/unxed/sandbox/pull/16) влит в main (`abf99e1`); exact-SHA native/Wine сравнение и следующий шаг записаны в `projects/sandbox/status/280.md` и [unxed/lunobot#280](https://github.com/unxed/lunobot/issues/280#issuecomment-7060844163).
 
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
