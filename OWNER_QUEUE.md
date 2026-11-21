@@ -124,7 +124,7 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
 
 --
-Прогресс 21-11-2026 02:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#15 с workflow нативного GUI baseline запушен; точный run 44855206946 ещё выполняется. Продолжение: проверить assertions/artifact этого SHA.
+Прогресс 21-11-2026 03:27:06 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA Windows/Wine top evidence сопоставлены; Windows 46/46, Wine 53/11, причина и fix не заявлены; результат и следующий шаг записаны: https://github.com/unxed/lunobot/issues/280#issuecomment-7056576373.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
