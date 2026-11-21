@@ -124,8 +124,7 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
 
 --
-Прогресс 21-11-2026 09:52:03 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR [unxed/sandbox#16](https://github.com/unxed/sandbox/pull/16) влит в main (`abf99e1`); exact-SHA native/Wine сравнение и следующий шаг записаны в `projects/sandbox/status/280.md` и [unxed/lunobot#280](https://github.com/unxed/lunobot/issues/280#issuecomment-7060844163).
-
+Прогресс 21-11-2026 15:10 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): сравнил точные артефакты Wine/native FastStone на SHA `48a04f7`; отдельные сбои horizontal wheel/GetScrollInfo и paint после `LVM_SCROLL` подтверждены, корень пока не установлен. Evidence и припаркованный SHA — в `projects/sandbox/status/280.md`.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
