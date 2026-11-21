@@ -122,8 +122,9 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
-Прогресс 21-11-2026 01:55 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): обнаружен более короткий путь к native Windows GUI reference: существующий gui-suite.c уже запускает приложение через CreateProcess, вводит Win32 SendInput и снимает GDI-кадры; сейчас это не подтверждено на runner. Следующий атомарный шаг — узкий workflow_dispatch на windows-2022 с pinned FastStone и сценарием top; оставить доказательства и проверить точный headSha.
+
 --
+Прогресс 21-11-2026 02:20 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#15 с workflow нативного GUI baseline запушен; точный run 44855206946 ещё выполняется. Продолжение: проверить assertions/artifact этого SHA.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
