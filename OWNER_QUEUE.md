@@ -124,7 +124,8 @@ id, адресат и проект не нужны (пишет с телефон
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
 
 --
-Прогресс 21-11-2026 03:27:06 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA Windows/Wine top evidence сопоставлены; Windows 46/46, Wine 53/11, причина и fix не заявлены; результат и следующий шаг записаны: https://github.com/unxed/lunobot/issues/280#issuecomment-7056576373.
+Прогресс 21-11-2026 04:28:21 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#16 pushed at 5ea2c8a to align the Wine GUI screen with the 1024x768 native reference; GUI matrix 44866084033, bootstrap 44866084015, and Windows reference 44866084032 were launched on that exact SHA; results not yet reviewed. Details: https://github.com/unxed/lunobot/issues/280#issuecomment-7057271251.
+
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
