@@ -122,9 +122,8 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
-
+Прогресс 21-11-2026 15:47:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): продолжена диагностика FastStone; коммит 2d5b0045bedd646e5d3db20c1f1fae762e6b9ae0 запушен в unxed/sandbox `tmp/19d3/sandbox-280-scrollbarinfo-1121`; запущен точный GUI workflow https://github.com/unxed/sandbox/actions/runs/44920882381, результат ещё не проверялся.
 --
-Прогресс 21-11-2026 15:10 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): сравнил точные артефакты Wine/native FastStone на SHA `48a04f7`; отдельные сбои horizontal wheel/GetScrollInfo и paint после `LVM_SCROLL` подтверждены, корень пока не установлен. Evidence и припаркованный SHA — в `projects/sandbox/status/280.md`.
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
 Проект: fix-it-in-wine
