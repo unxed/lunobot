@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
-Прогресс 22-11-2026 22:31:34 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA GUI evidence run 45023478260 разобран: assertions по wheel/repaint не прошли в 5.6 и 8.5; Crop также не прошёл; причина не установлена. Main run 45074812456 на merge SHA b62ade7 был in_progress при записи и не опрашивался повторно. Следующий круг: разобрать его exact-SHA evidence и разделить wheel routing/repaint.
+Прогресс 22-11-2026 23:31:42 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобран exact-SHA run https://github.com/unxed/sandbox/actions/runs/45074812456 на `b62ade7ca6056072a97c8a3fd94bb81a80b61692`: обе top-матрицы 5.6/8.5 — 8 отказов; WindowFromPoint попадает в ListView, инъекция wheel принята, позиция не меняется; LVM_SCROLL сдвигает геометрию на 3072 px, paint остаётся 0. Отчёт и границы вывода: https://github.com/unxed/lunobot/issues/280. Причина не установлена; следующий шаг — снять message path wheel, отдельно сохранить repaint-проверку.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
