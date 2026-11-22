@@ -1840,7 +1840,9 @@ def unreverted_commits(commits):
         message = commit.get("commit", {}).get("message", "")
         reverted.update(re.findall(r"(?im)^This reverts commit ([0-9a-f]{7,40})\.?$", message))
     return [commit for commit in commits
-            if not any((commit.get("sha") or "").startswith(r) for r in reverted)]
+            if not any((commit.get("sha") or "").startswith(r) for r in reverted)
+            and not re.search(r"(?m)^Staging-Revert:",
+                              commit.get("commit", {}).get("message", ""))]
 
 
 def triage_path(repo):
