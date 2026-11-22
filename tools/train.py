@@ -630,6 +630,16 @@ def compare(repo, base, head):
     return api(f"repos/{repo}/compare/{base}...{head}")
 
 
+def tree_has_changes(diff):
+    """Whether GitHub's compare response proves that two commit trees differ.
+
+    Missing file data is inconclusive (for example, an API error); only an
+    explicit empty files list proves a net-zero tree diff.
+    """
+    files = diff.get("files") if isinstance(diff, dict) else None
+    return files is None or bool(files)
+
+
 REVERTS = re.compile(r"^This reverts commit ([0-9a-f]{7,40})\.", re.M)
 
 
@@ -841,6 +851,9 @@ def cut(repo, sign):
         return 0
     cut_sha = extend_over_vendorhash(cut_sha, after_green)
     cmp = compare(repo, main_sha, cut_sha)
+    if not tree_has_changes(cmp):
+        print("дерево staging совпадает с main — пустой поезд не отправляется")
+        return 0
     own = [c for c in cmp["commits"] if len(c["parents"]) == 1]
     if not own:
         print("staging не впереди main — резать нечего")
@@ -1564,7 +1577,11 @@ def stuck(repo):
                             return 1
                         return 0
     train_in_flight = hours is not None
-    own = [c for c in compare(repo, main, staging)["commits"] if len(c["parents"]) == 1]
+    staging_diff = compare(repo, main, staging)
+    if not tree_has_changes(staging_diff):
+        print("дерево staging совпадает с main — изменений для доставки нет")
+        return 0
+    own = [c for c in staging_diff["commits"] if len(c["parents"]) == 1]
     own = exclude_reverted(own)
     if not own:
         print("staging не впереди main — приземлённая работа вся в main")

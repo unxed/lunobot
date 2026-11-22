@@ -292,6 +292,25 @@ class StuckTest(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertIn("1 коммит(ов) ждут main", output)
 
+    def test_net_zero_staging_tree_is_not_counted_as_work(self):
+        now = datetime.now(timezone.utc)
+        commits = [self.commit("d" * 40, 'Revert "unmerged work"', now - timedelta(hours=4))]
+
+        def compare(repo, base, head):
+            return {"status": "ahead", "commits": commits, "files": []}
+
+        with mock.patch.object(train, "api", side_effect=[
+                {"commit": {"sha": "main"}}, {"commit": {"sha": "staging"}}]), \
+                mock.patch.object(train, "train_pr", return_value=None), \
+                mock.patch.object(train, "compare", side_effect=compare), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            result = train.stuck("o/r")
+
+        self.assertEqual(result, 0)
+        self.assertIn("дерево staging совпадает с main", output.getvalue())
+        self.assertNotIn("ИНЦИДЕНТ ПРОЦЕССА", output.getvalue())
+
+
     def test_exact_staging_push_time_beats_rewritten_committer_date(self):
         # unxed/vtui#205: f514057 was committed at 03:28 but pushed with the exact
         # staging quick run 39211840597 at 06:46; it was only minutes old at health 07:03.
@@ -543,6 +562,15 @@ class StuckTest(unittest.TestCase):
             result, output = self.check_stuck([old], pr, rollup, ahead=ahead)
             self.assertEqual(result, 1)
             self.assertIn("ИНЦИДЕНТ ПРОЦЕССА", output)
+
+
+class TreeHasChangesTest(unittest.TestCase):
+    def test_explicit_empty_files_list_proves_no_change(self):
+        self.assertFalse(train.tree_has_changes({"files": []}))
+
+    def test_changed_or_missing_file_list_is_not_treated_as_empty(self):
+        self.assertTrue(train.tree_has_changes({"files": [{"filename": "main.go"}]}))
+        self.assertTrue(train.tree_has_changes({"commits": []}))
 
 
 class TrainStepCancellationTest(unittest.TestCase):
