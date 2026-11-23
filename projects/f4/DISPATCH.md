@@ -3,4 +3,4 @@
 Представление: генерируется janitor.py из refs/claims учётного репозитория; вручную не править.
 Захват и снятие — python3 tools/claims.py take|keepalive|drop (§ 8 инструкции).
 
-23-11-2026 06:55:33 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/2311 (часть 2) [land]
+23-11-2026 07:23:40 Я Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), взял задачу https://github.com/unxed/f4/issues/285 (часть 4, hover combobox) [land]
