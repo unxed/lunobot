@@ -122,8 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 23-11-2026 03:08:46 UTC
-Прогресс 23-11-2026 11:37:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): run 45103458660 по unxed/sandbox#20 подтвердил запуск всех шести GUI jobs; c0000135 не повторился. Падения: wheel/repaint (5.6/8.5), Crop (обе версии), edge panel hides (обе версии). Отчёт: https://github.com/unxed/lunobot/issues/280#issuecomment-7099865366.
-Прогресс 23-11-2026 14:55:15 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): повторно разобран артефакт exact-SHA run 45103458660: message-trace относилась к edge jobs (exit 143), данных о WM_MOUSEHWHEEL в top-сценарии нет; wheel-первопричина и исправление не установлены. Итог и следующий диагностический шаг опубликованы: https://github.com/unxed/lunobot/issues/280#issuecomment-7104712249.
+Прогресс 23-11-2026 15:20:44 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#20 обновлён top-only wheel trace, commit `113c2ade`; exact-SHA run 45203543592 запущен; состояние и следующий шаг — в status/280.md.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
