@@ -1,66 +1,54 @@
 # Рефлексия флота — сводка
 
-Записей: 36; период: 2026-11-23T08:43:45Z … 2026-11-23T12:59:12Z.
+Записей: 35; период: 2026-11-23T13:11:08Z … 2026-11-23T18:00:58Z.
 Генерирует `journal.py digest` (Лунобот-1, § 4 п. 6). Правила разбора — модуль round, «Рефлексия».
 
 ## Круги по раннерам и моделям
 
 | раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом | вызовов, медиана | контекст макс., тыс., медиана | субагентов |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 9 | 0 | 14 | 0.00 | 0.00 | 0 | — | — | — |
+| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 10 | 1 | 16 | 0.00 | 0.00 | 0 | — | — | — |
 
 ## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова
 
-- 2026-11-23T10:45:19Z lunobot-round-luna-high.sh круг 557, код 0, лимит:
+- 2026-11-23T17:53:41Z lunobot-round-luna-high.sh круг 571, код 124:
+  > ▶ read
+  > ▶ read
+  > ▶ read
   > ▶ shell
-  > ▶ shell
-  > ▶ shell
-  > ▶ task_complete
-  > Круг завершён. В `unxed/f4#2228` добавлен тест transport-команд, ветка запушена и припаркована (`3599d3c`); sandbox-прогон `45157947600` запущен, результат ещё не проверен. Статус и рефлексия записаны
+  > Error: {"type": "unknown", "message": "Transport: The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()"}
 
 ## Трения (повторы сверху)
 
-- **env-opencode** — 3× (1 инст.)
-  - 2026-11-23T08:48:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Required pull in the persistent accounting clone failed because it was 71 commits behind with a pre-existing TRIAGE.md edit; preserved it and used a clean clone.
-  - 2026-11-23T10:44:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Постоянный accounting clone имел unstaged TRIAGE.md; обязательный pull отказал. Изменение не трогал, круг продолжил в изолированном свежем клоне.
-  - 2026-11-23T12:35:57Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Persistent accounting clone was 106 commits behind and had an unrelated dirty TRIAGE edit; rebase correctly refused. Used isolated fresh accounting clones and left the pre-existing modification untouched.
-- **tool-git-pull** — 3× (1 инст.)
-  - 2026-11-23T09:13:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initial pull in persistent accounting clone refused because projects/fix-it-in-wine/TRIAGE.md had a pre-existing tracked edit; preserved it and used a fresh clone.
-  - 2026-11-23T11:38:52Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initial pull of /tmp/lunobot-2/accounting failed because pre-existing TRIAGE.md changes were present; preserved that clone and used a fresh step clone. Existing fix is tracked by unxed/lunobot#340 / PR #341.
-  - 2026-11-23T12:14:49Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The permanent accounting clone had a pre-existing TRIAGE.md edit, so pull --rebase refused; preserved it and used a fresh clone. The workaround is recorded in unxed/lunobot#340.
-- **push-race** — 2× (1 инст.)
-  - 2026-11-23T09:13:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Accounting push of 284273e was rejected after remote advanced to janitor commit b361cd2; pull --rebase then push succeeded as ec88d47.
-  - 2026-11-23T10:44:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Пуш status-коммита получил non-fast-forward; после pull --rebase проверка status-times прошла и пуш удался.
-- **read-instruction** — 2× (1 инст.)
-  - 2026-11-23T08:48:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode truncated the 839-line core and 545-line round module; full required reading needed 3 core reads and 2 round reads. Digest showed four repeats since 06:18:59Z; appended evidence to existing PR #330.
-  - 2026-11-23T11:07:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The first LUNOBOT.md read response stopped at line 357 despite requesting the full file; two continuation reads were needed to reach line 839.
-- **tool-check_triage** — 2× (1 инст.)
-  - 2026-11-23T08:48:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Launched all 18 check_triage search-count calls concurrently despite the shared-quota pacing rule; all gates returned success, but the calls should have been paced.
-  - 2026-11-23T12:14:49Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The stale permanent accounting clone (106 commits behind) reported three outdated f4 rows; the fresh clone's check_triage.py passed with all 169 rows current.
-- **tool-gh** — 2× (1 инст.)
-  - 2026-11-23T08:48:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): gh issue view rejected combining --comments and --json; switched to supported JSON/API reads.
-  - 2026-11-23T10:44:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При сборе snapshots четыре проекта получили GitHub API 403 rate limit на count lookup; paginated lists и все project gates прошли, повторов запросов не делал.
+- **read-instruction** — 3× (1 инст.)
+  - 2026-11-23T13:51:45Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode truncated LUNOBOT.md at lines 357 and 768 and round.md at line 388; full reading required 3 core and 2 round reads before action.
+  - 2026-11-23T14:20:02Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initially claimed f4#2228 before checking its issue body; body explicitly forbids bot work. Dropped claim after identifying prohibition; no repository changes were made.
+  - 2026-11-23T16:44:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode Read has no allow_large and capped/truncated output before EOF; core (839 lines) and round module (545 lines) required continuation reads.
+- **tool-gh** — 3× (1 инст.)
+  - 2026-11-23T13:51:45Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Search count API returned HTTP 403 rate limit after 14 sequential project counts at 13:41 UTC; remaining counts succeeded at 13:46, and all 18 paginated counts matched.
+  - 2026-11-23T15:27:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): `gh issue view --comments --json` rejected the combined flags; used the REST issue and comments endpoints instead.
+  - 2026-11-23T17:07:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): One gh issue view invocation failed because --comments and --json are mutually exclusive; no remote side effect.
+- **env-opencode** — 2× (1 инст.)
+  - 2026-11-23T13:51:45Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The persistent f4 clone contained extensive pre-existing edits, so the step used a fresh work clone instead of risking that tree.
+  - 2026-11-23T16:44:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): No DISPLAY, Wine, or xdotool in this runner, so the first unclaimed dllmgr probes requiring stand reproduction could not be safely started.
 - **deadline** — 1× (1 инст.)
-  - 2026-11-23T12:35:57Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): No fresh code/task step was safe to start before the 12:56:33 UTC persistence deadline.
-- **duplicate-work** — 1× (1 инст.)
-  - 2026-11-23T09:52:33Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): На пяти предыдущих SHA Ctrl+K/Ctrl+Y меняли только представление/маршрут события, но dn-linux снова видел строку abc; на этом круге обработчик сделан в принимающем TCommandLine до общей диспетчеризации. Проверка exact-SHA ещё выполняется.
-- **tool-check_prs** — 1× (1 инст.)
-  - 2026-11-23T09:13:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): tar check_prs returned HTTP 504 once; one retry passed with zero human PRs/rows.
-- **tool-gh-run-download** — 1× (1 инст.)
-  - 2026-11-23T11:38:52Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): gh run download 45103458660 hit the 120s foreground limit although extraction completed; a process check and artifact-directory inspection confirmed the evidence was present.
+  - 2026-11-23T17:07:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Runner persistence deadline passed before tick-all completion was available; no new code step was started or safely parked.
+- **push-race** — 1× (1 инст.)
+  - 2026-11-23T16:13:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Учётный push main был отклонён (remote продвинулся с 84b57c5e7); один pull --rebase и повторный push прошли, итоговый main 7ad4e9301b1d3aa0cbea8e101bca201f3789c6dd.
 - **tool-git** — 1× (1 инст.)
-  - 2026-11-23T11:07:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initial accounting pull --rebase refused because projects/fix-it-in-wine/TRIAGE.md had a pre-existing unstaged edit; preserved it and continued from an existing clean clone.
-- **tool-notify_owner** — 1× (1 инст.)
-  - 2026-11-23T08:48:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Reused the wrong source comment for the pending #330 review question, briefly creating duplicate #29 notification 7095774878; deleted that exact duplicate after inspecting the existing unresolved notification.
+  - 2026-11-23T15:27:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Accounting pull --rebase refused the local triage_touch change; stashed that named file, rebased, restored it, then committed and pushed.
+- **tool-git-pull** — 1× (1 инст.)
+  - 2026-11-23T13:11:08Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Pull --rebase persistent accounting clone отказал из-за прежнего unstaged TRIAGE.md; изменение сохранено, работа продолжена из чистого клона. Повторная проблема уже отражена в unxed/lunobot#340 / PR #342 и уведомление владельца существует.
+- **wrong-trace-scenario** — 1× (1 инст.)
+  - 2026-11-23T14:56:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Задание message-trace запустило edge сценарии вместо top-thumbnail; обе трассировки завершились exit 143, поэтому потребовалось повторно отделить подтверждённые данные от вопроса wheel delivery. Следующий прогон должен быть top-only и огран
 
 ## Идеи
 
-- 2026-11-23T08:48:39Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Before any notify_owner call, inspect #29 for an existing active notification for the same question; pace check_triage count requests in small batches.
-- 2026-11-23T09:13:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Start with a fresh isolated accounting clone when the persistent clone has unexplained tracked edits; after a remote race, rebase and verify the pushed main SHA.
-- 2026-11-23T09:52:33Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При сбое Win32 input в конкретном view проверять и потреблять исходный VirtualKey прямо в принимающем обработчике, не полагаясь только на DNKeyCode или маршрутизацию панели.
-- 2026-11-23T10:44:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): При большом флоте соблюдать небольшой последовательный batch для Search count lookups; в будущих snapshots учитывать текущий GitHub API rate limit.
-- 2026-11-23T11:38:52Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Use a fresh accounting clone when the persistent clone is dirty; confirm artifact extraction before treating a download timeout as failure.
-- 2026-11-23T12:14:49Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Run snapshot gates only from the fresh, updated accounting clone when the permanent clone is dirty or stale.
-- 2026-11-23T12:35:57Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Protect the owner-queue-first sequence when the persistent clone is dirty by reading from a clean isolated clone, as done this round.
+- 2026-11-23T13:11:08Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для учётной работы продолжать использовать чистый изолированный clone при наличии сторонних изменений в постоянном clone; не создавать повторное уведомление по уже открытому вопросу.
+- 2026-11-23T13:51:45Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): If GitHub Search rate limits recur during otherwise-required parallel gates/snapshots, pace count requests and API-heavy batches; this round recovered on retry, so no mechanism change was made.
+- 2026-11-23T14:56:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): В GUI workflow привязать профиль трассировки к сценарию явно и завершать задачу диагностическим отказом, если запрошен top wheel trace, а выбран edge plan.
+- 2026-11-23T15:27:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Prefer `gh api repos/<owner>/<repo>/issues/<N>` plus the comments endpoint when both issue metadata and comments are needed.
+- 2026-11-23T16:13:20Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для медленного GUI под Wine +message сначала запускать ограниченный сценарий с одним wheel input; полный top сценарий под message trace не дошёл до события колеса за 600 guest seconds.
+- 2026-11-23T16:44:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Provide a runner-compatible GUI/Wine stand for tasks whose first acceptance step requires interactive reproduction.
 
-Захватов снято: 7, медиана удержания 3 мин, дольше 2 ч: 0.
+Захватов снято: 6, медиана удержания 4 мин, дольше 2 ч: 0.
