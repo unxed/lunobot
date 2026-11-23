@@ -121,8 +121,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: sandbox (faststone)
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
-Состояние: взял в работу — Лунобот-2, 21-11-2026 01:52 UTC
-Прогресс 23-11-2026 01:47:12 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact run 45086422527 на PR unxed/sandbox#19 завершился success, но все шесть GUI сценариев не запустили FastStone (missing DLL, c0000135); wheel trace не подтверждён. Результат и следующий шаг: https://github.com/unxed/lunobot/issues/280#issuecomment-7089410650.
+Состояние: взял в работу — Лунобот-2, 23-11-2026 03:08:46 UTC
+Прогресс 23-11-2026 03:08:46 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): опубликован unxed/sandbox#20, commit 1b856371ce367c74f1899ffbbfeaca4c0c7b5c9b; exact-SHA workflow run 45103458660 идёт; ветка и продолжение записаны в projects/sandbox/status/280.md.
 
 --
 ## account-323
