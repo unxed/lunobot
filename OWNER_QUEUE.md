@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 23-11-2026 03:08:46 UTC
-Прогресс 23-11-2026 03:08:46 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): опубликован unxed/sandbox#20, commit 1b856371ce367c74f1899ffbbfeaca4c0c7b5c9b; exact-SHA workflow run 45103458660 идёт; ветка и продолжение записаны в projects/sandbox/status/280.md.
+Прогресс 23-11-2026 09:08:58 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#20: fail-fast подтверждён точным run 45103458660, шесть driver exits ненулевые, evidence загружен; запуск FastStone блокирует отсутствующий comctl32.dll (c0000135). Детали и следующий безопасный шаг — в projects/sandbox/status/280.md.
 
 --
 ## account-323
