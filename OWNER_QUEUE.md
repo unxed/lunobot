@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 24-11-2026 19:48:01 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA run 45411863778: `LVM_SCROLL` moves items 3072 px and hit-test succeeds, but thumbnail pixels after scroll are 0; wheel does not move strip. Evidence and next narrow forced-redraw probe recorded in https://github.com/unxed/lunobot/issues/280#issuecomment-7142605871.
+Прогресс 24-11-2026 19:50:01 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): предыдущий exact-SHA run показывает, что `LVM_SCROLL` перемещает items, hit-test работает, но пиксели миниатюр после scroll — 0; запущен диагностический run 45474300667 на точном SHA e99ea946fac61b51850e1a23ca99408d8fa1c893 с forced-redraw и scrollbar-object логами; queued, результаты не заявлены. Подробности: https://github.com/unxed/lunobot/issues/280#issuecomment-7142605871.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
