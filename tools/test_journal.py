@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stdout, redirect_stderr
+from datetime import datetime, timezone
 
 import claims
 import journal
@@ -144,6 +145,7 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual((m["cost_usd"], m["turns"], m["tokens"]["cache_read_input_tokens"]), (5.25, 32, 100))
         self.assertFalse(m["rate_limited"])
 
+
     def test_claude_blocks_of_one_call_are_counted_once(self):
         # один вызов модели — несколько событий (thinking, tool_use) с тем же id и тем же usage
         u1 = {"input_tokens": 2, "output_tokens": 50, "cache_read_input_tokens": 1000,
@@ -199,6 +201,24 @@ class MetricsTest(unittest.TestCase):
         self.assertTrue(m["rate_limited"])
         m = journal.metrics(self.write("> build\nвывод: rate limit в тексте тикета\n"), "opencode")
         self.assertFalse(m["rate_limited"])
+
+
+class JournalSinceTest(unittest.TestCase):
+    def test_day_first_date_remains_supported(self):
+        self.assertEqual(journal._since("24-11-2026"), datetime(2026, 11, 24, tzinfo=timezone.utc))
+
+    def test_iso_date_means_utc_midnight(self):
+        self.assertEqual(journal._since("2026-11-24"), datetime(2026, 11, 24, tzinfo=timezone.utc))
+
+    def test_iso_z_timestamp(self):
+        self.assertEqual(journal._since("2026-11-24T21:30:00Z"), datetime(2026, 11, 24, 21, 30, tzinfo=timezone.utc))
+
+    def test_iso_offset_timestamp_normalizes_to_utc(self):
+        self.assertEqual(journal._since("2026-11-24T23:30:00+02:00"), datetime(2026, 11, 24, 21, 30, tzinfo=timezone.utc))
+
+    def test_invalid_since_reports_supported_forms(self):
+        with self.assertRaisesRegex(ValueError, "DD-MM-YYYY or an ISO-8601"):
+            journal._since("not-a-date")
 
 
 if __name__ == "__main__":

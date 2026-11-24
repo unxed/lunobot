@@ -153,7 +153,7 @@ def read(repo, remote="origin", since=None, kind=None):
                 rec = json.loads(body[2])
             except ValueError:
                 continue
-            if since and rec.get("ts", "") < since:
+            if since and _utc_datetime(rec.get("ts", "")) < since:
                 continue
             if kind and rec.get("kind") != kind:
                 continue
@@ -326,13 +326,28 @@ def digest(recs):
 
 def last_digest_ts(recs):
     ds = [r.get("until") for r in recs if r["kind"] == "digest" and r.get("until")]
-    return max(ds) if ds else None
+    return _utc_datetime(max(ds)) if ds else None
+
+
+def _utc_datetime(value):
+    """Parse an ISO-8601 date/timestamp and interpret naive values as UTC."""
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _since(arg):
     if not arg:
         return None
-    return datetime.strptime(arg, "%d-%m-%Y").strftime("%Y-%m-%dT00:00:00Z")
+    try:
+        parsed = datetime.strptime(arg, "%d-%m-%Y").replace(tzinfo=timezone.utc)
+    except ValueError:
+        try:
+            parsed = _utc_datetime(arg)
+        except ValueError as e:
+            raise ValueError("--since: expected DD-MM-YYYY or an ISO-8601 date/timestamp") from e
+    return parsed.astimezone(timezone.utc)
 
 
 def main(argv=None):
@@ -390,7 +405,7 @@ def main(argv=None):
                 print(json.dumps(r, ensure_ascii=False, sort_keys=True))
             return 0
         start = _since(a.since) or last_digest_ts(recs)
-        recs = [r for r in recs if not start or r.get("ts", "") > start]
+        recs = [r for r in recs if not start or _utc_datetime(r.get("ts", "")) > start]
         text = digest(recs)
         if a.out:
             with open(a.out, "w", encoding="utf-8", newline="\n") as f:
