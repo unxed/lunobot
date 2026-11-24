@@ -218,3 +218,10 @@ Marwin runtime и cc580 — https://github.com/unxed/Marwin#1 и https://github.
 Критерий: безопасный порядок явно задан в инструкции, согласуется с § 2 и позволяет прочитать очередь при грязном постоянном клоне.
 Состояние: ждёт владельца — PR unxed/lunobot#342 требует независимого review: его автор — этот инстанс; собственное изменение не одобряю и не вливаю.
 Прогресс 23-11-2026 21:37:09 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): новый отказ `git pull --rebase` на сохранённых правках dn/CI.md и dn/status/176.md; обе правки сохранены, OWNER_QUEUE прочитан из FETCH_HEAD, работа продолжена в чистом клоне. Повтор зафиксирован в PR unxed/lunobot#342: https://github.com/unxed/lunobot/pull/342#issuecomment-7114528087; независимый review всё ещё нужен.
+
+## account-349
+Заметка владельца: https://github.com/unxed/lunobot/issues/349
+Проект: учёт
+Поручение: добавить точную sandbox-команду для шага `Run govulncheck` в `train.py` и регрессионный тест `pick_target_steps`.
+Критерий: `pick_target_steps` возвращает команду и ОС для govulncheck; тест подтверждает точные аргументы из `.github/workflows/build.yml`.
+Состояние: взял в работу — Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), 24-11-2026 04:52:05 UTC
