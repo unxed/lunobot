@@ -983,6 +983,7 @@ STEP_CMDS = [
     (r"^Check formatting$", 'test -z "$(gofmt -s -l .)"'),
     (r"^Check language file formatting$", "go run ./tools/langfmt -check internal/i18n/lang/*.lng"),
     (r"^Run go vet\b", "go vet ./..."),
+    (r"^Run govulncheck$", "go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./..."),
     (r"^Run Tests$", "go test -count=1 ./..."),
     (r"^Run race detector$", "go test -race -count=1 ./..."),
     # vtui (ci.yml): шаг «Test» job'а Test (<цель>), безымянный шаг job'а Race (авто-имя GitHub).

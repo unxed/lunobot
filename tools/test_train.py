@@ -2022,6 +2022,11 @@ class SeededBisectCommandTest(unittest.TestCase):
         self.assertEqual(train.pick_target_steps(steps, {}),
                          ("macos-latest", "go test -count=1 ./..."))
 
+    def test_govulncheck_step_has_an_exact_bisect_command(self):
+        self.assertEqual(
+            train.pick_target_steps([("Quality", "Run govulncheck")]),
+            ("ubuntu-latest", "go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./..."))
+
     def test_seeds_do_not_touch_other_steps_or_unknown_steps(self):
         seeds = {"Test (x)": [("./a", "1")]}
         self.assertEqual(train.pick_target_steps([("Test (x)", "Test")], seeds),
