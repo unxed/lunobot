@@ -91,6 +91,13 @@ class JournalGitTest(unittest.TestCase):
         self.assertIn("| claude | opus | 2 | 0 | 20 | 10.00 | 5.00 | 2 | — | — | — |", text)
         self.assertIn("**read-instruction** — 2×", text)
 
+    def test_since_accepts_legacy_date_and_iso_timestamp(self):
+        self.assertEqual(journal._since("24-11-2026"), "2026-11-24T00:00:00Z")
+        self.assertEqual(journal._since("2026-11-24T20:15:56Z"), "2026-11-24T20:15:56Z")
+
+    def test_since_normalizes_iso_timestamp_to_utc(self):
+        self.assertEqual(journal._since("2026-11-24T22:15:56+02:00"), "2026-11-24T20:15:56Z")
+
     def test_claim_take_and_drop_are_journaled(self):
         line = (f"21-10-2026 12:00:00 Я Лунобот-1 (node {NODE}; LNX; воркер ab12cd34), "
                 "взял задачу https://github.com/unxed/f4/issues/7 [land]")

@@ -5,8 +5,8 @@
     python3 tools/journal.py add      --sign "<id>" --kind round --json '{…}'                 # метрики круга (раннер)
     python3 tools/journal.py metrics  <лог круга> [--format claude|opencode]                  # метрики из лога → JSON
     python3 tools/journal.py round    <лог круга> --number N --runner R --model M --round K --exit C --duration S  # раннер
-    python3 tools/journal.py read     [--since ДД-ММ-ГГГГ] [--kind K]                          # все журналы, JSON строками
-    python3 tools/journal.py digest   [--since ДД-ММ-ГГГГ] [--out REFLECTION.md]               # сводка для разбора (Лунобот-1)
+    python3 tools/journal.py read     [--since ДД-ММ-ГГГГ|ISO-8601] [--kind K]                 # все журналы, JSON строками
+    python3 tools/journal.py digest   [--since ДД-ММ-ГГГГ|ISO-8601] [--out REFLECTION.md]      # сводка для разбора (Лунобот-1)
 
 Зачем. Учёт хранит состояние, а не опыт: что круг сделал, сколько стоил, где споткнулся. Раньше это жило в
 чате круга и в логах раннера на диске одного узла (`~/.lunobot`), а находки ретро без жалобы терялись. С
@@ -332,7 +332,14 @@ def last_digest_ts(recs):
 def _since(arg):
     if not arg:
         return None
-    return datetime.strptime(arg, "%d-%m-%Y").strftime("%Y-%m-%dT00:00:00Z")
+    try:
+        value = datetime.strptime(arg, "%d-%m-%Y").replace(tzinfo=timezone.utc)
+    except ValueError:
+        value = datetime.fromisoformat(arg.replace("Z", "+00:00"))
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        value = value.astimezone(timezone.utc)
+    return value.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def main(argv=None):
