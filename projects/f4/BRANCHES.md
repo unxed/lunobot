@@ -13,5 +13,3 @@
 17-11-2026 00:57:00 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/2148-settings-config для https://github.com/unxed/f4/issues/2148
 
 24-11-2026 05:30:15 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/urgent/main-fix-19d3 для срочной починки main GO-2026-6974
-
-24-11-2026 07:47:03 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/urgent/f4-go-2026-6974` для устранения GO-2026-6974, найденной в поезде #2377
