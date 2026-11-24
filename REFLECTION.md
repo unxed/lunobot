@@ -1,45 +1,36 @@
 # Рефлексия флота — сводка
 
-Записей: 29; период: 2026-11-24T08:09:01Z … 2026-11-24T10:43:34Z.
+Записей: 16; период: 2026-11-24T20:24:17Z … 2026-11-24T22:19:11Z.
 Генерирует `journal.py digest` (Лунобот-1, § 4 п. 6). Правила разбора — модуль round, «Рефлексия».
 
 ## Круги по раннерам и моделям
 
 | раннер | модель | кругов | по сроку | медиана, мин | $ всего | $ медиана | с результатом | вызовов, медиана | контекст макс., тыс., медиана | субагентов |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 6 | 0 | 14 | 0.00 | 0.00 | 0 | — | — | — |
-
-## Неудачные круги (код ≠ 0, по сроку, лимит) — последние слова
-
-- 2026-11-24T09:14:36Z lunobot-round-luna-high.sh круг 598, код 1:
-  > Error: {"type": "provider.transport", "message": "WebSocket closed with code 1006", "response": {"body": "Connection ended"}}
-  > ▶ shell
-  > ▶ shell
-  > ▶ shell
-  > `tick-all` is still running in the existing background process. Its latest output reports a red f4 `main` check after one retry and a main-to-staging sync. I haven’t started new work or taken further
+| lunobot-round-luna-high.sh | openai/gpt-6-luna#high | 4 | 0 | 16 | 0.00 | 0.00 | 0 | — | — | — |
 
 ## Трения (повторы сверху)
 
 - **tool-git** — 3× (1 инст.)
-  - 2026-11-24T08:23:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initial accounting pull failed on pre-existing projects/dn/CI.md and projects/dn/status/176.md edits; preserved both and used a clean clone. Recurrence recorded on PR #342.
-  - 2026-11-24T08:54:18Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): pull --rebase в постоянном accounting-клоне отказал из-за существующих незакоммиченных dn/CI.md и dn/status/176.md; сохранил их и работал в отдельном чистом клоне.
-  - 2026-11-24T09:58:04Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): git pull --rebase отказал из-за двух уже имевшихся правок dn/CI.md и dn/status/176.md; сохранены, круг продолжен в чистом клоне.
-- **tool-train.py** — 2× (1 инст.)
-  - 2026-11-24T08:23:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Manual bisect rejected os=linux with HTTP 422 before dispatch; sandbox.yml accepts ubuntu-latest, then exact-command control and four prefixes ran.
-  - 2026-11-24T08:23:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Mapped govulncheck could not auto-bisect because concurrent Codecov hashFiles timeout was an unknown failed step; documented on PR #350 and used manual bisect.
-- **read-instruction** — 1× (1 инст.)
-  - 2026-11-24T08:23:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): OpenCode truncated LUNOBOT.md at lines 357 and 768, and round.md at 388; resumed at offsets before acting.
-- **tool-acct_line.py** — 1× (1 инст.)
-  - 2026-11-24T08:23:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Shell backtick substitution removed the commit SHA from the first CI-row update; the gate rejected it. Rewrote through UTF-8 text file and pushed the corrected row.
-- **tool-gh_post** — 1× (1 инст.)
-  - 2026-11-24T09:58:04Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Гейт gh_post отклонил подпись кириллицей к англоязычному комментарию #2228; до отправки исправил подпись и прошёл check.
-- **tool-git-pull** — 1× (1 инст.)
-  - 2026-11-24T09:34:26Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The required pull refused pre-existing edits in projects/dn/CI.md and projects/dn/status/176.md. Preserved both, used a fresh accounting clone, and recorded this distinct recurrence on unxed/lunobot#342.
+  - 2026-11-24T20:56:11Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый обязательный pull --rebase отказал из-за двух сохранённых правок в постоянном клоне (dn/CI.md и dn/status/176.md); не затирал их, продолжил из свежего клона.
+  - 2026-11-24T21:27:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Initial pull in the persistent accounting clone was blocked by pre-existing modified projects/dn/CI.md and status/176.md; a fresh clone was needed to preserve them and read the current queue.
+  - 2026-11-24T21:33:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The initial pull in the persistent accounting clone failed because existing dn/CI.md and dn/status/176.md edits were present; preserved them and used a fresh clone.
+- **tool-shell** — 3× (1 инст.)
+  - 2026-11-24T21:27:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Two shell command strings ended with a dangling && and failed before execution; corrected calls completed the intended operations.
+  - 2026-11-24T21:33:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Two malformed shell command strings with a dangling && failed before execution and required corrected calls.
+  - 2026-11-24T21:58:13Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый пакетный запуск 72 гейтов стартовал из /home/ivan из-за пропущенного workdir; все команды сразу завершились «tools/*.py not found», повторил с абсолютными путями из клона.
+- **push-race** — 2× (1 инст.)
+  - 2026-11-24T21:27:55Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Push of accounting commit was rejected once because origin/main advanced; pull --rebase integrated remote commit(s), then push succeeded.
+  - 2026-11-24T21:33:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): One accounting push was rejected after origin/main advanced; pull --rebase integrated the concurrent commit and the retry succeeded.
+- **tool-gh** — 1× (1 инст.)
+  - 2026-11-24T21:58:13Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Первый запрос labelless issues использовал неверное расположение --jq/--arg в gh api; команды завершились usage error, повторил без --arg.
+- **tool-journal** — 1× (1 инст.)
+  - 2026-11-24T20:56:11Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Передал journal.py read --since ISO-8601, но CLI принимал только ДД-ММ-ГГГГ; отказ был без побочного эффекта, повторил с поддерживаемым форматом.
+- **tool-round** — 1× (1 инст.)
+  - 2026-11-24T21:33:47Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): The first work selection missed newly opened trusted issue unxed/lunobot#351; after the full trusted-issue list exposed it, claimed and completed it before ending the round.
 
 ## Идеи
 
-- 2026-11-24T08:23:16Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Classify known Codecov upload timeouts so they do not block a separate mapped security-scan bisect; evidence is recorded on PR #350.
-- 2026-11-24T09:34:26Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): No additional train.py defect was confirmed: the staging quick was pending at tick-all, then a single tick after it became green cut train #2380; its matrix is pending normally.
-- 2026-11-24T09:58:04Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Для грязного постоянного клона сразу использовать отдельный чистый клон; при подготовке комментариев сверять язык текста и подписи до gh_post.
+- 2026-11-24T20:56:11Z Лунобот-2 (node 19d368003c6c048e43dbec70; LNX): Оставлять dirty-клон нетронутым; для следующего шага выбрать первую доступную многошаговую задачу после полного снимка проекта.
 
-Захватов снято: 9, медиана удержания 1 мин, дольше 2 ч: 0.
+Захватов снято: 2, медиана удержания 6 мин, дольше 2 ч: 0.
