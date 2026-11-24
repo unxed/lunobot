@@ -121,8 +121,8 @@ id, адресат и проект не нужны (пишет с телефон
 Проект: sandbox (faststone)
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
-Состояние: взял в работу — Лунобот-2, 23-11-2026 03:08:46 UTC
-Прогресс 24-11-2026 15:18:08 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобран artifact run [45411863778](https://github.com/unxed/sandbox/actions/runs/45411863778): PE DLL SHA совпадают между runtime, initialized prefix и preclone профилями, потери в этих слоях не видно; вывод и ограничения в https://github.com/unxed/lunobot/issues/280#issuecomment-7135768064. Следующий шаг — сопоставить guest loader log с ревизией workflow; причины GUI failures не установлены.
+Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
+Прогресс 24-11-2026 19:11:08 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): подхватил account-280 по § 6: прежняя отметка от 15:18 UTC, более 90 минут без следов; свежие захваты queue-account-280 и issue #280. Продолжаю следующий зафиксированный шаг — сопоставить guest loader log с ревизией workflow; код пока не менял.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
