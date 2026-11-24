@@ -2028,6 +2028,11 @@ class SeededBisectCommandTest(unittest.TestCase):
                          ("ubuntu-latest", "go test -count=1 -timeout 4m ./..."))
         self.assertIsNone(train.pick_target_steps([("Test (x)", "Unknown step")], seeds))
 
+    def test_govulncheck_uses_the_workflow_command(self):
+        self.assertEqual(
+            train.pick_target_steps([("Quality", "Run govulncheck")]),
+            ("ubuntu-latest", "go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./..."))
+
     def test_seeds_are_read_from_the_log_of_the_failed_job_only(self):
         failed = [{"name": self.JOB, "detailsUrl": self.URL},
                   {"name": "Lint", "detailsUrl": self.URL.replace("117021805635", "1")}]
