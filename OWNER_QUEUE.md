@@ -16,15 +16,6 @@ id, адресат и проект не нужны (пишет с телефон
 
 --
 
-## account-351
-Заметка владельца: https://github.com/unxed/lunobot/issues/351
-Проект: учёт
-Поручение: принять в `journal.py --since` ISO-8601 даты и timestamps, нормализовать timestamps к UTC и покрыть формы тестами.
-Критерий: прежний формат DD-MM-YYYY сохраняется; date-only ISO и timezone-aware ISO timestamps проходят read/digest; тесты подтверждают поведение.
-Состояние: взял в работу — Лунобот-2, 24-11-2026 21:29:21 UTC
-
---
-
 ## account-336
 Заметка владельца: https://github.com/unxed/lunobot/issues/336
 Проект: учёт
