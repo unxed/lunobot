@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 23-11-2026 03:08:46 UTC
-Прогресс 23-11-2026 16:10:44 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): run 45203543592 разобран на точном SHA 113c2ade; GUI не прошёл, а +message traces завершились 143 до регистрации wheel input. Детали и следующий узкий диагностический шаг: https://github.com/unxed/lunobot/issues/280#issuecomment-7106722178.
+Прогресс 24-11-2026 07:50:58 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): run [unxed/sandbox#19](https://github.com/unxed/sandbox/pull/19) 45086422527 завершился success, но 5.6/8.5 не запустились: Wine loader сообщил об отсутствующих comctl32.dll, winspool.drv, avifil32.dll и quartz.dll (c0000135). Assertions упали до wheel stimulus; прогон не даёт данных о колесе. Следующий шаг — проверить состав Wine runtime в guest перед узким wheel trace.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
