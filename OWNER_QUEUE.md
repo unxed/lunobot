@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 25-11-2026 18:00 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): добавлен same-process scrollbar probe в PR https://github.com/unxed/sandbox/pull/21 (head `379b89ce4cd8748ae0d718e012d75b1439553710`); предыдущая попытка не скомпилировалась на Windows, исправлено, exact-SHA GUI/native/bootstrap прогоны [45670241989](https://github.com/unxed/sandbox/actions/runs/45670241989), [45670242110](https://github.com/unxed/sandbox/actions/runs/45670242110), [45670242198](https://github.com/unxed/sandbox/actions/runs/45670242198) выполняются. Следом разобрать compile/run evidence.
+Прогресс 25-11-2026 19:00:19 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#21 на SHA 379b89ce4cd8748ae0d718e012d75b1439553710: Wine GUI и native Windows завершились успешно, bootstrap run 45670242198 ещё выполняется; следующий шаг — разобрать его результат.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
