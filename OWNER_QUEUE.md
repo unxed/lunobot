@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 25-11-2026 21:35 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA runs unxed/sandbox#45670241989 (Wine 11.20) и #45670242110 (native Windows) разобраны; same-process scrollbar queries работают в обеих средах, прежний внешний запрос блокируется cross-process boundary. Native wheel: 0→828; Wine: 0→0. Wine LVM_SCROLL сдвигает позицию до 3072, но цветных пикселей после paint 0. Вывод без root cause: https://github.com/unxed/lunobot/issues/280#issuecomment-7175211993; следующий шаг — отдельно локализовать wheel и paint.
+Прогресс 25-11-2026 22:48 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобран Wine artifact run 45670241989: внутрипроцессные scrollbar queries успешны, wheel оставляет позицию 0, LVM_SCROLL перемещает на 3072 px, миниатюры после redraw остаются без цветных пикселей; root cause/fix не установлен. Итоги: https://github.com/unxed/lunobot/issues/280#issuecomment-7176714574.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
