@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 26-11-2026 01:46:26 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобран FastStone GUI artifact run 45720322935 на точном SHA; колесо не меняет in-process scroll position в 5.6/8.5, `LVM_SCROLL` меняет на 3072, thumbnail paint остаётся 0 цветов. Workflow success не означает GUI pass; причина не установлена. Данные: https://github.com/unxed/lunobot/issues/280#issuecomment-7180105448.
+Прогресс 26-11-2026 06:15:42 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#22 влит после exact-SHA сравнения Wine/native; результаты и границы вывода записаны в https://github.com/unxed/lunobot/issues/280#issuecomment-7184188553. Следующий шаг — внутренняя трассировка WM_MOUSEWHEEL/WM_MOUSEHWHEEL.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
