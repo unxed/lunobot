@@ -181,6 +181,10 @@ REST-вариант § 13.2), а перед первым
    `python3 /tmp/lunobot-<номер>/accounting/tools/train.py health <owner/repo>` по каждому проекту
    с staging — и честный ответ на один вопрос: **доезжает ли работа до `main`?** Не «сколько
    я сделал» (активность), а «что из сделанного пользователь уже может получить» (результат).
+   Для сверки состояния в начале шага используй точные формы:
+   `python3 /tmp/lunobot-<номер>/accounting/tools/train.py health <owner/repo>` и
+   `python3 /tmp/lunobot-<номер>/accounting/tools/train.py covered <owner/repo> <sha>`.
+   Это read-only команды без `--sign`; `covered` требует SHA коммита.
    Признаки того, что процесс не работает, даже если все заняты:
 
    - `main` не двигался дольше двух часов при непустом staging (`health` печатает
