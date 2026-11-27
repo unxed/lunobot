@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 27-11-2026 05:59 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#25 влит (`248f9fba`), строки CI и ветки удалены; PR #26 exact-SHA артефакт https://github.com/unxed/sandbox/actions/runs/45939995798 показывает, что прямой WM_MOUSEHWHEEL достигает TTntListView, но scroll не меняется (0; 3072→3072). Следующий шаг — трассировать WndProc/subclass chain и сверить с Windows reference.
+Прогресс 27-11-2026 07:00 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): сопоставлены Wine/native точные артефакты PR unxed/sandbox#26, SHA `b82f66092382621e87970b36088f46e3a0189bbb`: direct WM_MOUSEHWHEEL на TTntListView — Wine result=0, pos 3072→3072; native result=1, pos 3072→2865. GUI assertion failures не означают успеха workflow; причина не установлена. Детали: https://github.com/unxed/lunobot/issues/280#issuecomment-7212041654. Следующий шаг — трассировать WndProc/subclass chain и сравнить с native.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
