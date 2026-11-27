@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 27-11-2026 21:39:03 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): сопоставлены Wine/native WndProc записи для точного SHA; class hierarchy совпадает, но module fields для ListView/TMyPanel пусты, причина не установлена. Результат и безопасный следующий probe: https://github.com/unxed/lunobot/issues/280#issuecomment-7228626689.
+Прогресс 27-11-2026 22:32:00 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): diagnostic PR unxed/sandbox#28 запушен на `7c4676c0bdbf87abd9510d89309bf4bb5615ffd1`; exact-SHA Windows/Wine GUI checks идут. Добавлены module path/base/RVA и VirtualQuery fallback; subclass chain не заявляю. Следующий шаг: разобрать артефакты PR #28 и решить, как безопасно наблюдать subclass chain.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
