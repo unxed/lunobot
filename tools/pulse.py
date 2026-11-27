@@ -54,6 +54,26 @@ def latest_attempts(rounds):
     return list(latest.values())
 
 
+def friction_counts(recs, since):
+    """Count distinct friction incidents, collapsing mirrored copies within two minutes."""
+    counts = Counter()
+    last_seen = {}
+    reflections = sorted(
+        (r for r in recs if r["kind"] == "reflection" and r["ts"] > since),
+        key=lambda r: r["ts"],
+    )
+    for record in reflections:
+        ts = datetime.fromisoformat(record["ts"].replace("Z", "+00:00"))
+        for friction in record.get("friction") or []:
+            tag, text = friction["tag"], friction.get("text", "")
+            key = (tag, text)
+            previous = last_seen.get(key)
+            if previous is None or ts - previous > timedelta(minutes=2):
+                counts[tag] += 1
+                last_seen[key] = ts
+    return counts
+
+
 def alarms(recs, now=None):
     """Список (ключ, текст) тревог по записям журналов."""
     now = now or datetime.now(timezone.utc)
@@ -78,8 +98,7 @@ def alarms(recs, now=None):
         out.append(("rounds-failing", f"за 6 ч упали {len(bad6)} из {len(rounds6)} кругов ({', '.join(f'{k}: {n}' for k, n in who)}): "
                     "хвосты — в `journal.py digest`, раздел «Неудачные круги»"))
     since = max(digests) if digests else d48
-    tags = Counter(f["tag"] for r in recs if r["kind"] == "reflection" and r["ts"] > since
-                   for f in r.get("friction") or [])
+    tags = friction_counts(recs, since)
     hot = [(t, n) for t, n in tags.most_common() if n >= 3]
     if hot:
         out.append(("friction-repeats", "трения повторяются без разбора: " + ", ".join(f"`{t}` ×{n}" for t, n in hot[:5])

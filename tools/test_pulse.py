@@ -74,6 +74,17 @@ class PulseTest(unittest.TestCase):
             rec("reflection", f"2026-10-22T0{h + 1}:00:00Z", friction=fr, id=L2) for h in range(3)]
         self.assertIn("friction-repeats", self.keys(recs))
 
+    def test_friction_mirrors_within_two_minutes_count_once(self):
+        fr = [{"tag": "push-race", "text": "same incident"}]
+        recs = [rec("digest", "2026-10-22T00:00:00Z"),
+                rec("reflection", "2026-10-22T10:00:00Z", friction=fr, id=L1),
+                rec("reflection", "2026-10-22T10:01:00Z", friction=fr, id=L2),
+                rec("reflection", "2026-10-22T11:00:00Z", friction=fr, id=L2)]
+        self.assertNotIn("friction-repeats", self.keys(recs))
+
+        recs.append(rec("reflection", "2026-10-22T12:00:00Z", friction=fr, id=L2))
+        self.assertIn("friction-repeats", self.keys(recs))
+
 
 if __name__ == "__main__":
     unittest.main()
