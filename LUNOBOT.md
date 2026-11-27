@@ -162,9 +162,11 @@ users/<логин> --jq .id`; для `unxed` — `unxed <1151423+unxed@users.nor
 git -C /tmp/lunobot-<номер>/<клон> reset -q --hard
 git -C /tmp/lunobot-<номер>/<клон> clean -qfd
 git -C /tmp/lunobot-<номер>/<клон> switch -q main
-git -C /tmp/lunobot-<номер>/<клон> pull -q --rebase
+git -C /tmp/lunobot-<номер>/<клон> -c fetch.prune=true pull -q --rebase
 git -C /tmp/lunobot-<номер>/<клон> branch --list 'lunobot/*'   # каждую найденную — git -C … branch -D <имя>
 ```
+
+При обновлении `fetch.prune=true` удаляет только устаревшие локальные remote-tracking refs, которых уже нет на origin; удалённые ветки, локальные ветки и незакоммиченные изменения не затрагиваются. Это позволяет Git безопасно перейти между иерархическими именами refs, например `claims/<проект>/<тикет>` и `claims/<проект>/<тикет>/part-<N>`.
 
 **Безопасные команды.** Среда может требовать подтверждения человека на `rm`/`rmdir` по «опасным» путям, и никакое
 разрешение этого не снимает — автономная работа встаёт (что проверяет Claude Code — § 13.2). Поэтому:
