@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 27-11-2026 10:55:14 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): exact-SHA run 45939995798 на PR unxed/sandbox#26 показал, что conclusion success не равен GUI-pass: только 8.5-edges завершился с exit=0; факты и следующий шаг записаны в https://github.com/unxed/lunobot/issues/280#issuecomment-7216412716.
+Прогресс 27-11-2026 12:28:05 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): разобраны exact-SHA артефакты unxed/sandbox#25; наблюдения и ограничения зафиксированы в issue #280 и status/280.md. Следующий шаг — сравнить WndProc/subclass chain ListView в Wine и native reference; причина пока не установлена.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
