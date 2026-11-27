@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 27-11-2026 17:43:41 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): unxed/sandbox#27 влит (`db941cf7317b0a446fb94c44f2f84412ac7256e9`) после зелёных exact-SHA checks; диагностические WndProc/module identities записаны в issue #280: https://github.com/unxed/lunobot/issues/280#issuecomment-7224706282. Осталось: сопоставить evidence Wine/native; причина пока не установлена.
+Прогресс 27-11-2026 21:35:12 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): продолжаю сопоставление точных Wine/native WndProc evidence после PR unxed/sandbox#27; результат этой проверки будет отражён в issue #280.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
