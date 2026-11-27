@@ -392,6 +392,27 @@ def stamp_line(line, sign, now=None):
     return f"{now.strftime('%d-%m-%Y %H:%M:%S')} {head}{line}"
 
 
+def status_hints(repo, project, line, base):
+    """Для захвата тикета — последняя запись `projects/<проект>/status/<N>.md` (если файл есть).
+    Тот, кто берёт тикет, видит припаркованный sha и «осталось» СРАЗУ, а не после первой правки:
+    три записи `duplicate-work` 05-11-2026 — шаг начат заново, пока в status лежала ветка парковки."""
+    out = []
+    for r in check_dispatch.refs(re.sub(r"\]\(https?://[^)]+\)", "]", line)):
+        m = re.fullmatch(r"[\w.-]+/[\w.-]+#(\d+)", r)
+        if not m:
+            continue
+        path = f"projects/{project}/status/{m.group(1)}.md"
+        sh = git(repo, "show", f"{base}:{path}", check=False)
+        if sh.returncode:
+            continue
+        paras = [p.strip() for p in re.split(r"\n\s*\n", sh.stdout) if p.strip()]
+        if paras:
+            last = re.sub(r"\s+", " ", paras[-1])
+            out.append(f"status: {path} — последняя запись: {last[:300]}"
+                       f"{'…' if len(last) > 300 else ''} (прочти файл до первой правки, § 7.5)")
+    return out
+
+
 def take(repo, project, line, remote="origin", unix=None, check=True):
     """Захватить. 0 — взято (или уже держит тот же владелец), 1 — занято/гейт, 2 — сеть."""
     line = line.strip()
@@ -434,6 +455,8 @@ def take(repo, project, line, remote="origin", unix=None, check=True):
         ok, rejected, net = _push_retry(repo, remote, specs)
         if ok:
             print("взято: " + ", ".join(project + "/" + k for k in ks))
+            for hint in status_hints(repo, project, line, base):
+                print(hint)
             if check:  # не перенос migrate: событие в журнал инстанса (история захватов, journal.py)
                 import journal
                 journal.try_add(repo, sign, {"kind": "claim", "event": "take", "project": project,
