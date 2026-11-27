@@ -1248,6 +1248,40 @@ def close_train_cmd(repo, number, reason):
     return 0
 
 
+TRAIN_PAIR_HOLD_MARKER = "lunobot-red-train-pair-hold"
+
+
+def train_pair_held(repo, pr):
+    """Hold an exact red pair; close the stale train once staging has advanced."""
+    base_sha = (pr.get("base") or {}).get("sha")
+    head_sha = (pr.get("head") or {}).get("sha")
+    if not base_sha or not head_sha:
+        return False
+    marker = re.compile(
+        rf"<!-- {TRAIN_PAIR_HOLD_MARKER} base={re.escape(base_sha)} head={re.escape(head_sha)} -->")
+    comments = api(f"repos/{repo}/issues/{pr['number']}/comments?per_page=100", check=False)
+    if not isinstance(comments, list):
+        return False
+    if not any(marker.search(c.get("body") or "") for c in comments if isinstance(c, dict)):
+        return False
+    staging = api(f"repos/{repo}/branches/{STAGING}")
+    staging_sha = staging["commit"]["sha"]
+    if staging_sha != head_sha:
+        close_train(repo, pr, "Staging продвинулся после красного результата; поезд устарел, "
+                    "закрываю его без повторной матрицы. Следующий tick проверит новую вершину.")
+        print(f"поезд #{pr['number']}: staging продвинулся с {head_sha[:9]} до "
+              f"{staging_sha[:9]} после красного результата — устаревший поезд закрыт без повтора")
+    return True
+
+
+def hold_train_pair(repo, pr, reason):
+    """Record a terminal red outcome so unchanged staging/main SHAs aren't sent again."""
+    base_sha = api(f"repos/{repo}/branches/main")["commit"]["sha"]
+    head_sha = pr["head"]["sha"]
+    marker = f"<!-- {TRAIN_PAIR_HOLD_MARKER} base={base_sha} head={head_sha} -->"
+    api(f"repos/{repo}/issues/{pr['number']}/comments", "-f", f"body={reason}\n\n{marker}")
+
+
 def red(repo, pr, failed):
     """Красный поезд. Виновника определяет механика, не суждение бота:
     1) один перезапуск упавших job'ов — флейк отсеивается сам;
@@ -1269,6 +1303,10 @@ def red(repo, pr, failed):
         print(f"поезд #{n}: main ушёл вперёд на {behind} — поезд закрыт без перезапуска, "
               "следующий tick режет новый от staging с main")
         return 0
+    if train_pair_held(repo, pr):
+        print(f"поезд #{n}: пара main/staging уже получила красный результат — повторную матрицу "
+              "и бисект не запускаю; поезд удерживается до изменения SHA. СРОЧНО (§ 5 п. 2)")
+        return 1
     refs = bisect_refs(repo, n)
     if refs:
         verdict = []
@@ -1280,12 +1318,16 @@ def red(repo, pr, failed):
             return 0
         base = [(ref, r) for ref, r in verdict if "/base-" in ref]
         if base and base[0][1]["conclusion"] != "success":
-            close_train(repo, pr,
-                        f"Контрольный прогон бисекта на БАЗЕ поезда (main) тоже красный: "
-                        f"{base[0][1]['html_url']}. Виноват не поезд — сломан main; это § 5 п. 2 "
-                        "(красный main). Поезд закрыт, следующий режется после починки main.")
+            note = (f"Контрольный прогон бисекта на БАЗЕ поезда (main) тоже красный: "
+                    f"{base[0][1]['html_url']}. Виноват не поезд — сломан main; это § 5 п. 2 "
+                    "(красный main). Оставляю поезд открытым как предохранитель: пока main и "
+                    "голова поезда не изменились, повторные матрицы и бисекты не запускаются. "
+                    "После продвижения main следующий tick закроет устаревший поезд и продолжит.")
+            hold_train_pair(repo, pr, note)
+            drop_bisect(repo, refs)
             print(f"бисект: база поезда (main) сама красная — {base[0][1]['html_url']}. "
-                  "Коммиты поезда НЕ выкидываются. СРОЧНО (§ 5 п. 2): красный main")
+                  "коммиты не выкидываются; поезд удержан до продвижения main. "
+                  "СРОЧНО (§ 5 п. 2): красный main")
             return 1
         res = {int(ref.rsplit("/", 1)[1].split("-")[0]): r["conclusion"] == "success"
                for ref, r in verdict if "/base-" not in ref}
@@ -1308,13 +1350,16 @@ def red(repo, pr, failed):
             if undone:
                 # Откат гасит изменение на промежуточных префиксах, и бисект называет виновным
                 # первый коммит шага, хотя падает итог «шаг + откат + повторное применение» (§ 7.2 п. 5).
-                close_train(repo, pr,
-                            f"Бисект назвал виновным {sha[:9]}, но позже в этом же поезде его откат "
-                            f"({undone[:9]}) и, судя по откату, повторное применение: префиксы между ними "
-                            "зелёные из-за отката, вердикт ложный. Шаг не выбрасывается (иначе тесты "
-                            "повторного применения остаются без кода); поезд закрыт, чинить вперёд.")
+                note = (f"Бисект назвал виновным {sha[:9]}, но позже в этом же поезде его откат "
+                        f"({undone[:9]}) и, судя по откату, повторное применение: префиксы между ними "
+                        "зелёные из-за отката, вердикт ложный. Шаг не выбрасывается (иначе тесты "
+                        "повторного применения остаются без кода). Поезд остаётся открытым как "
+                        "предохранитель: исправьте причину вперёд; новая матрица запустится только "
+                        "после изменения головы staging или main.")
+                hold_train_pair(repo, pr, note)
+                drop_bisect(repo, refs)
                 print(f"бисект: {sha[:9]} откачен ниже в этом же поезде ({undone[:9]}) — виновник не "
-                      "выбрасывается, поезд закрыт. СРОЧНО (§ 5 п. 2, § 7.2 п. 5): починить вперёд "
+                      "выбрасывается, поезд удержан без повтора до изменения SHA. СРОЧНО (§ 5 п. 2, § 7.2 п. 5): починить вперёд "
                       "(тест вместе с шагом одним коммитом)")
                 return 1
             # Ветки бисекта удаляет eject только при успехе: если откат не лёг, следующий
