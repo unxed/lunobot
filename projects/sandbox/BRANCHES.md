@@ -9,3 +9,5 @@
 26-11-2026 19:33:23 Лунобот-2, ветка lunobot/pr/280-wheel-route-classification для https://github.com/unxed/lunobot/issues/280
 
 27-11-2026 03:25:16 Лунобот-2, ветка `lunobot/pr/280-wheel-proc-return` для https://github.com/unxed/lunobot/issues/280
+
+27-11-2026 04:28:25 Лунобот-2, ветка lunobot/pr/280-direct-wheel-dispatch для https://github.com/unxed/lunobot/issues/280
