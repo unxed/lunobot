@@ -1,3 +1,5 @@
 # CI — dn
 
 - PR [#195](https://github.com/unxed/dn/pull/195), K-75, exact head `e62a568b7d6c427cf250afc1a002317dda2d4533`: required `dn` [46133977814], `dn-linux` [46133977812], `dn-windows` [46133977835], `dn-freebsd` [46133977859], `class-migration` [46133977953] queued/in progress at 10:11 UTC; outcomes not yet known. Narrow `dn.yml` [46133729881] succeeded on the same SHA.
+
+28-11-2026 10:42:53 Лунобот-2, тикет https://github.com/unxed/dn/issues/176 (K-75), PR [#195](https://github.com/unxed/dn/pull/195), коммит `fbb0171`, обязательные прогоны: dn [#46136386664](https://github.com/unxed/dn/actions/runs/46136386664), dn-linux [#46136386654](https://github.com/unxed/dn/actions/runs/46136386654), dn-windows [#46136386646](https://github.com/unxed/dn/actions/runs/46136386646), dn-freebsd [#46136386649](https://github.com/unxed/dn/actions/runs/46136386649), class-migration [#46136386717](https://github.com/unxed/dn/actions/runs/46136386717); layout [#46136382237](https://github.com/unxed/dn/actions/runs/46136382237) успешен, toolchain [#46136382238](https://github.com/unxed/dn/actions/runs/46136382238) выполняется
