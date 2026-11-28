@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 28-11-2026 00:45:25 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): PR unxed/sandbox#28 влит после четырёх успешных проверок на точном SHA 7c4676c0bdbf87abd9510d89309bf4bb5615ffd1; диагностический результат и следующий шаг по subclass callbacks записаны в https://github.com/unxed/lunobot/issues/280#issuecomment-7231153176. Работа account-280 продолжается.
+Прогресс 28-11-2026 01:27:12 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): анализ диагностического пути зафиксирован в https://github.com/unxed/lunobot/issues/280#issuecomment-7231651631: текущий probe внедряется после создания ListView и не видит ранние subclass-регистрации; следующий шаг — оценить перехват импортов до возобновления процесса с явными ограничениями покрытия.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
