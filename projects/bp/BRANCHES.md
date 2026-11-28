@@ -11,3 +11,5 @@
 25-11-2026 08:51:13 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/pr/bp-218-h21-field-write для https://github.com/unxed/bp/issues/218; SHA ab06a4b.
 
 28-11-2026 00:19:45 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка `lunobot/pr/bp-218-h21-field-alias` для https://github.com/unxed/bp/issues/218; SHA `b7afa45`.
+
+28-11-2026 10:59:49 Лунобот-2 (node 19d368003c6c048e43dbec70; LNX), ветка lunobot/pr/bp-218-h21-global-var-alias для https://github.com/unxed/bp/issues/218; SHA 7914a3ac16451db423ca364f0e9a88dd6efb565d.
