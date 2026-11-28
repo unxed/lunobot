@@ -122,7 +122,7 @@ id, адресат и проект не нужны (пишет с телефон
 Поручение: продолжить FastStone-under-Wine workbench из `faststone/HANDOFF.md`: восстановить закреплённый baseline, устранить общий GUI bootstrap blocker, получить проверяемое реальное GUI-окно, затем воспроизводить и проверять указанные Wine/FastStone дефекты и довести portable/patch evidence по условиям handoff.
 Критерий: выполнено условие завершения из `faststone/HANDOFF.md`: проверенные before/after исправления или честная классификация тикетов, E2E viewer matrix для 5.6/актуальной версии (7.5 для #48872), portable one-file и отданные проверенные git-am patches с краткими абзацами по тикетам.
 Состояние: взял в работу — Лунобот-2, 24-11-2026 19:11:08 UTC
-Прогресс 28-11-2026 06:51:28 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): pinned FastStone 5.6 PE32/i386 подтверждён по SHA `1f6d5826…c070c604`; текущая проба также i686. В статических импортах FSViewer.exe нет SetWindowSubclass/RemoveWindowSubclass, зато есть LoadLibrary/GetProcAddress; ранний IAT-hook не покрывает доказанно динамические и поздние вызовы. Детали и следующий диагностический шаг записаны в https://github.com/unxed/lunobot/issues/280#issuecomment-7235560184.
+Прогресс 28-11-2026 08:50:05 UTC (Лунобот-2 (node 19d368003c6c048e43dbec70; LNX)): запаркован runtime-снимок списка загруженных модулей в unxed/sandbox#29, sha `617665a8b04d4414c3c36c0e865edad00a82094c`; initial compile-run поймал ошибочное имя Toolhelp API, исправление отправлено. Три проверки на новом SHA идут; ограничения и следующий шаг: https://github.com/unxed/lunobot/issues/280#issuecomment-7236837700.
 --
 ## account-323
 Заметка владельца: https://github.com/unxed/lunobot/issues/323
