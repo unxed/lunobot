@@ -2,4 +2,4 @@
 
 Пишет janitor (`janitor.py`, шаг 4). Эти комментарии дошли до GitHub с «?» на месте букв. Восстанови текст правкой того же комментария через `gh_post.py edit unxed/dn <id> <файл>`, а строки «тело тикета/PR» — через `gh_post.py pr-body` или `gh_post.py issue-body` (команда указана в строке), по ASCII-остову, соседним сообщениям и учёту — строка пропадёт на следующем проходе janitor. LUNOBOT.md § 2.
 
-- https://github.com/unxed/dn/pull/195 (#195, тело тикета/PR, unxed, 2026-11-28T10:11:22Z): в тексте буквальные \n вместо переводов строк; чинить: `gh_post.py pr-body unxed/dn 195 <файл>`
+- https://github.com/unxed/dn/pull/195 (#195, тело тикета/PR, unxed, 2026-11-28T10:41:45Z): в тексте буквальные \n вместо переводов строк; чинить: `gh_post.py pr-body unxed/dn 195 <файл>`
